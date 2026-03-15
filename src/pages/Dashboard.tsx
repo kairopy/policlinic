@@ -95,7 +95,8 @@ export const Dashboard: React.FC = () => {
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
            <h3 style={{ marginBottom: '1.5rem' }}>{t('dashboard.quickActions')}</h3>
            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-             <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => navigate('/appointments/new')}>{t('dashboard.newAppointment')}</button>
+             <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', boxShadow: '0 4px 12px -2px rgba(2, 132, 199, 0.4)' }} onClick={() => navigate('/consultations/new')}>{t('consultation.createTitle')}</button>
+             <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }} onClick={() => navigate('/appointments/new')}>{t('dashboard.newAppointment')}</button>
              <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }} onClick={() => navigate('/patients/new')}>{t('dashboard.registerPatient')}</button>
            </div>
         </div>

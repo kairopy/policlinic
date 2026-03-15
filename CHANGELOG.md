@@ -55,3 +55,11 @@ All notable changes to the `policlinic` project will be documented in this file.
 - **Premium Typography**: Upgraded system fonts to Google's variable `Plus Jakarta Sans` for geometric, high-craft legibility across all views.
 - **UI/UX Refinement (Templates)**: Executed a massive redesign on the template editor (`Templates.tsx`). Escaped the generic 2-column grid in favor of an elevated, glassmorphic "Floating Document A4" look.
 - **Rich User Illusion**: Added a stylized mock WYSIWYG toolbar over the editing area and implemented elegant state micro-animations for navigating the notes repository.t by `isSameDay` filtering and `reduce` accumulators for real numeric feedback on Revenue and Consultations.
+
+### Phase 5: Clinical Workflow Expansion
+- **New Consultation UI (`CreateConsultation.tsx`)**: Developed a deeply intentional, premium aesthetic view for registering daily consultations. Included structural spacing, subtle glassmorphism textures on the background panels, and visual hierarchy using `lucide-react` icons.
+- **Dynamic Pre-Filtering**: The "Select Patient" dropdown is now contextually aware. It filters the global database and exclusively shows patients who have an active appointment *scheduled for the current day*.
+- **Template Auto-Fill Integration**: Centralized the `mockTemplates` dictionary to the global data store. When a doctor selects a template (e.g., "General Checkup Notes") from the dropdown, the form instantly maps and auto-fills the large clinical notes `textarea`.
+- **Drag-and-Drop Image Proxies**: Designed premium placeholder "Dropzones" for attaching "Before & After" photographic clinical evidence.
+- **Dashboard Action Addition**: Added a highly visible, primary-tinted `Nueva Consulta` Quick Action button on the Dashboard.
+- **Bilingual Architecture Expansion**: Expanded both the `en.ts` and `es.ts` dictionaries introducing an entire `consultation` mapping tree. Fully functional immediate locale swapping across the new interface.

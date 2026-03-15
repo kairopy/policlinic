@@ -7,6 +7,7 @@ import { CreatePatient } from './pages/Patients/CreatePatient';
 import { CalendarView } from './pages/Appointments/Calendar';
 import { CreateAppointment } from './pages/Appointments/CreateAppointment';
 import { ConsultationHistory } from './pages/Consultations/History';
+import { CreateConsultation } from './pages/Consultations/CreateConsultation';
 import { Templates } from './pages/Templates/Templates';
 import { Settings } from './pages/Settings';
 import './App.css';
@@ -26,7 +27,10 @@ function App() {
             <Route index element={<CalendarView />} />
             <Route path="new" element={<CreateAppointment />} />
           </Route>
-          <Route path="consultations" element={<ConsultationHistory />} />
+          <Route path="consultations">
+            <Route index element={<ConsultationHistory />} />
+            <Route path="new" element={<CreateConsultation />} />
+          </Route>
           <Route path="templates" element={<Templates />} />
           <Route path="settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />

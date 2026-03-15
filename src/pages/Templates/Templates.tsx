@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
 import { FileText, Plus, Save, Trash2, Edit, Bold, Italic, List, AlignLeft, Search } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-
-const mockTemplates = [
-  { id: 1, title: 'General Checkup Notes', content: 'Patient presents for routine checkup.\nVitals:\n- BP:\n- HR:\n- Temp:\n\nNotes:\n' },
-  { id: 2, title: 'Prescription Refill', content: 'Patient requesting refill for [Medication].\nCurrent dosage: [Dosage]\nSymptoms stable.' },
-  { id: 3, title: 'Referral Letter', content: 'To whom it may concern,\n\nI am referring [Patient Name] for evaluation of [Condition].' },
-];
+import { mockTemplates } from '../../data/mockData';
 
 export const Templates: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(mockTemplates[0]);

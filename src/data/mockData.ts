@@ -18,3 +18,9 @@ export const mockAppointments = [
   { id: 2, title: 'Jane Smith - Follow-up', date: new Date(new Date().setHours(14, 30, 0, 0)), duration: 30, type: 'Follow-up', status: 'Pending', patientId: 'PT-1002' },
   { id: 3, title: 'Robert Johnson - Consultation', date: new Date(new Date().setDate(new Date().getDate() + 2)), duration: 45, type: 'Consultation', status: 'Pending', patientId: 'PT-1003' },
 ];
+
+export const mockTemplates = [
+  { id: 1, title: 'General Checkup Notes', content: 'Patient presents for routine checkup.\n\nVitals:\n- BP:\n- HR:\n- Temp:\n\nNotes:\n' },
+  { id: 2, title: 'Prescription Refill', content: 'Patient requesting refill for [Medication].\n\nCurrent dosage: [Dosage]\nSymptoms stable.\n\nRecommendations:\n- Continue current dosage.\n- Follow up in 3 months.' },
+  { id: 3, title: 'Post-Surgery Follow-up', content: 'Patient presents for post-op evaluation.\n\nSymptoms:\n- Mild pain at incision site.\n- No signs of infection.\n\nTreatment Applied:\n- Cleaned and redressed wound.\n\nRecovery Time:\n- 2 weeks for full recovery.' },
+];
