@@ -65,3 +65,5 @@ All notable changes to the `policlinic` project will be documented in this file.
 - **Customizable Datetime Context**: Added `Date` and `Time` inputs to the Consultation form that auto-initialize to the current timestamp but remain freely editable.
 - **Dashboard Action Addition**: Added a highly visible, primary-tinted `Nueva Consulta` Quick Action button on the Dashboard.
 - **Bilingual Architecture Expansion**: Expanded both the `en.ts` and `es.ts` dictionaries introducing an entire `consultation` mapping tree. Fully functional immediate locale swapping across the new interface.
+- **Multi-Field Standardized Templates**: Overhauled mockup templates representation branching into 5 contextual nodes (Symptoms, Treatment, Recommendations, Recovery Time, Notes). Clicking a template triggers direct full mapping inside the consultations flow form inputs rather than just general appends.
+- **Template Manager Panel Expansion**: The static reader is now a modular grid supporting individual layout nodes. Clicking 'Editar' allows mutating mock nodes across individual scoped bounds or declaring entire `Nueva Plantilla` empty scopes without losing view context frames.

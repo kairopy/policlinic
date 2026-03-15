@@ -20,7 +20,31 @@ export const mockAppointments = [
 ];
 
 export const mockTemplates = [
-  { id: 1, title: 'General Checkup Notes', content: 'Patient presents for routine checkup.\n\nVitals:\n- BP:\n- HR:\n- Temp:\n\nNotes:\n' },
-  { id: 2, title: 'Prescription Refill', content: 'Patient requesting refill for [Medication].\n\nCurrent dosage: [Dosage]\nSymptoms stable.\n\nRecommendations:\n- Continue current dosage.\n- Follow up in 3 months.' },
-  { id: 3, title: 'Post-Surgery Follow-up', content: 'Patient presents for post-op evaluation.\n\nSymptoms:\n- Mild pain at incision site.\n- No signs of infection.\n\nTreatment Applied:\n- Cleaned and redressed wound.\n\nRecovery Time:\n- 2 weeks for full recovery.' },
+  { 
+    id: 1, 
+    title: 'General Checkup Notes', 
+    symptoms: 'General consultation for routine status checkup. No acute symptoms.', 
+    treatment: 'Physical exam structure completed. Checked vital signs.', 
+    recommendations: 'Maintain present healthy lifestyle and schedule annual tests.', 
+    recoveryTime: 'N/A', 
+    notes: 'Vitals: BP: ____ | HR: ____ | Temp: ____' 
+  },
+  { 
+    id: 2, 
+    title: 'Prescription Refill', 
+    symptoms: 'Patient stable, requesting refill for current medication list.', 
+    treatment: 'Verification of laboratory/test panels relating to dosage levels.', 
+    recommendations: 'Book next appointment block when requesting future intervals.', 
+    recoveryTime: 'N/A', 
+    notes: 'Approved prescription renewal for [MedicationName].' 
+  },
+  { 
+    id: 3, 
+    title: 'Post-Surgery Evaluation', 
+    symptoms: 'Standard mild local soreness near incision site. No fever spikes.', 
+    treatment: 'Surgical wound cleansing overlayed with standard light gauze dressing.', 
+    recommendations: 'Must keep area strictly dry for 48h. Avoid intensive weight lifting.', 
+    recoveryTime: '10-14 days', 
+    notes: 'Healing speed appears normal. Redressing is optimal.' 
+  },
 ];

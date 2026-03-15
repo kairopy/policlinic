@@ -6,7 +6,49 @@ import { mockTemplates } from '../../data/mockData';
 export const Templates: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(mockTemplates[0]);
   const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({ ...mockTemplates[0] });
   const { t } = useLanguage();
+
+  const handleSelectTemplate = (template: typeof mockTemplates[0]) => {
+    setSelectedTemplate(template);
+    setEditData({ ...template });
+    setIsEditing(false);
+  };
+
+  const handleEditClick = () => {
+    setEditData({ ...selectedTemplate });
+    setIsEditing(true);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEditData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleNewClick = () => {
+    setIsEditing(true);
+    setEditData({
+      id: Math.floor(Math.random() * 10000),
+      title: 'Nueva Plantilla',
+      symptoms: '',
+      treatment: '',
+      recommendations: '',
+      recoveryTime: '',
+      notes: ''
+    });
+  };
+
+  const handleSave = () => {
+    // Mutate local mock array for visual persistence
+    const index = mockTemplates.findIndex(t => t.id === editData.id);
+    if (index !== -1) {
+      mockTemplates[index] = { ...editData };
+    } else {
+      mockTemplates.push({ ...editData });
+    }
+    setSelectedTemplate({ ...editData });
+    setIsEditing(false);
+  };
 
   return (
     <div className="animate-fade-in" style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '1rem', boxSizing: 'border-box' }}>
@@ -19,7 +61,7 @@ export const Templates: React.FC = () => {
           </h1>
           <p className="page-description" style={{ fontSize: '1.1rem', marginTop: '0.25rem' }}>{t('templates.description')}</p>
         </div>
-        <button className="btn btn-primary" style={{ boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.4)', borderRadius: '999px', padding: '0.75rem 1.5rem', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+        <button className="btn btn-primary" onClick={handleNewClick} style={{ boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.4)', borderRadius: '999px', padding: '0.75rem 1.5rem', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}>
           <Plus size={18} /> {t('templates.newTemplate')}
         </button>
       </header>
@@ -66,7 +108,7 @@ export const Templates: React.FC = () => {
                 return (
                   <div 
                     key={template.id}
-                    onClick={() => { setSelectedTemplate(template); setIsEditing(false); }}
+                    onClick={() => handleSelectTemplate(template)}
                     style={{
                       padding: '1rem 1.25rem',
                       borderRadius: '16px',
@@ -90,7 +132,7 @@ export const Templates: React.FC = () => {
                       textOverflow: 'ellipsis',
                       paddingLeft: '2.25rem'
                     }}>
-                      {template.content.split('\n')[0]}
+                      {template.symptoms || t('consultation.symptoms')}
                     </p>
                   </div>
                 );
@@ -144,7 +186,7 @@ export const Templates: React.FC = () => {
                <div style={{ display: 'flex', gap: '0.5rem' }}>
                  {!isEditing ? (
                    <>
-                     <button className="btn btn-outline" style={{ borderRadius: '999px', padding: '0.4rem 1rem' }} onClick={() => setIsEditing(true)}>
+                     <button className="btn btn-outline" style={{ borderRadius: '999px', padding: '0.4rem 1rem' }} onClick={handleEditClick}>
                        <Edit size={16} style={{ marginRight: '0.25rem' }} /> Editar
                      </button>
                      <button className="icon-btn" style={{ color: 'var(--color-danger)' }}>
@@ -154,60 +196,87 @@ export const Templates: React.FC = () => {
                  ) : (
                    <>
                      <button className="btn btn-outline" style={{ borderRadius: '999px', padding: '0.4rem 1rem' }} onClick={() => setIsEditing(false)}>{t('templates.cancel')}</button>
-                     <button className="btn btn-primary" style={{ borderRadius: '999px', padding: '0.4rem 1rem' }} onClick={() => setIsEditing(false)}><Save size={16} style={{ marginRight: '0.25rem' }}/> {t('templates.save')}</button>
+                     <button className="btn btn-primary" style={{ borderRadius: '999px', padding: '0.4rem 1rem' }} onClick={handleSave}><Save size={16} style={{ marginRight: '0.25rem' }}/> {t('templates.save')}</button>
                    </>
                  )}
                </div>
              </div>
              
              {/* Document Body */}
-             <div style={{ flex: 1, padding: '3rem 4rem', display: 'flex', flexDirection: 'column' }}>
+             <div style={{ flex: 1, padding: '3rem 4rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                {isEditing ? (
                  <>
-                   <input 
-                     type="text"
-                     defaultValue={selectedTemplate.title} 
-                     style={{ 
-                       fontSize: '2rem', 
-                       fontWeight: 700, 
-                       border: 'none', 
-                       background: 'transparent', 
-                       color: 'var(--color-text-main)',
-                       marginBottom: '1rem',
-                       outline: 'none',
-                       fontFamily: 'inherit',
-                       letterSpacing: '-0.02em',
-                       width: '100%'
-                     }}
-                   />
-                   <textarea 
-                     defaultValue={selectedTemplate.content} 
-                     style={{ 
-                       flex: 1, 
-                       fontFamily: 'inherit', 
-                       fontSize: '1.1rem',
-                       lineHeight: 1.8,
-                       color: 'var(--color-text-muted)',
-                       border: 'none',
-                       background: 'transparent',
-                       resize: 'none',
-                       outline: 'none',
-                       width: '100%'
-                     }}
-                   />
+                   <div style={{ borderBottom: '2px solid var(--color-border)', paddingBottom: '1rem' }}>
+                     <label className="form-label" style={{ fontWeight: 600, color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>Título de la Plantilla</label>
+                     <input 
+                       type="text"
+                       name="title"
+                       value={editData.title} 
+                       onChange={handleInputChange}
+                       style={{ 
+                         fontSize: '2rem', 
+                         fontWeight: 700, 
+                         border: 'none', 
+                         background: 'transparent', 
+                         color: 'var(--color-text-main)',
+                         outline: 'none',
+                         fontFamily: 'inherit',
+                         letterSpacing: '-0.02em',
+                         width: '100%'
+                       }}
+                     />
+                   </div>
+
+                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                       <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.symptoms')}</label>
+                       <textarea name="symptoms" value={editData.symptoms} onChange={handleInputChange} style={{ resize: 'none', minHeight: '80px', borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', padding: '0.75rem', color: 'var(--color-text-main)' }} />
+                     </div>
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                       <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.treatment')}</label>
+                       <textarea name="treatment" value={editData.treatment} onChange={handleInputChange} style={{ resize: 'none', minHeight: '80px', borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', padding: '0.75rem', color: 'var(--color-text-main)' }} />
+                     </div>
+                   </div>
+
+                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                       <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.recommendations')}</label>
+                       <textarea name="recommendations" value={editData.recommendations} onChange={handleInputChange} style={{ resize: 'none', minHeight: '80px', borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', padding: '0.75rem', color: 'var(--color-text-main)' }} />
+                     </div>
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                       <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.recoveryTime')}</label>
+                       <input type="text" name="recoveryTime" value={editData.recoveryTime} onChange={handleInputChange} style={{ borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', padding: '0.75rem', color: 'var(--color-text-main)' }} />
+                     </div>
+                   </div>
+
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                     <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.notes')}</label>
+                     <textarea name="notes" value={editData.notes} onChange={handleInputChange} style={{ resize: 'none', minHeight: '120px', borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', padding: '0.75rem', color: 'var(--color-text-main)' }} />
+                   </div>
                  </>
                ) : (
                  <>
-                   <h2 style={{ fontSize: '2rem', fontWeight: 700, margin: '0 0 1.5rem 0', color: 'var(--color-text-main)', letterSpacing: '-0.02em' }}>
+                   <h2 style={{ fontSize: '2.5rem', fontWeight: 800, margin: '0 0 1rem 0', color: 'var(--color-text-main)', letterSpacing: '-0.02em', borderBottom: '2px solid var(--color-border)', paddingBottom: '1rem' }}>
                      {selectedTemplate.title}
                    </h2>
-                   <div style={{ 
-                     fontSize: '1.1rem',
-                     lineHeight: 1.8,
-                     color: 'var(--color-text-muted)',
-                     whiteSpace: 'pre-wrap'
-                   }}>
-                     {selectedTemplate.content}
+                   
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                     {[
+                       { label: t('consultation.symptoms'), value: selectedTemplate.symptoms },
+                       { label: t('consultation.treatment'), value: selectedTemplate.treatment },
+                       { label: t('consultation.recommendations'), value: selectedTemplate.recommendations },
+                       { label: t('consultation.recoveryTime'), value: selectedTemplate.recoveryTime },
+                       { label: t('consultation.notes'), value: selectedTemplate.notes }
+                     ].map((item, idx) => (
+                       <div key={idx} style={{ background: 'var(--color-background)', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--color-border)' }}>
+                         <div style={{ fontWeight: 600, color: 'var(--color-primary)', fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>
+                           {item.label}
+                         </div>
+                         <div style={{ color: 'var(--color-text-main)', fontSize: '1rem', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
+                           {item.value || <span style={{ color: 'var(--color-text-muted)', fontStyle: 'italic' }}>Sin datos</span>}
+                         </div>
+                       </div>
+                     ))}
                    </div>
                  </>
                )}
