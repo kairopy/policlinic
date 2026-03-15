@@ -25,3 +25,4 @@ All notable changes to the `policlinic` project will be documented in this file.
 ### Architectural Decisions
 - **Vanilla CSS over Tailwind**: Decided per project directive to maximize stylistic control and achieve an immediate "wow factor". Custom variables allow effortless theming.
 - **Mock Data Layer (`src/data/mockData.ts`)**: Built a structural mock schema to rapidly iterate on the frontend without a dedicated backend blocker. Can be easily swapped for an API service later.
+- **Dynamic Dashboard Logic**: Replaced placeholders on the Dashboard with dynamic React calculation logic leveraging functions from `date-fns` to sort by `isSameDay` filtering and `reduce` accumulators for real numeric feedback on Revenue and Consultations.

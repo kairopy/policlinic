@@ -8,6 +8,13 @@ export const mockPatients = [
 ];
 
 export const mockConsultations = [
-  { id: 'C-5001', patientId: 'PT-1001', date: '2023-10-15', doctor: 'Dr. House', summary: 'General checkup. Blood pressure normal.', type: 'Checkup' },
-  { id: 'C-5002', patientId: 'PT-1003', date: '2023-10-28', doctor: 'Dr. House', summary: 'Follow-up on hypertension medication.', type: 'Follow-up' },
+  { id: 'C-5001', patientId: 'PT-1001', date: '2023-10-15', doctor: 'Dr. House', summary: 'General checkup. Blood pressure normal.', type: 'Checkup', status: 'Completed', cost: 150 },
+  { id: 'C-5002', patientId: 'PT-1003', date: '2023-10-28', doctor: 'Dr. House', summary: 'Follow-up on hypertension medication.', type: 'Follow-up', status: 'Completed', cost: 100 },
+  { id: 'C-5003', patientId: 'PT-1004', date: new Date().toISOString().split('T')[0], doctor: 'Dr. House', summary: 'Patient admitted with acute pain.', type: 'Emergency', status: 'In Progress', cost: 350 },
+];
+
+export const mockAppointments = [
+  { id: 1, title: 'John Doe - Checkup', date: new Date(new Date().setHours(10, 0, 0, 0)), duration: 60, type: 'Checkup', status: 'Pending', patientId: 'PT-1001' },
+  { id: 2, title: 'Jane Smith - Follow-up', date: new Date(new Date().setHours(14, 30, 0, 0)), duration: 30, type: 'Follow-up', status: 'Pending', patientId: 'PT-1002' },
+  { id: 3, title: 'Robert Johnson - Consultation', date: new Date(new Date().setDate(new Date().getDate() + 2)), duration: 45, type: 'Consultation', status: 'Pending', patientId: 'PT-1003' },
 ];

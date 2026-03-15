@@ -1,5 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, Calendar as CalendarIcon, Activity, TrendingUp } from 'lucide-react';
+import { isSameDay, startOfMonth, endOfMonth, isWithinInterval, format } from 'date-fns';
+import { mockPatients, mockAppointments, mockConsultations } from '../data/mockData';
 
 interface StatCardProps {
   title: string;
@@ -28,6 +31,22 @@ const StatCard = ({ title, value, icon: Icon, trend, trendUp }: StatCardProps) =
 );
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
+
+  // Logic Calculations
+  const today = new Date();
+  const currentMonthInterval = { start: startOfMonth(today), end: endOfMonth(today) };
+
+  const totalPatients = mockPatients.length;
+  
+  const appointmentsToday = mockAppointments.filter(app => isSameDay(app.date, today));
+  
+  const activeConsultations = mockConsultations.filter(c => c.status === 'In Progress').length;
+  
+  const monthlyRevenue = mockConsultations
+    .filter(c => isWithinInterval(new Date(c.date), currentMonthInterval))
+    .reduce((sum, consult) => sum + (consult.cost || 0), 0);
+
   return (
     <div className="animate-fade-in">
       <header className="page-header">
@@ -36,41 +55,46 @@ export const Dashboard: React.FC = () => {
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-        <StatCard title="Total Patients" value="1,248" icon={Users} trend="+12.5%" trendUp={true} />
-        <StatCard title="Appointments Today" value="14" icon={CalendarIcon} trend="+2.4%" trendUp={true} />
-        <StatCard title="Active Consultations" value="3" icon={Activity} trend="-4.1%" trendUp={false} />
-        <StatCard title="Monthly Revenue" value="$24k" icon={TrendingUp} trend="+8.2%" trendUp={true} />
+        <StatCard title="Total Patients" value={totalPatients} icon={Users} trend="+12.5%" trendUp={true} />
+        <StatCard title="Appointments Today" value={appointmentsToday.length} icon={CalendarIcon} trend="+2.4%" trendUp={true} />
+        <StatCard title="Active Consultations" value={activeConsultations} icon={Activity} trend="-4.1%" trendUp={false} />
+        <StatCard title="Monthly Revenue" value={`$${monthlyRevenue}`} icon={TrendingUp} trend="+8.2%" trendUp={true} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
-        {/* Placeholder for Upcoming Appointments List */}
+        
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1.5rem' }}>Upcoming Appointments</h3>
+          <h3 style={{ marginBottom: '1.5rem' }}>Upcoming Appointments Today</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>
+            {appointmentsToday.length > 0 ? appointmentsToday.map((app) => (
+              <div key={app.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div className="avatar" style={{ backgroundColor: 'var(--color-secondary)', color: 'white' }}>JS</div>
+                  <div className="avatar" style={{ backgroundColor: 'var(--color-secondary)', color: 'white' }}>
+                    {app.title.split(' ')[0][0]}{app.title.split(' ')[1][0]}
+                  </div>
                   <div>
-                    <div style={{ fontWeight: 600 }}>John Smith {i}</div>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>General Checkup</div>
+                    <div style={{ fontWeight: 600 }}>{app.title.split(' - ')[0]}</div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>{app.type}</div>
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 500 }}>{10 + i}:00 AM</div>
-                  <div className="badge badge-warning">Pending</div>
+                  <div style={{ fontWeight: 500 }}>{format(app.date, "hh:mm a")}</div>
+                  <div className="badge badge-warning">{app.status}</div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                No more appointments scheduled for today.
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Placeholder for Quick Actions or Tasks */}
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
            <h3 style={{ marginBottom: '1.5rem' }}>Quick Actions</h3>
            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-             <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => window.location.href='/appointments/new'}>+ New Appointment</button>
-             <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }}>+ Register Patient</button>
+             <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => navigate('/appointments/new')}>+ New Appointment</button>
+             <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }} onClick={() => navigate('/patients/new')}>+ Register Patient</button>
            </div>
         </div>
       </div>

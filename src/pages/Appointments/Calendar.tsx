@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, startOfWeek, endOfMonth, endOfWeek, isSameMonth, isSameDay, addDays } from 'date-fns';
+import { mockAppointments } from '../../data/mockData';
 
-// Mock Events
-const mockEvents = [
-  { id: 1, title: 'John Doe - Checkup', date: new Date(2023, 9, 15, 10, 0), duration: 60, type: 'Checkup' },
-  { id: 2, title: 'Jane Smith - Follow-up', date: new Date(2023, 9, 15, 14, 30), duration: 30, type: 'Follow-up' },
-  { id: 3, title: 'Robert Johnson - Consultation', date: new Date(2023, 9, 18, 11, 0), duration: 45, type: 'Consultation' },
-];
+// define simple interface
+interface MockAppt {
+  id: number;
+  title: string;
+  date: Date;
+  duration: number;
+  type: string;
+}
 
 export const CalendarView: React.FC = () => {
-  const [currentDate, setCurrentDate] = useState(new Date(2023, 9, 1)); // Fixed to Oct 2023 for mock data matching
+  // Sync currentDate with Today to see the new array correctly
+  const [currentDate, setCurrentDate] = useState(new Date()); 
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -52,16 +56,16 @@ export const CalendarView: React.FC = () => {
         const cloneDay = day;
         
         // Find events for this day
-        const dayEvents = mockEvents.filter(e => isSameDay(e.date, cloneDay));
+        const dayEvents = mockAppointments.filter((e: MockAppt) => isSameDay(e.date, cloneDay));
 
         days.push(
           <div 
-            className={`col cell ${!isSameMonth(day, monthStart) ? "disabled" : isSameDay(day, new Date(2023, 9, 15)) ? "selected" : ""}`} 
+            className={`col cell ${!isSameMonth(day, monthStart) ? "disabled" : isSameDay(day, new Date()) ? "selected" : ""}`} 
             key={day.toString()}
           >
             <span className="number">{formattedDate}</span>
             <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {dayEvents.map(event => (
+              {dayEvents.map((event: MockAppt) => (
                 <div key={event.id} className="event-badge">
                   {format(event.date, "HH:mm")} - {event.title.split(' - ')[0]}
                 </div>

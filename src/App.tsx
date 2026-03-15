@@ -3,6 +3,7 @@ import { MainLayout } from './components/layout/MainLayout';
 import { Dashboard } from './pages/Dashboard';
 import { PatientsList } from './pages/Patients/PatientsList';
 import { PatientDetail } from './pages/Patients/PatientDetail';
+import { CreatePatient } from './pages/Patients/CreatePatient';
 import { CalendarView } from './pages/Appointments/Calendar';
 import { CreateAppointment } from './pages/Appointments/CreateAppointment';
 import { ConsultationHistory } from './pages/Consultations/History';
@@ -25,6 +26,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="patients">
             <Route index element={<PatientsList />} />
+            <Route path="new" element={<CreatePatient />} />
             <Route path=":id" element={<PatientDetail />} />
           </Route>
           <Route path="appointments">
