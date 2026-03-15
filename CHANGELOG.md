@@ -61,5 +61,7 @@ All notable changes to the `policlinic` project will be documented in this file.
 - **Dynamic Pre-Filtering**: The "Select Patient" dropdown is now contextually aware. It filters the global database and exclusively shows patients who have an active appointment *scheduled for the current day*.
 - **Template Auto-Fill Integration**: Centralized the `mockTemplates` dictionary to the global data store. When a doctor selects a template (e.g., "General Checkup Notes") from the dropdown, the form instantly maps and auto-fills the large clinical notes `textarea`.
 - **Drag-and-Drop Image Proxies**: Designed premium placeholder "Dropzones" for attaching "Before & After" photographic clinical evidence.
+- **Consultation Form UX Revision**: Removed rich-text bloat in favor of native, auto-expanding plain `textarea` elements for a distraction-free typing experience.
+- **Customizable Datetime Context**: Added `Date` and `Time` inputs to the Consultation form that auto-initialize to the current timestamp but remain freely editable.
 - **Dashboard Action Addition**: Added a highly visible, primary-tinted `Nueva Consulta` Quick Action button on the Dashboard.
 - **Bilingual Architecture Expansion**: Expanded both the `en.ts` and `es.ts` dictionaries introducing an entire `consultation` mapping tree. Fully functional immediate locale swapping across the new interface.

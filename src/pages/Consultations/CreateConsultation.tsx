@@ -19,6 +19,10 @@ export const CreateConsultation: React.FC = () => {
     notes: ''
   });
 
+  const now = new Date();
+  const [consultDate, setConsultDate] = useState(now.toISOString().split('T')[0]);
+  const [consultTime, setConsultTime] = useState(now.toTimeString().substring(0, 5));
+
   const today = new Date();
   const appointmentsToday = mockAppointments.filter(app => isSameDay(app.date, today));
 
@@ -42,6 +46,12 @@ export const CreateConsultation: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleTextareaResize = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    e.target.style.height = 'auto';
+    e.target.style.height = `${e.target.scrollHeight}px`;
+    handleChange(e);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPatientId) return;
@@ -49,7 +59,8 @@ export const CreateConsultation: React.FC = () => {
     const newConsultation = {
       id: `C-${Math.floor(Math.random() * 10000)}`,
       patientId: selectedPatientId,
-      date: new Date().toISOString().split('T')[0],
+      date: consultDate,
+      time: consultTime,
       doctor: 'Dr. Admin',
       summary: formData.symptoms.substring(0, 50) + '...',
       type: 'Consultation',
@@ -122,6 +133,30 @@ export const CreateConsultation: React.FC = () => {
           </div>
         </div>
 
+        {/* Date and Time Configuration */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px' }}>
+            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem' }}>{t('consultation.date')}</label>
+            <input 
+              type="date" 
+              className="input-field" 
+              value={consultDate} 
+              onChange={e => setConsultDate(e.target.value)} 
+              style={{ borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)' }} 
+            />
+          </div>
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px' }}>
+            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem' }}>{t('consultation.time')}</label>
+            <input 
+              type="time" 
+              className="input-field" 
+              value={consultTime} 
+              onChange={e => setConsultTime(e.target.value)} 
+              style={{ borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)' }} 
+            />
+          </div>
+        </div>
+
         {/* Clinical Notes Grid */}
         <div className="glass-panel" style={{ padding: '2rem', borderRadius: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
           
@@ -132,10 +167,9 @@ export const CreateConsultation: React.FC = () => {
                 className="input-field" 
                 name="symptoms"
                 value={formData.symptoms}
-                onChange={handleChange}
+                onChange={handleTextareaResize}
                 placeholder={t('consultation.symptomsPlaceholder')} 
-                rows={4} 
-                style={{ resize: 'none', borderRadius: '12px', background: 'var(--color-background)' }} 
+                style={{ resize: 'none', overflow: 'hidden', minHeight: '100px', borderRadius: '12px', background: 'var(--color-background)' }} 
               />
             </div>
             
@@ -145,10 +179,9 @@ export const CreateConsultation: React.FC = () => {
                 className="input-field" 
                 name="treatment"
                 value={formData.treatment}
-                onChange={handleChange}
+                onChange={handleTextareaResize}
                 placeholder={t('consultation.treatmentPlaceholder')} 
-                rows={3} 
-                style={{ resize: 'none', borderRadius: '12px', background: 'var(--color-background)' }} 
+                style={{ resize: 'none', overflow: 'hidden', minHeight: '100px', borderRadius: '12px', background: 'var(--color-background)' }} 
               />
             </div>
           </div>
@@ -160,10 +193,9 @@ export const CreateConsultation: React.FC = () => {
                 className="input-field" 
                 name="recommendations"
                 value={formData.recommendations}
-                onChange={handleChange}
+                onChange={handleTextareaResize}
                 placeholder={t('consultation.recommendationsPlaceholder')} 
-                rows={3} 
-                style={{ resize: 'none', borderRadius: '12px', background: 'var(--color-background)' }} 
+                style={{ resize: 'none', overflow: 'hidden', minHeight: '100px', borderRadius: '12px', background: 'var(--color-background)' }} 
               />
             </div>
             
@@ -187,10 +219,9 @@ export const CreateConsultation: React.FC = () => {
               className="input-field" 
               name="notes"
               value={formData.notes}
-              onChange={handleChange}
+              onChange={handleTextareaResize}
               placeholder={t('consultation.notesPlaceholder')} 
-              rows={5} 
-              style={{ resize: 'vertical', borderRadius: '12px', background: 'var(--color-background)', fontFamily: 'var(--font-mono)' }} 
+              style={{ resize: 'none', overflow: 'hidden', minHeight: '120px', borderRadius: '12px', background: 'var(--color-background)', fontFamily: 'var(--font-mono)' }} 
             />
           </div>
         </div>

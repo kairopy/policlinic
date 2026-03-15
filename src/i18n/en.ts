@@ -99,5 +99,7 @@ export const en = {
     afterImage: 'AFTER Photo (Optional)',
     submitBtn: 'Complete and Save Consultation',
     noAppointmentsToday: 'No appointments registered for today.',
+    date: 'Consultation Date',
+    time: 'Time',
   }
 };

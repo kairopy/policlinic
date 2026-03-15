@@ -99,5 +99,7 @@ export const es = {
     afterImage: 'Foto DESPUÉS (Opcional)',
     submitBtn: 'Completar y Guardar Consulta',
     noAppointmentsToday: 'No hay citas registradas para hoy.',
+    date: 'Fecha de la Consulta',
+    time: 'Hora',
   }
 };
