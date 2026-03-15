@@ -20,17 +20,16 @@ export const Sidebar: React.FC = () => {
     { to: '/appointments', icon: CalendarIcon, label: t('sidebar.appointments') },
     { to: '/consultations', icon: Activity, label: t('sidebar.history') },
     { to: '/templates', icon: FileText, label: t('sidebar.templates') },
-    { to: '/settings', icon: Settings, label: t('sidebar.settings') },
   ];
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-logo">
-        <Activity color="var(--color-primary)" size={28} />
-        <h2>Policlinic</h2>
+      <div className="sidebar-header">
+        <Activity className="logo-icon" />
+        <span className="brand-name">Policlinic App</span>
       </div>
 
-      <nav className="sidebar-nav">
+      <nav className="nav-menu">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
@@ -42,6 +41,13 @@ export const Sidebar: React.FC = () => {
           </NavLink>
         ))}
       </nav>
+
+      <div className="sidebar-footer">
+        <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} style={{ padding: '0.75rem 0' }}>
+          <Settings size={20} />
+          <span>{t('sidebar.settings')}</span>
+        </NavLink>
+      </div>
     </aside>
   );
 };
