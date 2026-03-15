@@ -1,9 +1,11 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 import { Settings as SettingsIcon, Globe, Monitor } from 'lucide-react';
 
 export const Settings: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
+  const { theme, setTheme } = useTheme();
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '800px' }}>
@@ -51,11 +53,17 @@ export const Settings: React.FC = () => {
           </div>
           
           <div style={{ display: 'flex', gap: '1rem', marginLeft: '3rem' }}>
-            <button className="btn btn-outline" disabled style={{ opacity: 0.6 }}>
+            <button 
+              className={`btn ${theme === 'light' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setTheme('light')}
+            >
                {t('settings.light')}
             </button>
-            <button className="btn btn-primary" disabled style={{ opacity: 0.8 }}>
-               {t('settings.dark')} (Default)
+            <button 
+              className={`btn ${theme === 'dark' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setTheme('dark')}
+            >
+               {t('settings.dark')}
             </button>
           </div>
         </section>
