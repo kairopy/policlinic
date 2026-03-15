@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Plus, Save, Trash2, Edit } from 'lucide-react';
+import { FileText, Plus, Save, Trash2, Edit, Bold, Italic, List, AlignLeft, Search } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 const mockTemplates = [
@@ -14,105 +14,211 @@ export const Templates: React.FC = () => {
   const { t } = useLanguage();
 
   return (
-    <div className="animate-fade-in" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <header className="page-header flex-between" style={{ marginBottom: '1.5rem' }}>
+    <div className="animate-fade-in" style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '1rem', boxSizing: 'border-box' }}>
+      
+      {/* Dynamic Header */}
+      <header className="page-header flex-between" style={{ marginBottom: '2rem', padding: '0 1rem' }}>
         <div>
-          <h1 className="page-title">{t('templates.title')}</h1>
-          <p className="page-description">{t('templates.description')}</p>
+          <h1 className="page-title" style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.02em', background: 'linear-gradient(to right, var(--color-primary), #0ea5e9)', WebkitBackgroundClip: 'text', color: 'transparent' }}>
+            {t('templates.title')}
+          </h1>
+          <p className="page-description" style={{ fontSize: '1.1rem', marginTop: '0.25rem' }}>{t('templates.description')}</p>
         </div>
-        <button className="btn btn-primary">
+        <button className="btn btn-primary" style={{ boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.4)', borderRadius: '999px', padding: '0.75rem 1.5rem', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }}>
           <Plus size={18} /> {t('templates.newTemplate')}
         </button>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem', flex: 1, overflow: 'hidden' }}>
+      {/* Main Layout: 30% List / 70% Floating Document */}
+      <div style={{ display: 'flex', gap: '2rem', flex: 1, overflow: 'hidden', padding: '0 1rem 1rem' }}>
         
-        {/* Template List */}
-        <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Left Column: Glassmorphic List Panel */}
+        <aside style={{ 
+          width: '320px', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          background: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          borderRadius: '24px',
+          boxShadow: 'var(--shadow-glass)',
+          overflow: 'hidden'
+        }}>
+          {/* Search/Filter Header */}
           <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <FileText size={18} color="var(--color-primary)" /> {t('templates.myTemplates')}
-            </h3>
+            <div style={{ position: 'relative' }}>
+              <Search size={16} color="var(--color-text-muted)" style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)' }} />
+              <input 
+                type="text" 
+                placeholder={t('templates.myTemplates')} 
+                style={{ 
+                  width: '100%', 
+                  padding: '0.75rem 1rem 0.75rem 2.5rem', 
+                  borderRadius: '999px', 
+                  border: '1px solid var(--color-border)', 
+                  background: 'var(--color-background)',
+                  color: 'var(--color-text-main)',
+                  outline: 'none',
+                  fontSize: '0.9rem'
+                }} 
+              />
+            </div>
           </div>
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            {mockTemplates.map(template => (
-              <div 
-                key={template.id}
-                onClick={() => { setSelectedTemplate(template); setIsEditing(false); }}
-                style={{
-                  padding: '1.25rem 1.5rem',
-                  borderBottom: '1px solid var(--color-border)',
-                  cursor: 'pointer',
-                  backgroundColor: selectedTemplate.id === template.id ? 'var(--color-primary-light)' : 'transparent',
-                  borderLeft: `3px solid ${selectedTemplate.id === template.id ? 'var(--color-primary)' : 'transparent'}`,
-                  transition: 'background-color var(--transition-fast)'
-                }}
-              >
-                <h4 style={{ color: 'var(--color-text-main)', marginBottom: '0.25rem' }}>{template.title}</h4>
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {template.content.split('\n')[0]}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Template Editor */}
-        <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-           <div className="flex-between" style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)' }}>
-             <h3 style={{ margin: 0 }}>
-               {isEditing ? t('templates.editing') : selectedTemplate.title}
-             </h3>
-             <div style={{ display: 'flex', gap: '0.5rem' }}>
-               {!isEditing ? (
+          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {mockTemplates.map(template => {
+                const isSelected = selectedTemplate.id === template.id;
+                return (
+                  <div 
+                    key={template.id}
+                    onClick={() => { setSelectedTemplate(template); setIsEditing(false); }}
+                    style={{
+                      padding: '1rem 1.25rem',
+                      borderRadius: '16px',
+                      cursor: 'pointer',
+                      background: isSelected ? 'var(--color-primary)' : 'transparent',
+                      color: isSelected ? 'white' : 'var(--color-text-main)',
+                      transition: 'all 0.2s ease',
+                      transform: isSelected ? 'translateX(4px)' : 'none',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
+                      <FileText size={16} opacity={isSelected ? 1 : 0.6} />
+                      <h4 style={{ margin: 0, fontWeight: 600, fontSize: '0.95rem' }}>{template.title}</h4>
+                    </div>
+                    <p style={{ 
+                      margin: 0, 
+                      fontSize: '0.8rem', 
+                      color: isSelected ? 'rgba(255,255,255,0.7)' : 'var(--color-text-muted)', 
+                      whiteSpace: 'nowrap', 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis',
+                      paddingLeft: '2.25rem'
+                    }}>
+                      {template.content.split('\n')[0]}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </aside>
+
+        {/* Right Column: The "Floating A4 Editor" */}
+        <main style={{ 
+          flex: 1, 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'flex-start',
+          overflowY: 'auto',
+          paddingBottom: '2rem'
+        }}>
+          
+          <div style={{
+            width: '100%',
+            maxWidth: '850px',
+            background: 'var(--color-surface)',
+            borderRadius: '16px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
+            border: '1px solid var(--color-border)',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            minHeight: '80vh',
+            transition: 'all 0.4s ease'
+          }}>
+             
+             {/* Styled Toolbar */}
+             <div style={{ 
+               padding: '1rem 1.5rem', 
+               borderBottom: '1px solid var(--color-border)', 
+               background: 'var(--color-background)',
+               display: 'flex',
+               justifyContent: 'space-between',
+               alignItems: 'center'
+             }}>
+               
+               <div style={{ display: 'flex', gap: '0.5rem' }}>
+                 <button className="icon-btn" style={{ padding: '0.5rem', borderRadius: '8px' }} title="Bold"><Bold size={16} /></button>
+                 <button className="icon-btn" style={{ padding: '0.5rem', borderRadius: '8px' }} title="Italic"><Italic size={16} /></button>
+                 <div style={{ width: '1px', background: 'var(--color-border)', margin: '0 0.25rem' }}></div>
+                 <button className="icon-btn" style={{ padding: '0.5rem', borderRadius: '8px' }} title="List"><List size={16} /></button>
+                 <button className="icon-btn" style={{ padding: '0.5rem', borderRadius: '8px' }} title="Align"><AlignLeft size={16} /></button>
+               </div>
+
+               <div style={{ display: 'flex', gap: '0.5rem' }}>
+                 {!isEditing ? (
+                   <>
+                     <button className="btn btn-outline" style={{ borderRadius: '999px', padding: '0.4rem 1rem' }} onClick={() => setIsEditing(true)}>
+                       <Edit size={16} style={{ marginRight: '0.25rem' }} /> Editar
+                     </button>
+                     <button className="icon-btn" style={{ color: 'var(--color-danger)' }}>
+                       <Trash2 size={18} />
+                     </button>
+                   </>
+                 ) : (
+                   <>
+                     <button className="btn btn-outline" style={{ borderRadius: '999px', padding: '0.4rem 1rem' }} onClick={() => setIsEditing(false)}>{t('templates.cancel')}</button>
+                     <button className="btn btn-primary" style={{ borderRadius: '999px', padding: '0.4rem 1rem' }} onClick={() => setIsEditing(false)}><Save size={16} style={{ marginRight: '0.25rem' }}/> {t('templates.save')}</button>
+                   </>
+                 )}
+               </div>
+             </div>
+             
+             {/* Document Body */}
+             <div style={{ flex: 1, padding: '3rem 4rem', display: 'flex', flexDirection: 'column' }}>
+               {isEditing ? (
                  <>
-                   <button className="icon-btn" style={{ color: 'var(--color-primary)' }} onClick={() => setIsEditing(true)}>
-                     <Edit size={18} />
-                   </button>
-                   <button className="icon-btn" style={{ color: 'var(--color-danger)' }}>
-                     <Trash2 size={18} />
-                   </button>
+                   <input 
+                     type="text"
+                     defaultValue={selectedTemplate.title} 
+                     style={{ 
+                       fontSize: '2rem', 
+                       fontWeight: 700, 
+                       border: 'none', 
+                       background: 'transparent', 
+                       color: 'var(--color-text-main)',
+                       marginBottom: '1rem',
+                       outline: 'none',
+                       fontFamily: 'inherit',
+                       letterSpacing: '-0.02em',
+                       width: '100%'
+                     }}
+                   />
+                   <textarea 
+                     defaultValue={selectedTemplate.content} 
+                     style={{ 
+                       flex: 1, 
+                       fontFamily: 'inherit', 
+                       fontSize: '1.1rem',
+                       lineHeight: 1.8,
+                       color: 'var(--color-text-muted)',
+                       border: 'none',
+                       background: 'transparent',
+                       resize: 'none',
+                       outline: 'none',
+                       width: '100%'
+                     }}
+                   />
                  </>
                ) : (
                  <>
-                   <button className="btn btn-outline" onClick={() => setIsEditing(false)}>{t('templates.cancel')}</button>
-                   <button className="btn btn-primary" onClick={() => setIsEditing(false)}><Save size={18} /> {t('templates.save')}</button>
+                   <h2 style={{ fontSize: '2rem', fontWeight: 700, margin: '0 0 1.5rem 0', color: 'var(--color-text-main)', letterSpacing: '-0.02em' }}>
+                     {selectedTemplate.title}
+                   </h2>
+                   <div style={{ 
+                     fontSize: '1.1rem',
+                     lineHeight: 1.8,
+                     color: 'var(--color-text-muted)',
+                     whiteSpace: 'pre-wrap'
+                   }}>
+                     {selectedTemplate.content}
+                   </div>
                  </>
                )}
              </div>
-           </div>
-           
-           <div style={{ flex: 1, padding: '1.5rem', backgroundColor: isEditing ? 'var(--color-background)' : 'transparent', overflowY: 'auto' }}>
-             {isEditing ? (
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
-                 <input 
-                   className="input-field" 
-                   defaultValue={selectedTemplate.title} 
-                   style={{ fontSize: '1.25rem', fontWeight: 600 }}
-                 />
-                 <textarea 
-                   className="input-field" 
-                   defaultValue={selectedTemplate.content} 
-                   style={{ flex: 1, fontFamily: 'monospace', resize: 'none', lineHeight: 1.6 }}
-                 />
-               </div>
-             ) : (
-               <div style={{ 
-                 padding: '2rem', 
-                 backgroundColor: 'var(--color-surface)', 
-                 border: '1px solid var(--color-border)', 
-                 borderRadius: 'var(--radius-md)', 
-                 minHeight: '100%',
-                 fontFamily: 'serif',
-                 lineHeight: 1.8,
-                 whiteSpace: 'pre-wrap'
-               }}>
-                 {selectedTemplate.content}
-               </div>
-             )}
-           </div>
-        </div>
-
+          </div>
+        </main>
       </div>
     </div>
   );

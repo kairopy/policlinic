@@ -49,4 +49,9 @@ All notable changes to the `policlinic` project will be documented in this file.
 - **Dark Mode Support**: Deployed a `ThemeProvider` context to inject the `.dark` utility scope globally to `<html/>`, seamlessly switching root variables to dark tones. Added `color-scheme: dark` to ensure native browser date/time pickers adopt the dark mode.
 - **Complete Translations**: Refactored `CreatePatient.tsx`, `CreateAppointment.tsx`, and `Templates.tsx` to pull strings exclusively from the custom `i18n` dictionary mappings. Eliminated hardcoded background `white` values causing styling conflicts in the document template editor.
 - **Dynamic Dashboard Logic**: Replaced all hardcoded integers in the Dashboard with dynamic `.filter` and `.reduce` computations mapping over the global mock database to simulate real-time metrics reading.
-- **Global i18n Context**: Implemented a dependency-free custom React Context (`LanguageProvider`) to manage bilingual states (EN/ES) and nested dictionary mapping (`t(key)`) natively without relying on heavy external libraries like `react-i18next`.t by `isSameDay` filtering and `reduce` accumulators for real numeric feedback on Revenue and Consultations.
+- **Global i18n Context**: Implemented a dependency-free custom React Context (`LanguageProvider`) to manage bilingual states (EN/ES) and nested dictionary mapping (`t(key)`) natively without relying on heavy external libraries like `react-i18next`.
+
+### Phase 4: Frontend Overhaul 
+- **Premium Typography**: Upgraded system fonts to Google's variable `Plus Jakarta Sans` for geometric, high-craft legibility across all views.
+- **UI/UX Refinement (Templates)**: Executed a massive redesign on the template editor (`Templates.tsx`). Escaped the generic 2-column grid in favor of an elevated, glassmorphic "Floating Document A4" look.
+- **Rich User Illusion**: Added a stylized mock WYSIWYG toolbar over the editing area and implemented elegant state micro-animations for navigating the notes repository.t by `isSameDay` filtering and `reduce` accumulators for real numeric feedback on Revenue and Consultations.
