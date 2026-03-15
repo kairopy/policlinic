@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FileText, Plus, Save, Trash2, Edit } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const mockTemplates = [
   { id: 1, title: 'General Checkup Notes', content: 'Patient presents for routine checkup.\nVitals:\n- BP:\n- HR:\n- Temp:\n\nNotes:\n' },
@@ -10,16 +11,17 @@ const mockTemplates = [
 export const Templates: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(mockTemplates[0]);
   const [isEditing, setIsEditing] = useState(false);
+  const { t } = useLanguage();
 
   return (
     <div className="animate-fade-in" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <header className="page-header flex-between" style={{ marginBottom: '1.5rem' }}>
         <div>
-          <h1 className="page-title">Document Templates</h1>
-          <p className="page-description">Manage standard forms and clinical note templates.</p>
+          <h1 className="page-title">{t('templates.title')}</h1>
+          <p className="page-description">{t('templates.description')}</p>
         </div>
         <button className="btn btn-primary">
-          <Plus size={18} /> New Template
+          <Plus size={18} /> {t('templates.newTemplate')}
         </button>
       </header>
 
@@ -29,7 +31,7 @@ export const Templates: React.FC = () => {
         <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)' }}>
             <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <FileText size={18} color="var(--color-primary)" /> My Templates
+              <FileText size={18} color="var(--color-primary)" /> {t('templates.myTemplates')}
             </h3>
           </div>
           <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -59,7 +61,7 @@ export const Templates: React.FC = () => {
         <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
            <div className="flex-between" style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)' }}>
              <h3 style={{ margin: 0 }}>
-               {isEditing ? 'Editing Template' : selectedTemplate.title}
+               {isEditing ? t('templates.editing') : selectedTemplate.title}
              </h3>
              <div style={{ display: 'flex', gap: '0.5rem' }}>
                {!isEditing ? (
@@ -73,14 +75,14 @@ export const Templates: React.FC = () => {
                  </>
                ) : (
                  <>
-                   <button className="btn btn-outline" onClick={() => setIsEditing(false)}>Cancel</button>
-                   <button className="btn btn-primary" onClick={() => setIsEditing(false)}><Save size={18} /> Save Changes</button>
+                   <button className="btn btn-outline" onClick={() => setIsEditing(false)}>{t('templates.cancel')}</button>
+                   <button className="btn btn-primary" onClick={() => setIsEditing(false)}><Save size={18} /> {t('templates.save')}</button>
                  </>
                )}
              </div>
            </div>
            
-           <div style={{ flex: 1, padding: '1.5rem', backgroundColor: isEditing ? 'var(--color-surface)' : 'var(--color-background)', overflowY: 'auto' }}>
+           <div style={{ flex: 1, padding: '1.5rem', backgroundColor: isEditing ? 'var(--color-background)' : 'transparent', overflowY: 'auto' }}>
              {isEditing ? (
                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
                  <input 
@@ -97,7 +99,7 @@ export const Templates: React.FC = () => {
              ) : (
                <div style={{ 
                  padding: '2rem', 
-                 backgroundColor: 'white', 
+                 backgroundColor: 'var(--color-surface)', 
                  border: '1px solid var(--color-border)', 
                  borderRadius: 'var(--radius-md)', 
                  minHeight: '100%',
