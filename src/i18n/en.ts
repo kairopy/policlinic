@@ -1,0 +1,40 @@
+export const en = {
+  common: {
+    cancel: 'Cancel',
+    save: 'Save',
+    search: 'Search anything...',
+    welcome: 'Welcome back',
+  },
+  sidebar: {
+    dashboard: 'Dashboard',
+    patients: 'Patients',
+    appointments: 'Appointments',
+    history: 'History',
+    templates: 'Templates',
+    settings: 'Settings',
+  },
+  dashboard: {
+    title: 'Dashboard',
+    description: "Here's your clinic overview for today.",
+    totalPatients: 'Total Patients',
+    appointmentsToday: 'Appointments Today',
+    activeConsultations: 'Active Consultations',
+    monthlyRevenue: 'Monthly Revenue',
+    vsLastMonth: 'vs last month',
+    upcomingAppointments: 'Upcoming Appointments Today',
+    noMoreAppointments: 'No more appointments scheduled for today.',
+    quickActions: 'Quick Actions',
+    newAppointment: '+ New Appointment',
+    registerPatient: '+ Register Patient',
+  },
+  settings: {
+    title: 'Settings',
+    description: 'Manage your clinic preferences and application behavior.',
+    languagePreference: 'Language Preference',
+    english: 'English',
+    spanish: 'Spanish',
+    themePreference: 'Theme Preference',
+    light: 'Light',
+    dark: 'Dark',
+  }
+};

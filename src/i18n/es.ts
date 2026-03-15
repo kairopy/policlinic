@@ -1,0 +1,40 @@
+export const es = {
+  common: {
+    cancel: 'Cancelar',
+    save: 'Guardar',
+    search: 'Buscar cualquier cosa...',
+    welcome: 'Bienvenido de nuevo',
+  },
+  sidebar: {
+    dashboard: 'Panel Principal',
+    patients: 'Pacientes',
+    appointments: 'Citas',
+    history: 'Historial',
+    templates: 'Plantillas',
+    settings: 'Configuración',
+  },
+  dashboard: {
+    title: 'Panel Principal',
+    description: 'Este es el resumen de tu clínica de hoy.',
+    totalPatients: 'Pacientes Totales',
+    appointmentsToday: 'Citas de Hoy',
+    activeConsultations: 'Consultas Activas',
+    monthlyRevenue: 'Ingreso Mensual',
+    vsLastMonth: 'vs mes pasado',
+    upcomingAppointments: 'Citas Próximas de Hoy',
+    noMoreAppointments: 'No hay más citas programadas para hoy.',
+    quickActions: 'Acciones Rápidas',
+    newAppointment: '+ Nueva Cita',
+    registerPatient: '+ Registrar Paciente',
+  },
+  settings: {
+    title: 'Configuraciones',
+    description: 'Administra las preferencias de tu clínica y el comportamiento de la app.',
+    languagePreference: 'Preferencia de Idioma',
+    english: 'Inglés',
+    spanish: 'Español',
+    themePreference: 'Preferencia de Tema',
+    light: 'Claro',
+    dark: 'Oscuro',
+  }
+};

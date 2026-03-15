@@ -23,6 +23,7 @@ All notable changes to the `policlinic` project will be documented in this file.
 - Performed initial `npm audit` confirming 0 vulnerabilities across all installed packages.
 
 ### Architectural Decisions
-- **Vanilla CSS over Tailwind**: Decided per project directive to maximize stylistic control and achieve an immediate "wow factor". Custom variables allow effortless theming.
-- **Mock Data Layer (`src/data/mockData.ts`)**: Built a structural mock schema to rapidly iterate on the frontend without a dedicated backend blocker. Can be easily swapped for an API service later.
-- **Dynamic Dashboard Logic**: Replaced placeholders on the Dashboard with dynamic React calculation logic leveraging functions from `date-fns` to sort by `isSameDay` filtering and `reduce` accumulators for real numeric feedback on Revenue and Consultations.
+- **Vanilla CSS Exclusivity**: Bypassed Tailwind dependency in favor of robust, hand-written CSS Variables and generic `.glass-panel` utility classes. Follows the "premium dynamic minimal interface" directive. 
+- **Mock Data Layer**: Built `mockPatients`, `mockConsultations` and `mockAppointments` globally inside `/data/mockData.ts` to simulate a live database backend.
+- **Dynamic Dashboard Logic**: Replaced all hardcoded integers in the Dashboard with dynamic `.filter` and `.reduce` computations mapping over the global mock database to simulate real-time metrics reading.
+- **Global i18n Context**: Implemented a dependency-free custom React Context (`LanguageProvider`) to manage bilingual states (EN/ES) and nested dictionary mapping (`t(key)`) natively without relying on heavy external libraries like `react-i18next`.t by `isSameDay` filtering and `reduce` accumulators for real numeric feedback on Revenue and Consultations.

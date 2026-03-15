@@ -1,0 +1,66 @@
+import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
+import { Settings as SettingsIcon, Globe, Monitor } from 'lucide-react';
+
+export const Settings: React.FC = () => {
+  const { language, setLanguage, t } = useLanguage();
+
+  return (
+    <div className="animate-fade-in" style={{ maxWidth: '800px' }}>
+      <header className="page-header">
+        <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <SettingsIcon size={28} /> {t('settings.title')}
+        </h1>
+        <p className="page-description">{t('settings.description')}</p>
+      </header>
+
+      <div className="glass-panel" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        
+        <section>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <div style={{ backgroundColor: 'var(--color-primary-light)', padding: '0.5rem', borderRadius: 'var(--radius-sm)', color: 'var(--color-primary)' }}>
+              <Globe size={18} />
+            </div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{t('settings.languagePreference')}</h3>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '1rem', marginLeft: '3rem' }}>
+            <button 
+              className={`btn ${language === 'en' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setLanguage('en')}
+            >
+              🇺🇸 {t('settings.english')}
+            </button>
+            <button 
+              className={`btn ${language === 'es' ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => setLanguage('es')}
+            >
+              🇪🇸 {t('settings.spanish')}
+            </button>
+          </div>
+        </section>
+
+        <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)' }} />
+
+        <section>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+            <div style={{ backgroundColor: 'var(--color-primary-light)', padding: '0.5rem', borderRadius: 'var(--radius-sm)', color: 'var(--color-primary)' }}>
+              <Monitor size={18} />
+            </div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{t('settings.themePreference')}</h3>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '1rem', marginLeft: '3rem' }}>
+            <button className="btn btn-outline" disabled style={{ opacity: 0.6 }}>
+               {t('settings.light')}
+            </button>
+            <button className="btn btn-primary" disabled style={{ opacity: 0.8 }}>
+               {t('settings.dark')} (Default)
+            </button>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  );
+};

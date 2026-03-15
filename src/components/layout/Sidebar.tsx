@@ -1,37 +1,40 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Calendar, 
-  History, 
-  FileText, 
+import {
+  Users,
+  Calendar as CalendarIcon,
+  FileText,
   Settings,
-  Activity
+  Activity,
+  LayoutDashboard
 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import './layout.css';
 
-const navItems = [
-  { path: '/', label: 'Overview', icon: LayoutDashboard },
-  { path: '/patients', label: 'Patients', icon: Users },
-  { path: '/appointments', label: 'Appointments', icon: Calendar },
-  { path: '/consultations', label: 'History', icon: History },
-  { path: '/templates', label: 'Templates', icon: FileText },
-];
-
 export const Sidebar: React.FC = () => {
+  const { t } = useLanguage();
+
+  const navItems = [
+    { to: '/', icon: LayoutDashboard, label: t('sidebar.dashboard') },
+    { to: '/patients', icon: Users, label: t('sidebar.patients') },
+    { to: '/appointments', icon: CalendarIcon, label: t('sidebar.appointments') },
+    { to: '/consultations', icon: Activity, label: t('sidebar.history') },
+    { to: '/templates', icon: FileText, label: t('sidebar.templates') },
+    { to: '/settings', icon: Settings, label: t('sidebar.settings') },
+  ];
+
   return (
     <aside className="sidebar">
-      <div className="sidebar-header">
-        <Activity className="logo-icon" />
-        <span className="brand-name">Policlinic App</span>
+      <div className="sidebar-logo">
+        <Activity color="var(--color-primary)" size={28} />
+        <h2>Policlinic</h2>
       </div>
-      
-      <nav className="nav-menu">
+
+      <nav className="sidebar-nav">
         {navItems.map((item) => (
-          <NavLink 
-            key={item.path} 
-            to={item.path} 
+          <NavLink
+            key={item.to}
+            to={item.to}
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
             <item.icon size={20} />
@@ -39,13 +42,6 @@ export const Sidebar: React.FC = () => {
           </NavLink>
         ))}
       </nav>
-
-      <div className="sidebar-footer">
-        <NavLink to="/settings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`} style={{ padding: '0.75rem 0' }}>
-          <Settings size={20} />
-          <span>Settings</span>
-        </NavLink>
-      </div>
     </aside>
   );
 };
