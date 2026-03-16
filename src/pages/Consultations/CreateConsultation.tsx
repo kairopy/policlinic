@@ -29,6 +29,8 @@ export const CreateConsultation: React.FC = () => {
 
   const beforeInputRef = useRef<HTMLInputElement>(null);
   const afterInputRef = useRef<HTMLInputElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+  const timeInputRef = useRef<HTMLInputElement>(null);
 
   const now = new Date();
   const [consultDate, setConsultDate] = useState(now.toISOString().split('T')[0]);
@@ -155,7 +157,7 @@ export const CreateConsultation: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
           
           {/* Patient Selection */}
-          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative', overflow: 'visible' }} ref={patientDropdownRef}>
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative', overflow: 'visible', zIndex: showPatientDropdown && !selectedPatient ? 50 : 1 }} ref={patientDropdownRef}>
             <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--color-primary)', borderRadius: '4px 0 0 4px' }}></div>
             <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Stethoscope size={16} color="var(--color-primary)" /> {t('consultation.patientSelection')} <span style={{ color: 'var(--color-danger)' }}>*</span>
@@ -221,7 +223,7 @@ export const CreateConsultation: React.FC = () => {
               <FileEdit size={16} color="#8b5cf6" /> {t('consultation.templateSelection')}
             </label>
             
-            <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem', marginTop: '0.5rem' }} className="no-scrollbar">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.75rem' }}>
               {mockTemplates.map(template => {
                 const isSelected = selectedTemplateId === template.id.toString();
                 return (
@@ -257,10 +259,14 @@ export const CreateConsultation: React.FC = () => {
               <Calendar size={16} color="var(--color-primary)" /> {t('consultation.date')}
             </label>
             <div style={{ position: 'relative' }}>
-              <div style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+              <div 
+                onClick={() => dateInputRef.current?.showPicker()} 
+                style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
+              >
                 <span style={{ color: 'var(--color-text-main)', fontWeight: 500 }}>{consultDate}</span>
               </div>
               <input 
+                ref={dateInputRef}
                 type="date" 
                 value={consultDate} 
                 onChange={e => setConsultDate(e.target.value)} 
@@ -274,10 +280,14 @@ export const CreateConsultation: React.FC = () => {
               <Clock size={16} color="#8b5cf6" /> {t('consultation.time')}
             </label>
             <div style={{ position: 'relative' }}>
-              <div style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+              <div 
+                onClick={() => timeInputRef.current?.showPicker()} 
+                style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
+              >
                 <span style={{ color: 'var(--color-text-main)', fontWeight: 500 }}>{consultTime}</span>
               </div>
               <input 
+                ref={timeInputRef}
                 type="time" 
                 value={consultTime} 
                 onChange={e => setConsultTime(e.target.value)} 
