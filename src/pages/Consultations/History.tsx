@@ -59,7 +59,7 @@ export const ConsultationHistory: React.FC = () => {
   };
 
   return (
-    <div id="history-page-container" className="animate-fade-in" style={{ position: 'relative', padding: '1.5rem', height: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
+    <div id="history-page-container" className="animate-fade-in" style={{ position: 'relative', padding: '1.5rem', height: '100%', boxSizing: 'border-box', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <header className="page-header flex-between" style={{ marginBottom: '2rem' }}>
         <div>
           <h1 className="page-title">{t('history.title') || 'Consultation History'}</h1>
@@ -70,7 +70,7 @@ export const ConsultationHistory: React.FC = () => {
         </button>
       </header>
 
-      <div className="glass-panel" style={{ padding: '0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div className="glass-panel" style={{ padding: '0', overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, background: 'var(--color-surface)' }}>
         <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'center', justifyContent: 'space-between' }}>
            <div className="header-search" style={{ margin: 0, flex: 1, maxWidth: '400px', display: 'flex', alignItems: 'center' }}>
              <Search size={18} color="var(--color-text-muted)" style={{ position: 'absolute', left: '2rem' }} />
