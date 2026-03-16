@@ -161,7 +161,7 @@ export const Templates: React.FC = () => {
           {filteredTemplates.map(template => (
             <div 
               key={template.id}
-              className="glass-panel"
+              className="glass-panel template-card"
               onClick={() => handleEditClick(template)}
               style={{
                 padding: '1.5rem',
@@ -215,6 +215,11 @@ export const Templates: React.FC = () => {
           </div>
         )}
       </div>
+      <style>{`
+        .template-card:hover {
+          border-color: var(--color-primary) !important;
+        }
+      `}</style>
     </div>
   );
 };
