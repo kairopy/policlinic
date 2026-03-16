@@ -14,9 +14,15 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
   const [viewDate, setViewDate] = useState(new Date());
   const pickerRef = useRef<HTMLDivElement>(null);
 
-  // Parse strings back to Dates for calculation
-  const start = startDate ? new Date(startDate) : null;
-  const end = endDate ? new Date(endDate) : null;
+  // Parse strings back to Local Dates to avoid timezone offsets
+  const parseLocal = (str: string) => {
+    if (!str) return null;
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+
+  const start = parseLocal(startDate);
+  const end = parseLocal(endDate);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -40,7 +46,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
         onRangeChange(dateStr, '');
       } else {
         onRangeChange(format(start, 'yyyy-MM-dd'), dateStr);
-        setIsOpen(false); // Auto close on finish range
+        // Let them see the range, they click outside to close style.
       }
     }
   };
