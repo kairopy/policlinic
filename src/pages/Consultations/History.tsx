@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, FileText, Download, Eye, X, ChevronLeft } from 'lucide-react';
+import { Search, Filter, FileText, Download, Eye, X } from 'lucide-react';
 import { mockConsultations, mockPatients } from '../../data/mockData';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -34,7 +34,7 @@ export const ConsultationHistory: React.FC = () => {
   };
 
   return (
-    <div className="animate-fade-in" style={{ padding: '1.5rem', height: '100%', boxSizing: 'border-box' }}>
+    <div className="animate-fade-in" style={{ position: 'relative', padding: '1.5rem', height: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
       <header className="page-header flex-between" style={{ marginBottom: '2rem' }}>
         <div>
           <h1 className="page-title">{t('history.title') || 'Consultation History'}</h1>
@@ -132,46 +132,43 @@ export const ConsultationHistory: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </div>
-
-      {/* Full Page View details */}
+      </div>      {/* Absolute Inner-Page View details */}
       {viewingRecord && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'var(--color-surface)', zIndex: 9999, overflowY: 'auto', display: 'flex', flexDirection: 'column', animation: 'slide-up 0.2s ease-out' }}>
-          <header style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--color-background)', position: 'sticky', top: 0, zIndex: 10 }}>
-            <button onClick={() => setViewingRecord(null)} className="icon-btn" style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '10px', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ChevronLeft size={20} />
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(4px)', zIndex: 50, overflowY: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'slide-up 0.2s ease-out' }}>
+          <div className="glass-panel" style={{ width: '90%', maxWidth: '650px', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem', maxHeight: '90vh', overflowY: 'auto', position: 'relative', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', border: '1px solid var(--color-border)' }}>
+            <button onClick={() => setViewingRecord(null)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--color-text-muted)', transition: 'all 0.2s' }}>
+              <X size={18} />
             </button>
+            
             <div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)', margin: 0 }}>{t('history.actions') || 'Detalles de Consulta'}</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)', margin: '0 0 0.5rem 0' }}>{t('history.actions') || 'Detalles de Consulta'}</h2>
               <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Ficha médica correspondiente a la visita del {viewingRecord.date}</p>
             </div>
-          </header>
 
-          <div style={{ flex: 1, padding: '2.5rem', maxWidth: '800px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem', padding: '1.5rem', background: 'var(--color-background)', borderRadius: '16px', border: '1px solid var(--color-border)' }}>
-              <div><strong style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{t('history.patient') || 'Paciente'}:</strong> <div style={{ fontWeight: 600, fontSize: '1.1rem', marginTop: '0.2rem' }}>{viewingRecord.patientName}</div></div>
-              <div><strong style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{t('history.doctor') || 'Médico'}:</strong> <div style={{ fontWeight: 600, fontSize: '1.1rem', marginTop: '0.2rem' }}>{viewingRecord.doctor}</div></div>
-              <div><strong style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{t('history.type') || 'Tipo'}:</strong> <div style={{ marginTop: '0.3rem' }}><span className="badge badge-success" style={{ padding: '0.4rem 0.8rem' }}>{viewingRecord.type}</span></div></div>
-              <div><strong style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>Costo:</strong> <div style={{ fontWeight: 700, marginTop: '0.3rem', color: 'var(--color-primary)', fontSize: '1.1rem' }}>{viewingRecord.cost ? `${viewingRecord.cost.toLocaleString('es-PY')} Gs` : 'N/A'}</div></div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', padding: '1.25rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+              <div><strong style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{t('history.patient') || 'Paciente'}:</strong> <div style={{ fontWeight: 600, marginTop: '0.2rem' }}>{viewingRecord.patientName}</div></div>
+              <div><strong style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{t('history.doctor') || 'Médico'}:</strong> <div style={{ fontWeight: 600, marginTop: '0.2rem' }}>{viewingRecord.doctor}</div></div>
+              <div><strong style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{t('history.type') || 'Tipo'}:</strong> <div style={{ marginTop: '0.2rem' }}><span className="badge badge-success">{viewingRecord.type}</span></div></div>
+              <div><strong style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>Costo:</strong> <div style={{ fontWeight: 600, marginTop: '0.2rem', color: 'var(--color-primary)' }}>{viewingRecord.cost ? `${viewingRecord.cost.toLocaleString('es-PY')} Gs` : 'N/A'}</div></div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
-                <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-main)' }}>
-                  <div style={{ width: '4px', height: '18px', borderRadius: '4px', background: 'var(--color-primary)' }}></div>
+                <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-main)' }}>
+                  <div style={{ width: '4px', height: '16px', borderRadius: '4px', background: 'var(--color-primary)' }}></div>
                   {t('consultation.symptoms') || 'Síntomas'}
                 </h4>
-                <div style={{ padding: '1rem 1.25rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '12px', color: 'var(--color-text-main)', fontSize: '1rem', lineHeight: '1.6' }}>
+                <div style={{ padding: '0.75rem 1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '10px', color: 'var(--color-text-main)', fontSize: '0.95rem', lineHeight: '1.5' }}>
                   {viewingRecord.symptoms || 'No registrado'}
                 </div>
               </div>
 
               <div>
-                <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-main)' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-main)' }}>
                   <div style={{ width: '4px', height: '16px', borderRadius: '4px', background: 'var(--color-primary)' }}></div>
                   {t('consultation.treatment') || 'Tratamiento'}
                 </h4>
-                <div style={{ padding: '1rem 1.25rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '12px', color: 'var(--color-text-main)', fontSize: '1rem', lineHeight: '1.6' }}>
+                <div style={{ padding: '0.75rem 1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '10px', color: 'var(--color-text-main)', fontSize: '0.95rem', lineHeight: '1.5' }}>
                   {viewingRecord.treatment || 'No registrado'}
                 </div>
               </div>
@@ -179,13 +176,13 @@ export const ConsultationHistory: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.5rem' }}>
                 <div>
                   <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>{t('consultation.recommendations') || 'Recomendaciones'}</h4>
-                  <div style={{ padding: '1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '12px', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                  <div style={{ padding: '1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '12px', fontSize: '0.95rem' }}>
                     {viewingRecord.recommendations || 'Ninguna'}
                   </div>
                 </div>
                 <div>
                   <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>{t('consultation.recoveryTime') || 'Tiempo de Recuperación'}</h4>
-                  <div style={{ padding: '1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '12px', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                  <div style={{ padding: '1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '12px', fontSize: '0.95rem' }}>
                     {viewingRecord.recoveryTime || 'Inmediato'}
                   </div>
                 </div>
@@ -193,8 +190,8 @@ export const ConsultationHistory: React.FC = () => {
 
               {viewingRecord.notes && (
                 <div>
-                  <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>{t('consultation.notes') || 'Notas Clínicas'}</h4>
-                  <div style={{ padding: '1.25rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '12px', fontSize: '0.98rem', fontStyle: 'italic', borderLeft: '4px solid var(--color-primary)', lineHeight: '1.6' }}>
+                  <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>{t('consultation.notes') || 'Notas Clínicas'}</h4>
+                  <div style={{ padding: '1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '12px', fontSize: '0.95rem', fontStyle: 'italic', borderLeft: '3px solid var(--color-primary)' }}>
                     {viewingRecord.notes}
                   </div>
                 </div>
