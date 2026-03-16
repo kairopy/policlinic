@@ -28,6 +28,7 @@ export const ConsultationHistory: React.FC = () => {
   });
 
   const [viewingRecord, setViewingRecord] = useState<typeof enrichedConsultations[0] | null>(null);
+  const [printingRecord, setPrintingRecord] = useState<typeof enrichedConsultations[0] | null>(null);
 
   const handleExport = () => {
     alert('Exporting records to CSV... (Mock active)');
@@ -115,7 +116,7 @@ export const ConsultationHistory: React.FC = () => {
                       <button className="icon-btn" onClick={() => setViewingRecord(consult)} style={{ width: '36px', height: '36px', borderRadius: '8px' }} title="View Details">
                         <Eye size={17} />
                       </button>
-                      <button className="icon-btn" onClick={() => alert('View Document not configured')} style={{ width: '36px', height: '36px', borderRadius: '8px' }} title="View Document">
+                      <button className="icon-btn" onClick={() => setPrintingRecord(consult)} style={{ width: '36px', height: '36px', borderRadius: '8px' }} title="View Document">
                         <FileText size={17} />
                       </button>
                     </div>
@@ -201,6 +202,108 @@ export const ConsultationHistory: React.FC = () => {
         </div>
       )}
 
+      {/* Printable Document Modal */}
+      {printingRecord && (
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', overflowY: 'auto' }}>
+          <div style={{ background: 'white', width: '210mm', height: 'auto', minHeight: '297mm', padding: '3rem', position: 'relative', color: 'black', fontFamily: 'Inter, sans-serif', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', borderRadius: '12px' }} className="print-safe">
+            
+            <div className="no-print" style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', display: 'flex', gap: '0.75rem' }}>
+              <button 
+                onClick={() => window.print()} 
+                className="btn btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem', borderRadius: '10px' }}
+              >
+                <FileText size={18} /> Imprimir
+              </button>
+              <button 
+                onClick={() => setPrintingRecord(null)} 
+                className="btn btn-outline"
+                style={{ cursor: 'pointer', borderRadius: '10px', padding: '0.6rem 1rem', background: 'white', color: '#333', border: '1px solid #ccc' }}
+              >
+                Cerrar
+              </button>
+            </div>
+
+            {/* Document Header */}
+            <div style={{ borderBottom: '3px solid var(--color-primary)', paddingBottom: '1.5rem', marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-primary)' }}>POLICLINIC APP</h1>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.9rem', color: '#555' }}>Prescripción médica y resumen de visita</p>
+              </div>
+              <div style={{ textAlign: 'right', fontSize: '0.95rem', color: '#333' }}>
+                <div style={{ fontWeight: 700 }}>Fecha: {printingRecord.date}</div>
+                <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.2rem' }}>ID: {printingRecord.id}</div>
+              </div>
+            </div>
+
+            {/* Patient Header Section */}
+            <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '2.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>PACIENTE</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700, marginTop: '0.2rem', color: '#1e293b' }}>{printingRecord.patientName}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>MÉDICO TRATANTE</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700, marginTop: '0.2rem', color: '#1e293b' }}>{printingRecord.doctor}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>TIPO DE CONSULTA</div>
+                <div style={{ fontSize: '1rem', fontWeight: 600, marginTop: '0.2rem' }}>{printingRecord.type}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>COSTO</div>
+                <div style={{ fontSize: '1rem', fontWeight: 700, marginTop: '0.2rem', color: 'var(--color-primary)' }}>{printingRecord.cost ? `${printingRecord.cost.toLocaleString('es-PY')} Gs` : 'N/A'}</div>
+              </div>
+            </div>
+
+            {/* Document Content */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem', marginBottom: '0.75rem', color: '#1e293b' }}>SÍNTOMAS Y MOTIVO</h3>
+                <div style={{ fontSize: '1rem', color: '#334155', lineHeight: '1.6' }}>
+                   {printingRecord.symptoms || 'No registrado'}
+                </div>
+              </div>
+
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem', marginBottom: '0.75rem', color: '#1e293b' }}>TRATAMIENTO APLICADO / PRESCRIPCIÓN</h3>
+                <div style={{ fontSize: '1rem', color: '#334155', lineHeight: '1.6' }}>
+                   {printingRecord.treatment || 'No registrado'}
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.5rem' }}>
+                <div>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem', marginBottom: '0.5rem', color: '#1e293b' }}>RECOMENDACIONES</h3>
+                  <div style={{ fontSize: '0.95rem', color: '#334155', lineHeight: '1.5' }}>
+                     {printingRecord.recommendations || 'Ninguna'}
+                  </div>
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, borderBottom: '1px solid #e2e8f0', paddingBottom: '0.5rem', marginBottom: '0.5rem', color: '#1e293b' }}>TIEMPO DE RECUPERACIÓN</h3>
+                  <div style={{ fontSize: '0.95rem', color: '#334155', lineHeight: '1.5' }}>
+                     {printingRecord.recoveryTime || 'Inmediato'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer / Signature */}
+            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '2rem', marginTop: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+               <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                  Documento generado por software médico Politinic App.
+               </div>
+               <div style={{ textAlign: 'center', width: '200px' }}>
+                  <div style={{ borderBottom: '1px solid #333', marginBottom: '0.5rem', height: '40px' }}></div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>Firma del Médico</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{printingRecord.doctor}</div>
+               </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       <style>{`
         .hover-row:hover {
           background-color: var(--color-background) !important;
@@ -209,6 +312,12 @@ export const ConsultationHistory: React.FC = () => {
         @keyframes slide-up {
           from { transform: translateY(20px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
+        }
+        @media print {
+          body * { visibility: hidden; }
+          .print-safe, .print-safe * { visibility: visible !important; }
+          .print-safe { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; height: auto !important; max-height: none !important; margin: 0 !important; box-shadow: none !important; border: none !important; z-index: 1000 !important; }
+          .no-print { display: none !important; }
         }
       `}</style>
     </div>
