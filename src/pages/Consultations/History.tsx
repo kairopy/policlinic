@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Search, FileText, Download, Eye, X } from 'lucide-react';
+import { Search, FileText, Download, Eye, X, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { mockConsultations, mockPatients } from '../../data/mockData';
 import { useLanguage } from '../../context/LanguageContext';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
 
 export const ConsultationHistory: React.FC = () => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -65,9 +67,14 @@ export const ConsultationHistory: React.FC = () => {
           <h1 className="page-title">{t('history.title') || 'Consultation History'}</h1>
           <p className="page-description">{t('history.description') || 'Review past medical records and visit summaries.'}</p>
         </div>
-        <button className="btn btn-outline" onClick={handleExport} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Download size={18} /> {t('history.export') || 'Export Records'}
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button className="btn btn-outline" onClick={handleExport} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Download size={18} /> {t('history.export') || 'Exportar Registros'}
+          </button>
+          <button className="btn btn-primary" onClick={() => navigate('/consultations/create')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Plus size={18} /> {t('consultation.create') || 'Nueva Consulta'}
+          </button>
+        </div>
       </header>
 
       <div className="glass-panel" style={{ padding: '0', overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, background: 'var(--color-surface)' }}>
