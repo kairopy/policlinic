@@ -8,6 +8,7 @@ import { CalendarView } from './pages/Appointments/Calendar';
 import { CreateAppointment } from './pages/Appointments/CreateAppointment';
 import { ConsultationHistory } from './pages/Consultations/History';
 import { CreateConsultation } from './pages/Consultations/CreateConsultation';
+import { PrintConsultation } from './pages/Consultations/PrintConsultation';
 import { Templates } from './pages/Templates/Templates';
 import { Settings } from './pages/Settings';
 import './App.css';
@@ -35,6 +36,7 @@ function App() {
           <Route path="settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
+        <Route path="print/consultation/:id" element={<PrintConsultation />} />
       </Routes>
     </BrowserRouter>
   );

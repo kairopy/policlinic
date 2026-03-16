@@ -116,7 +116,7 @@ export const ConsultationHistory: React.FC = () => {
                       <button className="icon-btn" onClick={() => { setViewingRecord(consult); document.getElementById('history-page-container')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ width: '36px', height: '36px', borderRadius: '8px' }} title="View Details">
                         <Eye size={17} />
                       </button>
-                      <button className="icon-btn" onClick={() => { setPrintingRecord(consult); document.getElementById('history-page-container')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ width: '36px', height: '36px', borderRadius: '8px' }} title={t('history.export_doc') || 'Exportar Documento'}>
+                      <button className="icon-btn" onClick={() => window.open(`/print/consultation/${consult.id}`, '_blank')} style={{ width: '36px', height: '36px', borderRadius: '8px' }} title={t('history.export_doc') || 'Exportar Documento'}>
                         <FileText size={17} />
                       </button>
                     </div>
