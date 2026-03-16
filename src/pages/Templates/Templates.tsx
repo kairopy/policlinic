@@ -215,11 +215,6 @@ export const Templates: React.FC = () => {
           </div>
         )}
       </div>
-      <style>{`
-        .glass-panel:hover {
-          border-color: var(--color-primary) !important;
-        }
-      `}</style>
     </div>
   );
 };
