@@ -71,8 +71,8 @@ export const ConsultationHistory: React.FC = () => {
           <button className="btn btn-outline" onClick={handleExport} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Download size={18} /> {t('history.export') || 'Exportar Registros'}
           </button>
-          <button className="btn btn-primary" onClick={() => navigate('/consultations/create')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Plus size={18} /> {t('consultation.create') || 'Nueva Consulta'}
+          <button className="btn btn-primary" onClick={() => navigate('/consultations/new')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Plus size={18} /> Nueva Consulta
           </button>
         </div>
       </header>
