@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Search, Filter, FileText, Download, Eye, X } from 'lucide-react';
+import { Search, FileText, Download, Eye, X } from 'lucide-react';
 import { mockConsultations, mockPatients } from '../../data/mockData';
 import { useLanguage } from '../../context/LanguageContext';
+import { DateRangePicker } from '../../components/ui/DateRangePicker';
 
 export const ConsultationHistory: React.FC = () => {
   const { t } = useLanguage();
@@ -84,25 +85,11 @@ export const ConsultationHistory: React.FC = () => {
            </div>
            
            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-             <Filter size={18} color="var(--color-text-muted)" />
-             <input 
-               type="date" 
-               value={startDate} 
-               onChange={e => setStartDate(e.target.value)} 
-               style={{ borderRadius: '10px', padding: '0.5rem', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text-main)' }} 
+             <DateRangePicker 
+               startDate={startDate} 
+               endDate={endDate} 
+               onRangeChange={(start, end) => { setStartDate(start); setEndDate(end); }} 
              />
-             <span style={{ color: 'var(--color-text-muted)' }}>—</span>
-             <input 
-               type="date" 
-               value={endDate} 
-               onChange={e => setEndDate(e.target.value)} 
-               style={{ borderRadius: '10px', padding: '0.5rem', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text-main)' }} 
-             />
-             {(startDate || endDate) && (
-               <button className="icon-btn" onClick={() => { setStartDate(''); setEndDate(''); }} style={{ padding: '0.25rem' }}>
-                 <X size={16} />
-               </button>
-             )}
            </div>
         </div>
 
