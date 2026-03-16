@@ -19,7 +19,10 @@ export const PrintConsultation = () => {
     if (consult) {
       // Trigger print automatically after a short delay for rendering
       const timer = setTimeout(() => {
+        const originalTitle = document.title;
+        document.title = ''; // Clear title to prevent printing on headers
         window.print();
+        document.title = originalTitle;
       }, 500);
       return () => clearTimeout(timer);
     }
@@ -130,12 +133,25 @@ export const PrintConsultation = () => {
 
       <style>{`
         @media print {
-          body { background: white !important; padding: 0 !important; margin: 0 !important; }
+          @page { margin: 0; size: A4; }
+          body { background: white !important; padding: 0 !important; margin: 0 !important; overflow: hidden !important; }
           .no-print { display: none !important; }
-          .print-safe { box-shadow: none !important; border: none !important; margin: 0 !important; width: 100% !important; padding: 0 !important; }
+          .print-safe { 
+            box-shadow: none !important; 
+            border: none !important; 
+            margin: 0 !important; 
+            width: 100% !important; 
+            height: 100vh !important; 
+            min-height: auto !important;
+            padding: 3.5rem !important; 
+            position: absolute !important; 
+            left: 0 !important; 
+            top: 0 !important; 
+            overflow: hidden !important;
+            page-break-inside: avoid !important;
+          }
           body * { visibility: hidden; }
           .print-safe, .print-safe * { visibility: visible !important; }
-          .print-safe { position: absolute !important; left: 0 !important; top: 0 !important; }
         }
       `}</style>
     </div>
