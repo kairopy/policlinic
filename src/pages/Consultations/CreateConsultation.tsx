@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stethoscope, Image as ImageIcon, CheckCircle, UploadCloud, FileEdit, X, Calendar, Clock } from 'lucide-react';
+import { Stethoscope, Image as ImageIcon, CheckCircle, UploadCloud, FileEdit, X } from 'lucide-react';
 import { isSameDay } from 'date-fns';
 import { mockAppointments, mockTemplates, mockConsultations, mockPatients } from '../../data/mockData';
 import { useLanguage } from '../../context/LanguageContext';
@@ -11,9 +11,6 @@ export const CreateConsultation: React.FC = () => {
   
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
-  const [patientSearch, setPatientSearch] = useState('');
-  const [showPatientDropdown, setShowPatientDropdown] = useState(false);
-  const patientDropdownRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     symptoms: '',
@@ -29,8 +26,6 @@ export const CreateConsultation: React.FC = () => {
 
   const beforeInputRef = useRef<HTMLInputElement>(null);
   const afterInputRef = useRef<HTMLInputElement>(null);
-  const dateInputRef = useRef<HTMLInputElement>(null);
-  const timeInputRef = useRef<HTMLInputElement>(null);
 
   const now = new Date();
   const [consultDate, setConsultDate] = useState(now.toISOString().split('T')[0]);
@@ -39,20 +34,7 @@ export const CreateConsultation: React.FC = () => {
   const today = new Date();
   const appointmentsToday = mockAppointments.filter(app => isSameDay(app.date, today));
 
-  const filteredPatients = mockPatients.filter(p => 
-    p.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
-    p.id.toLowerCase().includes(patientSearch.toLowerCase())
-  );
 
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (patientDropdownRef.current && !patientDropdownRef.current.contains(event.target as Node)) {
-        setShowPatientDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const selectedPatient = mockPatients.find(p => p.id === selectedPatientId);
 
@@ -75,18 +57,7 @@ export const CreateConsultation: React.FC = () => {
     }
   };
 
-  const handleTemplateClick = (template: typeof mockTemplates[0]) => {
-    setSelectedTemplateId(template.id.toString());
-    
-    setFormData({
-      symptoms: template.symptoms || '',
-      treatment: template.treatment || '',
-      recommendations: template.recommendations || '',
-      recoveryTime: template.recoveryTime || '',
-      notes: template.notes || '',
-      cost: (template as { cost?: string }).cost || '',
-    });
-  };
+
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -157,143 +128,72 @@ export const CreateConsultation: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
           
           {/* Patient Selection */}
-          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative', overflow: 'visible', zIndex: showPatientDropdown && !selectedPatient ? 50 : 1 }} ref={patientDropdownRef}>
-            <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--color-primary)', borderRadius: '4px 0 0 4px' }}></div>
-            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Stethoscope size={16} color="var(--color-primary)" /> {t('consultation.patientSelection')} <span style={{ color: 'var(--color-danger)' }}>*</span>
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--color-primary)' }}></div>
+            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem' }}>
+              {t('consultation.patientSelection')} <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
-            
-            <div style={{ position: 'relative' }}>
-              {selectedPatient ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.85rem 1rem', background: 'var(--color-primary-light)', borderRadius: '12px', border: '1px solid var(--color-primary)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--color-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600 }}>
-                      {selectedPatient.name[0]}
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 600, color: 'var(--color-primary)', fontSize: '0.95rem' }}>{selectedPatient.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{selectedPatient.id}</div>
-                    </div>
-                  </div>
-                  <button type="button" onClick={() => setSelectedPatientId('')} style={{ background: 'transparent', border: 'none', color: 'var(--color-primary)', cursor: 'pointer' }}>
-                    <X size={16} />
-                  </button>
-                </div>
-              ) : (
-                <input 
-                  type="text"
-                  placeholder={t('consultation.selectPatient') || "Buscar paciente..."}
-                  value={patientSearch}
-                  onChange={e => { setPatientSearch(e.target.value); setShowPatientDropdown(true); }}
-                  onFocus={() => setShowPatientDropdown(true)}
-                  className="input-field"
-                  style={{ borderRadius: '12px', padding: '0.85rem 1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', width: '100%' }}
-                />
-              )}
-
-              {showPatientDropdown && !selectedPatient && (
-                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 1000, background: 'var(--color-surface, white)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', borderRadius: '12px', border: '1px solid var(--color-border)', maxHeight: '200px', overflowY: 'auto' }}>
-                  {filteredPatients.length > 0 ? (
-                    filteredPatients.map(p => (
-                      <div 
-                        key={p.id} 
-                        onClick={() => { setSelectedPatientId(p.id); setShowPatientDropdown(false); setPatientSearch(''); }}
-                        style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', transition: 'background 0.2s' }}
-                        className="hover-bg"
-                      >
-                        <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--color-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '0.8rem' }}>{p.name[0]}</div>
-                        <div>
-                          <div style={{ fontWeight: 500, color: 'var(--color-text-main)', fontSize: '0.9rem' }}>{p.name}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{p.id}</div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>No se encontraron pacientes</div>
-                  )}
-                </div>
-              )}
-            </div>
+            {appointmentsToday.length > 0 ? (
+              <select 
+                className="input-field" 
+                value={selectedPatientId}
+                onChange={(e) => setSelectedPatientId(e.target.value)}
+                required
+                style={{ borderRadius: '12px', padding: '0.85rem 1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', cursor: 'pointer' }}
+              >
+                <option value="" disabled>{t('consultation.selectPatient')}</option>
+                {appointmentsToday.map(app => (
+                  <option key={app.id} value={app.patientId}>{app.title.split(' - ')[0]} ({app.type})</option>
+                ))}
+              </select>
+            ) : (
+              <div style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', color: 'var(--color-danger)', fontSize: '0.9rem', border: '1px dashed var(--color-danger)' }}>
+                {t('consultation.noAppointmentsToday')}
+              </div>
+            )}
           </div>
 
           {/* Template Selection */}
           <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#8b5cf6', borderRadius: '4px 0 0 4px' }}></div>
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#8b5cf6' }}></div>
             <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <FileEdit size={16} color="#8b5cf6" /> {t('consultation.templateSelection')}
             </label>
-            
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.75rem' }}>
-              {mockTemplates.map(template => {
-                const isSelected = selectedTemplateId === template.id.toString();
-                return (
-                  <button
-                    key={template.id}
-                    type="button"
-                    onClick={() => handleTemplateClick(template)}
-                    style={{
-                      padding: '0.6rem 1rem',
-                      borderRadius: '16px',
-                      border: isSelected ? '2px solid #8b5cf6' : '1px solid var(--color-border)',
-                      background: isSelected ? 'rgba(139, 92, 246, 0.1)' : 'var(--color-background)',
-                      color: isSelected ? '#8b5cf6' : 'var(--color-text-main)',
-                      fontWeight: 600,
-                      fontSize: '0.85rem',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {template.title}
-                  </button>
-                );
-              })}
-            </div>
+            <select 
+              className="input-field"
+              value={selectedTemplateId}
+              onChange={handleTemplateChange}
+              style={{ borderRadius: '12px', padding: '0.85rem 1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', cursor: 'pointer' }}
+            >
+              <option value="">{t('consultation.selectTemplate')}</option>
+              {mockTemplates.map(template => (
+                <option key={template.id} value={template.id}>{template.title}</option>
+              ))}
+            </select>
           </div>
         </div>
 
         {/* Date and Time Configuration */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative' }}>
-            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Calendar size={16} color="var(--color-primary)" /> {t('consultation.date')}
-            </label>
-            <div style={{ position: 'relative' }}>
-              <div 
-                onClick={() => dateInputRef.current?.showPicker()} 
-                style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
-              >
-                <span style={{ color: 'var(--color-text-main)', fontWeight: 500 }}>{consultDate}</span>
-              </div>
-              <input 
-                ref={dateInputRef}
-                type="date" 
-                value={consultDate} 
-                onChange={e => setConsultDate(e.target.value)} 
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} 
-              />
-            </div>
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px' }}>
+            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem' }}>{t('consultation.date')}</label>
+            <input 
+              type="date" 
+              className="input-field" 
+              value={consultDate} 
+              onChange={e => setConsultDate(e.target.value)} 
+              style={{ borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)' }} 
+            />
           </div>
-
-          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative' }}>
-            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Clock size={16} color="#8b5cf6" /> {t('consultation.time')}
-            </label>
-            <div style={{ position: 'relative' }}>
-              <div 
-                onClick={() => timeInputRef.current?.showPicker()} 
-                style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
-              >
-                <span style={{ color: 'var(--color-text-main)', fontWeight: 500 }}>{consultTime}</span>
-              </div>
-              <input 
-                ref={timeInputRef}
-                type="time" 
-                value={consultTime} 
-                onChange={e => setConsultTime(e.target.value)} 
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} 
-              />
-            </div>
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px' }}>
+            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem' }}>{t('consultation.time')}</label>
+            <input 
+              type="time" 
+              className="input-field" 
+              value={consultTime} 
+              onChange={e => setConsultTime(e.target.value)} 
+              style={{ borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)' }} 
+            />
           </div>
         </div>
 
