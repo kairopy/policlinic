@@ -120,13 +120,13 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
         <div style={{ 
           position: 'absolute', 
           top: 'calc(100% + 8px)', 
-          left: 0, 
+          right: 0, 
           zIndex: 1000, 
           background: 'var(--color-surface, white)', 
           boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', 
-          borderRadius: '16px', 
-          padding: '1.5rem', 
-          width: '320px', 
+          borderRadius: '14px', 
+          padding: '1rem', 
+          width: '260px', 
           border: '1px solid var(--color-border)',
           animation: 'slide-up 0.2s ease-out'
         }}>
