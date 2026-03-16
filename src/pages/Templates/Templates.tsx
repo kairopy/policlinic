@@ -182,7 +182,7 @@ export const Templates: React.FC = () => {
                   <h3 style={{ margin: 0, fontWeight: 600, fontSize: '1.1rem', color: 'var(--color-text-main)' }}>{template.title}</h3>
                   {(template as { cost?: string }).cost && (
                     <span style={{ fontSize: '0.8rem', background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.2rem 0.6rem', borderRadius: '8px', fontWeight: 600 }}>
-                      ${(template as { cost?: string }).cost}
+                      {(template as { cost?: string }).cost} Gs.
                     </span>
                   )}
                 </div>

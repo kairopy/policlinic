@@ -8,9 +8,9 @@ export const mockPatients = [
 ];
 
 export const mockConsultations = [
-  { id: 'C-5001', patientId: 'PT-1001', date: '2023-10-15', doctor: 'Dr. House', summary: 'General checkup. Blood pressure normal.', type: 'Checkup', status: 'Completed', cost: 150 },
-  { id: 'C-5002', patientId: 'PT-1003', date: '2023-10-28', doctor: 'Dr. House', summary: 'Follow-up on hypertension medication.', type: 'Follow-up', status: 'Completed', cost: 100 },
-  { id: 'C-5003', patientId: 'PT-1004', date: new Date().toISOString().split('T')[0], doctor: 'Dr. House', summary: 'Patient admitted with acute pain.', type: 'Emergency', status: 'In Progress', cost: 350 },
+  { id: 'C-5001', patientId: 'PT-1001', date: '2023-10-15', doctor: 'Dr. House', summary: 'General checkup. Blood pressure normal.', type: 'Checkup', status: 'Completed', cost: 150000 },
+  { id: 'C-5002', patientId: 'PT-1003', date: '2023-10-28', doctor: 'Dr. House', summary: 'Follow-up on hypertension medication.', type: 'Follow-up', status: 'Completed', cost: 120000 },
+  { id: 'C-5003', patientId: 'PT-1004', date: new Date().toISOString().split('T')[0], doctor: 'Dr. House', summary: 'Patient admitted with acute pain.', type: 'Emergency', status: 'In Progress', cost: 250000 },
 ];
 
 export const mockAppointments = [
@@ -28,7 +28,7 @@ export const mockTemplates = [
     recommendations: 'Maintain present healthy lifestyle and schedule annual tests.', 
     recoveryTime: 'N/A', 
     notes: 'Vitals: BP: ____ | HR: ____ | Temp: ____',
-    cost: '50'
+    cost: '150000'
   },
   { 
     id: 2, 
@@ -38,7 +38,7 @@ export const mockTemplates = [
     recommendations: 'Book next appointment block when requesting future intervals.', 
     recoveryTime: 'N/A', 
     notes: 'Approved prescription renewal for [MedicationName].',
-    cost: '30'
+    cost: '100000'
   },
   { 
     id: 3, 
@@ -48,6 +48,6 @@ export const mockTemplates = [
     recommendations: 'Must keep area strictly dry for 48h. Avoid intensive weight lifting.', 
     recoveryTime: '10-14 days', 
     notes: 'Healing speed appears normal. Redressing is optimal.',
-    cost: '80'
+    cost: '200000'
   },
 ];

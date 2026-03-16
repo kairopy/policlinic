@@ -60,7 +60,7 @@ export const Dashboard: React.FC = () => {
         <StatCard title={t('dashboard.totalPatients')} value={totalPatients} icon={Users} trend="+12.5%" trendUp={true} />
         <StatCard title={t('dashboard.appointmentsToday')} value={appointmentsToday.length} icon={CalendarIcon} trend="+2.4%" trendUp={true} />
         <StatCard title={t('dashboard.activeConsultations')} value={activeConsultations} icon={Activity} trend="-4.1%" trendUp={false} />
-        <StatCard title={t('dashboard.monthlyRevenue')} value={`$${monthlyRevenue}`} icon={TrendingUp} trend="+8.2%" trendUp={true} />
+        <StatCard title={t('dashboard.monthlyRevenue')} value={`${monthlyRevenue.toLocaleString('es-PY')} Gs.`} icon={TrendingUp} trend="+8.2%" trendUp={true} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
