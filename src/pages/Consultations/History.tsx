@@ -31,7 +31,30 @@ export const ConsultationHistory: React.FC = () => {
   const [printingRecord, setPrintingRecord] = useState<typeof enrichedConsultations[0] | null>(null);
 
   const handleExport = () => {
-    alert('Exporting records to CSV... (Mock active)');
+    const headers = ['ID', 'Paciente', 'Fecha', 'Doctor', 'Tipo', 'Costo (Gs)', 'Síntomas', 'Tratamiento'];
+    
+    const rows = enrichedConsultations.map(c => [
+      c.id,
+      `"${c.patientName}"`,
+      c.date,
+      `"${c.doctor}"`,
+      `"${c.type}"`,
+      c.cost,
+      `"${(c.symptoms || '').replace(/"/g, '""')}"`,
+      `"${(c.treatment || '').replace(/"/g, '""')}"`
+    ]);
+    
+    // Add UTF-8 BOM for Excel to read accents correctly, use Semicolon as separator for Spanish Excel
+    const csvContent = "\uFEFF" + [headers, ...rows].map(e => e.join(";")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `historial_consultas_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
