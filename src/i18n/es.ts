@@ -102,5 +102,19 @@ export const es = {
     date: 'Fecha de la Consulta',
     time: 'Hora',
     cost: 'Costo de la Consulta',
+  },
+  history: {
+    title: 'Historial de Consultas',
+    description: 'Revisa expedientes médicos y resúmenes de visitas pasadas.',
+    export: 'Exportar Registros',
+    searchPlaceholder: 'Buscar por paciente, médico o tipo...',
+    dateRange: 'Rango de Fecha',
+    date: 'Fecha',
+    patient: 'Paciente',
+    doctor: 'Médico',
+    type: 'Tipo',
+    summary: 'Resumen',
+    actions: 'Acciones',
+    noRecords: 'No se encontraron consultas coincidentes.'
   }
 };

@@ -102,5 +102,19 @@ export const en = {
     date: 'Consultation Date',
     time: 'Time',
     cost: 'Consultation Cost',
+  },
+  history: {
+    title: 'Consultation History',
+    description: 'Review past medical records and visit summaries.',
+    export: 'Export Records',
+    searchPlaceholder: 'Search by patient, doctor, or type...',
+    dateRange: 'Date Range',
+    date: 'Date',
+    patient: 'Patient',
+    doctor: 'Doctor',
+    type: 'Type',
+    summary: 'Summary',
+    actions: 'Actions',
+    noRecords: 'No consultations found matching criteria.'
   }
 };
