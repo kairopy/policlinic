@@ -26,7 +26,7 @@ export const Sidebar: React.FC = () => {
     <aside className="sidebar">
       <div className="sidebar-header">
         <Activity className="logo-icon" />
-        <span className="brand-name">Policlinic App</span>
+        <span className="brand-name">Lic Karina Podología</span>
       </div>
 
       <nav className="nav-menu">
