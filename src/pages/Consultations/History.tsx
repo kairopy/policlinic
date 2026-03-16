@@ -35,7 +35,7 @@ export const ConsultationHistory: React.FC = () => {
   };
 
   return (
-    <div className="animate-fade-in" style={{ position: 'relative', padding: '1.5rem', height: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
+    <div id="history-page-container" className="animate-fade-in" style={{ position: 'relative', padding: '1.5rem', height: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
       <header className="page-header flex-between" style={{ marginBottom: '2rem' }}>
         <div>
           <h1 className="page-title">{t('history.title') || 'Consultation History'}</h1>
@@ -113,10 +113,10 @@ export const ConsultationHistory: React.FC = () => {
                   </td>
                   <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                      <button className="icon-btn" onClick={() => setViewingRecord(consult)} style={{ width: '36px', height: '36px', borderRadius: '8px' }} title="View Details">
+                      <button className="icon-btn" onClick={() => { setViewingRecord(consult); document.getElementById('history-page-container')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ width: '36px', height: '36px', borderRadius: '8px' }} title="View Details">
                         <Eye size={17} />
                       </button>
-                      <button className="icon-btn" onClick={() => setPrintingRecord(consult)} style={{ width: '36px', height: '36px', borderRadius: '8px' }} title="View Document">
+                      <button className="icon-btn" onClick={() => { setPrintingRecord(consult); document.getElementById('history-page-container')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ width: '36px', height: '36px', borderRadius: '8px' }} title={t('history.export_doc') || 'Exportar Documento'}>
                         <FileText size={17} />
                       </button>
                     </div>
