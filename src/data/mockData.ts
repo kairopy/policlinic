@@ -8,9 +8,51 @@ export const mockPatients = [
 ];
 
 export const mockConsultations = [
-  { id: 'C-5001', patientId: 'PT-1001', date: '2023-10-15', doctor: 'Dr. House', summary: 'General checkup. Blood pressure normal.', type: 'Checkup', status: 'Completed', cost: 150000 },
-  { id: 'C-5002', patientId: 'PT-1003', date: '2023-10-28', doctor: 'Dr. House', summary: 'Follow-up on hypertension medication.', type: 'Follow-up', status: 'Completed', cost: 120000 },
-  { id: 'C-5003', patientId: 'PT-1004', date: new Date().toISOString().split('T')[0], doctor: 'Dr. House', summary: 'Patient admitted with acute pain.', type: 'Emergency', status: 'In Progress', cost: 250000 },
+  { 
+    id: 'C-5001', 
+    patientId: 'PT-1001', 
+    date: '2023-10-15', 
+    doctor: 'Dr. House', 
+    summary: 'General checkup. Blood pressure normal.', 
+    type: 'Checkup', 
+    status: 'Completed', 
+    cost: 150000,
+    symptoms: 'Dolor leve en tobillo derecho por las mañanas.',
+    treatment: 'Manipulación de tobillo y compresa local.',
+    recommendations: 'Evitar cargas pesadas durante 3 días.',
+    recoveryTime: '3 días',
+    notes: 'Signos vitales normales. PA 120/80.'
+  },
+  { 
+    id: 'C-5002', 
+    patientId: 'PT-1003', 
+    date: '2023-10-28', 
+    doctor: 'Dr. House', 
+    summary: 'Follow-up on hypertension medication.', 
+    type: 'Follow-up', 
+    status: 'Completed', 
+    cost: 120000,
+    symptoms: 'Mareos ocasionales al levantarse.',
+    treatment: 'Ajuste de dosis de medicamento matutino.',
+    recommendations: 'Monitorear presión arterial 2 veces al día por una semana.',
+    recoveryTime: 'N/A',
+    notes: 'Ajustado de 10mg a 15mg.'
+  },
+  { 
+    id: 'C-5003', 
+    patientId: 'PT-1004', 
+    date: new Date().toISOString().split('T')[0], 
+    doctor: 'Dr. House', 
+    summary: 'Patient admitted with acute pain.', 
+    type: 'Emergency', 
+    status: 'In Progress', 
+    cost: 250000,
+    symptoms: 'Dolor agudo lumbar que irradia a pierna derecha.',
+    treatment: 'Inyección analgésica e hidratación con antiinflamatorio.',
+    recommendations: 'Reposo absoluto por 24 horas. Consultar kinesiología.',
+    recoveryTime: '7 días',
+    notes: 'Pendiente resonancia si el dolor no cede.'
+  },
 ];
 
 export const mockAppointments = [

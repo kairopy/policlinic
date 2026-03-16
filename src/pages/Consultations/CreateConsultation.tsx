@@ -93,7 +93,12 @@ export const CreateConsultation: React.FC = () => {
       summary: formData.symptoms.substring(0, 50) + '...',
       type: 'Consultation',
       status: 'Completed',
-      cost: 120
+      cost: Number(formData.cost) || 0,
+      symptoms: formData.symptoms,
+      treatment: formData.treatment,
+      recommendations: formData.recommendations,
+      recoveryTime: formData.recoveryTime,
+      notes: formData.notes
     };
     
     mockConsultations.push(newConsultation);
