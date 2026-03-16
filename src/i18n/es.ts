@@ -101,5 +101,6 @@ export const es = {
     noAppointmentsToday: 'No hay citas registradas para hoy.',
     date: 'Fecha de la Consulta',
     time: 'Hora',
+    cost: 'Costo de la Consulta',
   }
 };

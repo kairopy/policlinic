@@ -16,7 +16,8 @@ export const CreateConsultation: React.FC = () => {
     treatment: '',
     recommendations: '',
     recoveryTime: '',
-    notes: ''
+    notes: '',
+    cost: '',
   });
 
   const [beforeImage, setBeforeImage] = useState<string | undefined>(undefined);
@@ -44,7 +45,8 @@ export const CreateConsultation: React.FC = () => {
           treatment: template.treatment || '',
           recommendations: template.recommendations || '',
           recoveryTime: template.recoveryTime || '',
-          notes: template.notes || ''
+          notes: template.notes || '',
+          cost: (template as { cost?: string }).cost || '',
         });
       }
     }
@@ -234,6 +236,19 @@ export const CreateConsultation: React.FC = () => {
                 value={formData.recoveryTime}
                 onChange={handleChange}
                 placeholder={t('consultation.recoveryTimePlaceholder')} 
+                style={{ borderRadius: '12px', background: 'var(--color-background)', width: '100%' }} 
+              />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.cost')}</label>
+              <input 
+                type="text"
+                className="input-field" 
+                name="cost"
+                value={formData.cost}
+                onChange={handleChange}
+                placeholder="Ej. $50" 
                 style={{ borderRadius: '12px', background: 'var(--color-background)', width: '100%' }} 
               />
             </div>

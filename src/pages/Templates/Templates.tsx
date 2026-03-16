@@ -27,7 +27,8 @@ export const Templates: React.FC = () => {
       treatment: '',
       recommendations: '',
       recoveryTime: '',
-      notes: ''
+      notes: '',
+      cost: ''
     });
     setView('edit');
   };
@@ -106,6 +107,13 @@ export const Templates: React.FC = () => {
             </div>
           </div>
 
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.cost')}</label>
+              <input type="text" name="cost" value={(editData as { cost?: string }).cost || ''} onChange={handleInputChange} placeholder="Ej. 50" style={{ borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', padding: '0.75rem', color: 'var(--color-text-main)' }} />
+            </div>
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.notes')}</label>
             <textarea name="notes" value={editData.notes} onChange={handleInputChange} style={{ resize: 'none', minHeight: '150px', borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', padding: '0.75rem', color: 'var(--color-text-main)' }} />
@@ -166,11 +174,18 @@ export const Templates: React.FC = () => {
                 background: 'var(--color-surface)'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%' }}>
                 <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--color-primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary)' }}>
                   <FileText size={18} />
                 </div>
-                <h3 style={{ margin: 0, fontWeight: 600, fontSize: '1.1rem', color: 'var(--color-text-main)' }}>{template.title}</h3>
+                <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ margin: 0, fontWeight: 600, fontSize: '1.1rem', color: 'var(--color-text-main)' }}>{template.title}</h3>
+                  {(template as { cost?: string }).cost && (
+                    <span style={{ fontSize: '0.8rem', background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.2rem 0.6rem', borderRadius: '8px', fontWeight: 600 }}>
+                      ${(template as { cost?: string }).cost}
+                    </span>
+                  )}
+                </div>
               </div>
               
               <p style={{ 
@@ -202,8 +217,6 @@ export const Templates: React.FC = () => {
       </div>
       <style>{`
         .glass-panel:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 24px -10px rgba(0,0,0,0.15);
           border-color: var(--color-primary) !important;
         }
       `}</style>

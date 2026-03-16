@@ -27,7 +27,8 @@ export const mockTemplates = [
     treatment: 'Physical exam structure completed. Checked vital signs.', 
     recommendations: 'Maintain present healthy lifestyle and schedule annual tests.', 
     recoveryTime: 'N/A', 
-    notes: 'Vitals: BP: ____ | HR: ____ | Temp: ____' 
+    notes: 'Vitals: BP: ____ | HR: ____ | Temp: ____',
+    cost: '50'
   },
   { 
     id: 2, 
@@ -36,7 +37,8 @@ export const mockTemplates = [
     treatment: 'Verification of laboratory/test panels relating to dosage levels.', 
     recommendations: 'Book next appointment block when requesting future intervals.', 
     recoveryTime: 'N/A', 
-    notes: 'Approved prescription renewal for [MedicationName].' 
+    notes: 'Approved prescription renewal for [MedicationName].',
+    cost: '30'
   },
   { 
     id: 3, 
@@ -45,6 +47,7 @@ export const mockTemplates = [
     treatment: 'Surgical wound cleansing overlayed with standard light gauze dressing.', 
     recommendations: 'Must keep area strictly dry for 48h. Avoid intensive weight lifting.', 
     recoveryTime: '10-14 days', 
-    notes: 'Healing speed appears normal. Redressing is optimal.' 
+    notes: 'Healing speed appears normal. Redressing is optimal.',
+    cost: '80'
   },
 ];

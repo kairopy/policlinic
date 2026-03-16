@@ -101,5 +101,6 @@ export const en = {
     noAppointmentsToday: 'No appointments registered for today.',
     date: 'Consultation Date',
     time: 'Time',
+    cost: 'Consultation Cost',
   }
 };
