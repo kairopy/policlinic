@@ -1,10 +1,11 @@
-// Mock Data for UI presentation
+// Mock Data for UI presentation - Tailored for Podiatry & Paraguayan Names
+
 export const mockPatients = [
-  { id: 'PT-1001', name: 'John Doe', age: 45, phone: '+1 (555) 123-4567', email: 'john.doe@example.com', lastVisit: '2023-10-15', status: 'Active' },
-  { id: 'PT-1002', name: 'Jane Smith', age: 32, phone: '+1 (555) 987-6543', email: 'j.smith@email.com', lastVisit: '2023-11-02', status: 'Inactive' },
-  { id: 'PT-1003', name: 'Robert Johnson', age: 58, phone: '+1 (555) 456-7890', email: 'rob.j@web.com', lastVisit: '2023-10-28', status: 'Active' },
-  { id: 'PT-1004', name: 'Emily Davis', age: 28, phone: '+1 (555) 234-5678', email: 'emilyd@example.net', lastVisit: '2023-11-10', status: 'Active' },
-  { id: 'PT-1005', name: 'Michael Wilson', age: 62, phone: '+1 (555) 876-5432', email: 'mwilson62@mail.com', lastVisit: '2023-09-05', status: 'Inactive' },
+  { id: 'PT-1001', name: 'Juan Ramón Ayala', age: 45, phone: '+595 (981) 123-456', email: 'j.ayala@email.com', lastVisit: '2023-10-15', status: 'Active' },
+  { id: 'PT-1002', name: 'Blanca Nieves Galeano', age: 32, phone: '+595 (971) 987-654', email: 'b.galeano@email.com', lastVisit: '2023-11-02', status: 'Inactive' },
+  { id: 'PT-1003', name: 'Silverio Martínez', age: 58, phone: '+595 (961) 456-789', email: 's.martinez@email.com', lastVisit: '2023-10-28', status: 'Active' },
+  { id: 'PT-1004', name: 'Nilsa Beatriz Morel', age: 28, phone: '+595 (982) 234-567', email: 'n.morel@email.com', lastVisit: '2023-11-10', status: 'Active' },
+  { id: 'PT-1005', name: 'Gustavo Adolfo Benítez', age: 62, phone: '+595 (991) 876-543', email: 'g.benitez@email.com', lastVisit: '2023-09-05', status: 'Inactive' },
 ];
 
 export const mockConsultations = [
@@ -12,84 +13,84 @@ export const mockConsultations = [
     id: 'C-5001', 
     patientId: 'PT-1001', 
     date: '2023-10-15', 
-    doctor: 'Dr. House', 
-    summary: 'General checkup. Blood pressure normal.', 
-    type: 'Checkup', 
+    doctor: 'Lic. Karina', 
+    summary: 'Retiro de espícula en dedo gordo derecho (Onicocriptosis).', 
+    type: 'Urgencia', 
     status: 'Completed', 
-    cost: 150000,
-    symptoms: 'Dolor leve en tobillo derecho por las mañanas.',
-    treatment: 'Manipulación de tobillo y compresa local.',
-    recommendations: 'Evitar cargas pesadas durante 3 días.',
-    recoveryTime: '3 días',
-    notes: 'Signos vitales normales. PA 120/80.'
+    cost: 180000,
+    symptoms: 'Dolor punzante e inflamación en el lateral del dedo gordo del pie derecho. Dificultad para calzarse.',
+    treatment: 'Espiculotomía lateral con instrumental estéril, retiro de espícula y curación con antiséptico y vendaje.',
+    recommendations: 'Mantener el pie seco por 24 horas. Usar calzado holgado. Volver para control en 3 días.',
+    recoveryTime: '3-5 días',
+    notes: 'No presenta signos de infección severa (pus o granuloma), solo inflamación local.'
   },
   { 
     id: 'C-5002', 
     patientId: 'PT-1003', 
     date: '2023-10-28', 
-    doctor: 'Dr. House', 
-    summary: 'Follow-up on hypertension medication.', 
-    type: 'Follow-up', 
+    doctor: 'Lic. Karina', 
+    summary: 'Tratamiento y desbridamiento de onicomicosis.', 
+    type: 'Consulta', 
     status: 'Completed', 
     cost: 120000,
-    symptoms: 'Mareos ocasionales al levantarse.',
-    treatment: 'Ajuste de dosis de medicamento matutino.',
-    recommendations: 'Monitorear presión arterial 2 veces al día por una semana.',
-    recoveryTime: 'N/A',
-    notes: 'Ajustado de 10mg a 15mg.'
+    symptoms: 'Uñas de ambos pies engrosadas, quebradizas y con cambio de color amarillento.',
+    treatment: 'Limpieza profunda del lecho ungueal, desbridamiento mecánico y aplicación de medicamentos antimicóticos.',
+    recommendations: 'Aplicar laca antimicótica todas las noches. Desinfectar calzados.',
+    recoveryTime: 'Evaluación mensual',
+    notes: 'Se sugiere constancia en el tratamiento tópico diario para ver resultados.'
   },
   { 
     id: 'C-5003', 
     patientId: 'PT-1004', 
     date: new Date().toISOString().split('T')[0], 
-    doctor: 'Dr. House', 
-    summary: 'Patient admitted with acute pain.', 
-    type: 'Emergency', 
+    doctor: 'Lic. Karina', 
+    summary: 'Profilaxis podológica general y retiro de helomas.', 
+    type: 'Mantenimiento', 
     status: 'In Progress', 
-    cost: 250000,
-    symptoms: 'Dolor agudo lumbar que irradia a pierna derecha.',
-    treatment: 'Inyección analgésica e hidratación con antiinflamatorio.',
-    recommendations: 'Reposo absoluto por 24 horas. Consultar kinesiología.',
-    recoveryTime: '7 días',
-    notes: 'Pendiente resonancia si el dolor no cede.'
+    cost: 150000,
+    symptoms: 'Dolor en la planta del pie al caminar por presencia de callosidades (helomas).',
+    treatment: 'Corte correcto de uñas, desbridamiento de hiperqueratosis (callosidades) y masaje de descarga.',
+    recommendations: 'Hidratar pies diariamente con crema a base de urea. Usar plantillas si el dolor persiste.',
+    recoveryTime: 'Inmediato',
+    notes: 'Paciente refiere alivio inmediato tras el desbridamiento de los helomas plantares.'
   },
 ];
 
 export const mockAppointments = [
-  { id: 1, title: 'John Doe - Checkup', date: new Date(new Date().setHours(10, 0, 0, 0)), duration: 60, type: 'Checkup', status: 'Pending', patientId: 'PT-1001' },
-  { id: 2, title: 'Jane Smith - Follow-up', date: new Date(new Date().setHours(14, 30, 0, 0)), duration: 30, type: 'Follow-up', status: 'Pending', patientId: 'PT-1002' },
-  { id: 3, title: 'Robert Johnson - Consultation', date: new Date(new Date().setDate(new Date().getDate() + 2)), duration: 45, type: 'Consultation', status: 'Pending', patientId: 'PT-1003' },
+  { id: 1, title: 'Juan Ramón Ayala - Retiro de Espícula', date: new Date(new Date().setHours(10, 0, 0, 0)), duration: 45, type: 'Urgencia', status: 'Pending', patientId: 'PT-1001' },
+  { id: 2, title: 'Blanca Nieves Galeano - Profilaxis', date: new Date(new Date().setHours(14, 30, 0, 0)), duration: 45, type: 'Mantenimiento', status: 'Pending', patientId: 'PT-1002' },
+  { id: 3, title: 'Silverio Martínez - Control Micosis', date: new Date(new Date().setDate(new Date().getDate() + 2)), duration: 30, type: 'Consulta', status: 'Pending', patientId: 'PT-1003' },
 ];
 
 export const mockTemplates = [
   { 
     id: 1, 
-    title: 'General Checkup Notes', 
-    symptoms: 'General consultation for routine status checkup. No acute symptoms.', 
-    treatment: 'Physical exam structure completed. Checked vital signs.', 
-    recommendations: 'Maintain present healthy lifestyle and schedule annual tests.', 
-    recoveryTime: 'N/A', 
-    notes: 'Vitals: BP: ____ | HR: ____ | Temp: ____',
+    title: 'Profilaxis Podológica General', 
+    symptoms: 'Consulta de rutina o mantenimiento general. Presencia de hiperqueratosis leve.', 
+    treatment: 'Corte correcto de uñas, desbridamiento de hiperqueratosis y masaje de descarga podológico.', 
+    recommendations: 'Mantener hidratación diaria con cremas específicas. Control en 30 días.', 
+    recoveryTime: 'Inmediato', 
+    notes: 'Vitals: Presión ____ | Sensibilidad: ____ | Pulso pedal: ____',
     cost: '150000'
   },
   { 
     id: 2, 
-    title: 'Prescription Refill', 
-    symptoms: 'Patient stable, requesting refill for current medication list.', 
-    treatment: 'Verification of laboratory/test panels relating to dosage levels.', 
-    recommendations: 'Book next appointment block when requesting future intervals.', 
-    recoveryTime: 'N/A', 
-    notes: 'Approved prescription renewal for [MedicationName].',
-    cost: '100000'
+    title: 'Tratamiento de Uña Encarnada (Onicocriptosis)', 
+    symptoms: 'Dolor, enrojecimiento e inflamación en canales ungueales. Molestia al tacto.', 
+    treatment: 'Espiculotomía lateral con instrumental estéril, retiro de espícula y curación local con antiséptico.', 
+    recommendations: 'Evitar calzado ajustado. Mantener vendaje seco por 24hs. Control de curación en 48hs.', 
+    recoveryTime: '3-5 días', 
+    notes: 'Evaluar si requiere derivación médica en caso de granuloma infectado.',
+    cost: '180000'
   },
   { 
     id: 3, 
-    title: 'Post-Surgery Evaluation', 
-    symptoms: 'Standard mild local soreness near incision site. No fever spikes.', 
-    treatment: 'Surgical wound cleansing overlayed with standard light gauze dressing.', 
-    recommendations: 'Must keep area strictly dry for 48h. Avoid intensive weight lifting.', 
-    recoveryTime: '10-14 days', 
-    notes: 'Healing speed appears normal. Redressing is optimal.',
-    cost: '200000'
+    title: 'Tratamiento de Onicomicosis (Hongos)', 
+    symptoms: 'Uñas engrosadas, hiperqueratósicas, amarillentas o quebradizas.', 
+    treatment: 'Desbridamiento mecánico profundo de la lámina ungueal y aplicación de laca antimicótica.', 
+    recommendations: 'Uso diario de antimicótico tópico. Desinfección de calzados y medias.', 
+    recoveryTime: 'Evaluación mensual', 
+    notes: 'Explicar al paciente que el crecimiento de uña sana demora meses.',
+    cost: '120000'
   },
 ];
