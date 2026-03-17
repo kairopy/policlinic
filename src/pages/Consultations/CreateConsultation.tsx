@@ -230,10 +230,10 @@ export const CreateConsultation: React.FC = () => {
         </div>
 
         {/* Date and Time Configuration */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', position: 'relative' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', position: 'relative', zIndex: 5 }}>
           
           {/* Date Selector */}
-          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px' }}>
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative', overflow: 'visible', zIndex: 2 }}>
             <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem', display: 'block', marginBottom: '0.5rem' }}>{t('consultation.date')}</label>
             <SingleDatePicker date={consultDate} onChange={setConsultDate} />
           </div>
