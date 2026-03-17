@@ -1,25 +1,33 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stethoscope, Image as ImageIcon, CheckCircle, UploadCloud, FileEdit, X, ChevronDown, Clock } from 'lucide-react';
+import { Stethoscope, Image as ImageIcon, CheckCircle, UploadCloud, FileEdit, X, ChevronDown, Clock, Activity, Loader2 } from 'lucide-react';
 import { isSameDay } from 'date-fns';
-import { mockAppointments, mockTemplates, mockConsultations } from '../../data/mockData';
 import { useLanguage } from '../../context/LanguageContext';
 import { SingleDatePicker } from '../../components/ui/SingleDatePicker';
+import { getPatients, getAppointments, saveConsultation, getTemplates, updatePatientStatus } from '../../services/dataService';
 
 export const CreateConsultation: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   
+  const [patients, setPatients] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [patientSearch, setPatientSearch] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [showPatientDropdown, setShowPatientDropdown] = useState(false);
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [patientStatus, setPatientStatus] = useState('in_treatment');
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   
-  const patientDropdownRef = React.useRef<HTMLDivElement>(null);
-  const templateDropdownRef = React.useRef<HTMLDivElement>(null);
-  const timeDropdownRef = React.useRef<HTMLDivElement>(null);
+  const patientDropdownRef = useRef<HTMLDivElement>(null);
+  const templateDropdownRef = useRef<HTMLDivElement>(null);
+  const timeDropdownRef = useRef<HTMLDivElement>(null);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     symptoms: '',
@@ -41,9 +49,25 @@ export const CreateConsultation: React.FC = () => {
   const [consultTime, setConsultTime] = useState(now.toTimeString().substring(0, 5));
 
   const today = new Date();
-  const appointmentsToday = mockAppointments.filter(app => isSameDay(app.date, today));
+  const appointmentsToday = appointments.filter((app: any) => isSameDay(new Date(app.date), today));
 
-  React.useEffect(() => {
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const [p, a, tpl] = await Promise.all([
+        getPatients(),
+        getAppointments(),
+        getTemplates()
+      ]);
+      setPatients(p);
+      setAppointments(a);
+      setTemplates(tpl);
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (patientDropdownRef.current && !patientDropdownRef.current.contains(event.target as Node)) {
         setShowPatientDropdown(false);
@@ -54,22 +78,17 @@ export const CreateConsultation: React.FC = () => {
       if (timeDropdownRef.current && !timeDropdownRef.current.contains(event.target as Node)) {
         setShowTimePicker(false);
       }
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+        setShowStatusDropdown(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-
-
-
-
-
-
-
-
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev: typeof formData) => ({ ...prev, [name]: value }));
   };
 
   const handleTextareaResize = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -95,7 +114,14 @@ export const CreateConsultation: React.FC = () => {
     else setAfterImage(undefined);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const statuses = [
+    { id: 'in_treatment', label: t('consultation.statuses.in_treatment'), color: 'var(--color-primary)' },
+    { id: 'medical_discharge', label: t('consultation.statuses.medical_discharge'), color: 'var(--color-success)' },
+    { id: 'maintenance', label: t('consultation.statuses.maintenance'), color: 'var(--color-info, #0ea5e9)' },
+    { id: 'pending_control', label: t('consultation.statuses.pending_control'), color: 'var(--color-warning)' },
+  ];
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPatientId) return;
 
@@ -106,7 +132,7 @@ export const CreateConsultation: React.FC = () => {
       time: consultTime,
       doctor: 'Dr. Admin',
       summary: formData.symptoms.substring(0, 50) + '...',
-      type: 'Consultation',
+      type: t('consultation.type'),
       status: 'Completed',
       cost: Number(formData.cost) || 0,
       symptoms: formData.symptoms,
@@ -116,9 +142,19 @@ export const CreateConsultation: React.FC = () => {
       notes: formData.notes
     };
     
-    mockConsultations.push(newConsultation);
+    await updatePatientStatus(selectedPatientId, patientStatus);
+    await saveConsultation(newConsultation);
     navigate('/dashboard');
   };
+
+  if (loading) {
+    return (
+      <div className="flex-center" style={{ height: '80vh', flexDirection: 'column', gap: '1rem' }}>
+        <Loader2 size={48} className="animate-spin" color="var(--color-primary)" />
+        <p style={{ color: 'var(--color-text-muted)' }}>Preparando consulta...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in" style={{ padding: '0 1rem 3rem 1rem', maxWidth: '1000px', margin: '0 auto' }}>
@@ -141,61 +177,53 @@ export const CreateConsultation: React.FC = () => {
               {t('consultation.patientSelection')} <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
             <div style={{ position: 'relative' }}>
-              {appointmentsToday.length > 0 ? (
-                <>
-                  <div 
-                    onClick={() => setShowPatientDropdown(!showPatientDropdown)} 
-                    style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.2s' }}
-                    className="hover-border-primary"
-                  >
-                    <span style={{ color: selectedPatientId ? 'var(--color-text-main)' : 'var(--color-text-muted)', fontSize: '0.95rem' }}>
-                      {appointmentsToday.find(a => a.patientId === selectedPatientId)?.title.split(' - ')[0] || t('consultation.selectPatient')}
-                    </span>
-                    <ChevronDown size={16} color="var(--color-text-muted)" style={{ transform: showPatientDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+              <div 
+                onClick={() => setShowPatientDropdown(!showPatientDropdown)} 
+                style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.2s' }}
+                className="hover-border-primary"
+              >
+                <span style={{ color: selectedPatientId ? 'var(--color-text-main)' : 'var(--color-text-muted)', fontSize: '0.95rem' }}>
+                  {patients.find((p: any) => p.id === selectedPatientId)?.name || t('consultation.selectPatient')}
+                </span>
+                <ChevronDown size={16} color="var(--color-text-muted)" style={{ transform: showPatientDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+              </div>
+
+              {showPatientDropdown && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 1000, background: 'var(--color-surface, white)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)', borderRadius: '12px', border: '1px solid var(--color-border)', maxHeight: '280px', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'slide-up 0.2s ease-out' }}>
+                  {/* Search Bar */}
+                  <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--color-border-light)', background: 'var(--color-surface)', position: 'sticky', top: 0, zIndex: 10 }}>
+                    <input 
+                      type="text" 
+                      placeholder="Buscar paciente..." 
+                      value={patientSearch}
+                      onChange={e => setPatientSearch(e.target.value)}
+                      style={{ padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid var(--color-border)', width: '100%', fontSize: '0.9rem', background: 'var(--color-background)', outline: 'none', transition: 'all 0.2s' }}
+                      onClick={e => e.stopPropagation()} 
+                      className="hover-border-primary"
+                    />
                   </div>
 
-                  {showPatientDropdown && (
-                    <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 1000, background: 'var(--color-surface, white)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)', borderRadius: '12px', border: '1px solid var(--color-border)', maxHeight: '280px', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'slide-up 0.2s ease-out' }}>
-                      {/* Search Bar */}
-                      <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--color-border-light)', background: 'var(--color-surface)', position: 'sticky', top: 0, zIndex: 10 }}>
-                        <input 
-                          type="text" 
-                          placeholder="Buscar cita..." 
-                          value={patientSearch}
-                          onChange={e => setPatientSearch(e.target.value)}
-                          style={{ padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid var(--color-border)', width: '100%', fontSize: '0.9rem', background: 'var(--color-background)', outline: 'none', transition: 'all 0.2s' }}
-                          onClick={e => e.stopPropagation()} 
-                          className="hover-border-primary"
-                        />
+                  {/* Options List */}
+                  <div style={{ flex: 1, overflowY: 'auto' }}>
+                    {patients
+                      .filter((p: any) => p.name.toLowerCase().includes(patientSearch.toLowerCase()))
+                      .map((p: any) => (
+                        <div 
+                          key={p.id} 
+                          onClick={() => { setSelectedPatientId(p.id); setShowPatientDropdown(false); setPatientSearch(''); }}
+                          style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer', transition: 'background 0.2s' }}
+                          className="hover-bg"
+                        >
+                          <div style={{ fontWeight: 500, color: 'var(--color-text-main)', fontSize: '0.9rem' }}>{p.name}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>ID: {p.id}</div>
+                        </div>
+                      ))}
+                    {patients.filter((p: any) => p.name.toLowerCase().includes(patientSearch.toLowerCase())).length === 0 && (
+                      <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
+                        Sin resultados
                       </div>
-
-                      {/* Options List */}
-                      <div style={{ flex: 1, overflowY: 'auto' }}>
-                        {appointmentsToday
-                          .filter(app => app.title.toLowerCase().includes(patientSearch.toLowerCase()))
-                          .map(app => (
-                            <div 
-                              key={app.id} 
-                              onClick={() => { setSelectedPatientId(app.patientId); setShowPatientDropdown(false); setPatientSearch(''); }}
-                              style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer', transition: 'background 0.2s' }}
-                              className="hover-bg"
-                            >
-                              <div style={{ fontWeight: 500, color: 'var(--color-text-main)', fontSize: '0.9rem' }}>{app.title.split(' - ')[0]}</div>
-                              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{app.type}</div>
-                            </div>
-                          ))}
-                        {appointmentsToday.filter(app => app.title.toLowerCase().includes(patientSearch.toLowerCase())).length === 0 && (
-                          <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-                            Sin resultados
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', color: 'var(--color-danger)', fontSize: '0.9rem', border: '1px dashed var(--color-danger)' }}>
-                  {t('consultation.noAppointmentsToday')}
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -213,7 +241,7 @@ export const CreateConsultation: React.FC = () => {
                 className="hover-border-violet"
               >
                 <span style={{ color: selectedTemplateId ? 'var(--color-text-main)' : 'var(--color-text-muted)', fontSize: '0.95rem' }}>
-                  {mockTemplates.find(t => t.id.toString() === selectedTemplateId)?.title || t('consultation.selectTemplate')}
+                  {templates.find((t: any) => t.id.toString() === selectedTemplateId)?.title || t('consultation.selectTemplate')}
                 </span>
                 <ChevronDown size={16} color="var(--color-text-muted)" style={{ transform: showTemplateDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
               </div>
@@ -226,7 +254,7 @@ export const CreateConsultation: React.FC = () => {
                   >
                     {t('consultation.selectTemplate')}
                   </div>
-                  {mockTemplates.map(template => (
+                  {templates.map((template: any) => (
                     <div 
                       key={template.id} 
                       onClick={() => { 
@@ -253,8 +281,8 @@ export const CreateConsultation: React.FC = () => {
           </div>
         </div>
 
-        {/* Date and Time Configuration */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', position: 'relative', zIndex: 5 }}>
+        {/* Date, Time & Status Configuration */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', position: 'relative', zIndex: 5 }}>
           
           {/* Date Selector */}
           <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative', overflow: 'visible', zIndex: 2 }}>
@@ -285,6 +313,42 @@ export const CreateConsultation: React.FC = () => {
                       className="hover-bg"
                     >
                       {time}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Status Selector */}
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative', overflow: 'visible', zIndex: showStatusDropdown ? 50 : 1 }} ref={statusDropdownRef}>
+            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem', display: 'block', marginBottom: '0.5rem' }}>{t('consultation.patientStatus')}</label>
+            <div style={{ position: 'relative' }}>
+              <div 
+                onClick={() => setShowStatusDropdown(!showStatusDropdown)} 
+                style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.2s' }}
+                className="hover-border-primary"
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <Activity size={18} color={statuses.find(s => s.id === patientStatus)?.color} />
+                  <span style={{ color: 'var(--color-text-main)', fontSize: '0.95rem', fontWeight: 500 }}>
+                    {statuses.find(s => s.id === patientStatus)?.label}
+                  </span>
+                </div>
+                <ChevronDown size={16} color="var(--color-text-muted)" style={{ transform: showStatusDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+              </div>
+
+              {showStatusDropdown && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 1000, background: 'var(--color-surface, white)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)', borderRadius: '12px', border: '1px solid var(--color-border)', overflow: 'hidden', animation: 'slide-up 0.2s ease-out' }}>
+                  {statuses.map(s => (
+                    <div 
+                      key={s.id} 
+                      onClick={() => { setPatientStatus(s.id); setShowStatusDropdown(false); }}
+                      style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer', transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: '0.75rem' }}
+                      className="hover-bg"
+                    >
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: s.color }}></div>
+                      <span style={{ fontSize: '0.9rem', color: 'var(--color-text-main)', fontWeight: patientStatus === s.id ? 600 : 400 }}>{s.label}</span>
                     </div>
                   ))}
                 </div>

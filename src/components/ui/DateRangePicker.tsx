@@ -169,7 +169,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
 
               let bgColor = 'transparent';
               let textColor = 'var(--color-text-main)';
-              let borderRadius = '8px';
+              const borderRadius = '8px';
 
               if (!isCurrentMonth) {
                 textColor = 'var(--color-text-muted)';

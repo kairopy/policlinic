@@ -1,15 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Calendar, Clock, User, FileText, ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, Clock, User, FileText, ChevronDown, CheckCircle } from 'lucide-react';
+import { getPatients, saveAppointment } from '../../services/dataService';
+import type { Patient } from '../../services/dataService';
 import { useLanguage } from '../../context/LanguageContext';
 import { SingleDatePicker } from '../../components/ui/SingleDatePicker';
-import { mockPatients } from '../../data/mockData';
 
 export const CreateAppointment: React.FC = () => {
+  const navigate = useNavigate();
   const { t } = useLanguage();
 
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [patientSearch, setPatientSearch] = useState('');
   const [showPatientDropdown, setShowPatientDropdown] = useState(false);
+  const [notes, setNotes] = useState('');
   
   const [selectedApptType, setSelectedApptType] = useState('checkup');
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
@@ -22,6 +27,14 @@ export const CreateAppointment: React.FC = () => {
   const patientDropdownRef = useRef<HTMLDivElement>(null);
   const typeDropdownRef = useRef<HTMLDivElement>(null);
   const timeDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      const data = await getPatients();
+      setPatients(data);
+    };
+    fetchPatients();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -39,6 +52,28 @@ export const CreateAppointment: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPatientId) return;
+
+    const patient = patients.find((p: Patient) => p.id === selectedPatientId);
+    if (!patient) return;
+
+    const newAppointment = {
+      id: Math.floor(Math.random() * 10000),
+      title: `${patient.name} - ${t('appointments.' + selectedApptType)}`,
+      date: new Date(`${consultDate}T${consultTime}:00`),
+      duration: 45,
+      type: t('appointments.' + selectedApptType),
+      status: 'Pending',
+      patientId: selectedPatientId,
+      notes: notes
+    };
+
+    await saveAppointment(newAppointment);
+    navigate('/appointments');
+  };
+
   return (
     <div className="animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
       <header className="page-header">
@@ -47,7 +82,7 @@ export const CreateAppointment: React.FC = () => {
       </header>
 
       <div className="glass-panel" style={{ padding: '2rem' }}>
-        <form style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
             {/* Patient Selection */}
@@ -62,7 +97,7 @@ export const CreateAppointment: React.FC = () => {
                   className="hover-border-primary"
                 >
                   <span style={{ color: selectedPatientId ? 'var(--color-text-main)' : 'var(--color-text-muted)', fontSize: '0.95rem' }}>
-                    {mockPatients.find(p => p.id === selectedPatientId)?.name || t('appointments.selectPatient')}
+                    {patients.find((p: any) => p.id === selectedPatientId)?.name || t('appointments.selectPatient')}
                   </span>
                   <ChevronDown size={16} color="var(--color-text-muted)" style={{ transform: showPatientDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
                 </div>
@@ -84,9 +119,9 @@ export const CreateAppointment: React.FC = () => {
 
                     {/* Options List */}
                     <div style={{ flex: 1, overflowY: 'auto' }}>
-                      {mockPatients
-                        .filter(p => p.name.toLowerCase().includes(patientSearch.toLowerCase()) || p.id.toLowerCase().includes(patientSearch.toLowerCase()))
-                        .map(patient => (
+                      {patients
+                        .filter((p: any) => p.name.toLowerCase().includes(patientSearch.toLowerCase()) || p.id.toLowerCase().includes(patientSearch.toLowerCase()))
+                        .map((patient: any) => (
                           <div 
                             key={patient.id} 
                             onClick={() => { setSelectedPatientId(patient.id); setShowPatientDropdown(false); setPatientSearch(''); }}
@@ -97,7 +132,7 @@ export const CreateAppointment: React.FC = () => {
                             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>ID: {patient.id}</div>
                           </div>
                         ))}
-                      {mockPatients.filter(p => p.name.toLowerCase().includes(patientSearch.toLowerCase()) || p.id.toLowerCase().includes(patientSearch.toLowerCase())).length === 0 && (
+                      {patients.filter((p: any) => p.name.toLowerCase().includes(patientSearch.toLowerCase()) || p.id.toLowerCase().includes(patientSearch.toLowerCase())).length === 0 && (
                         <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
                           Sin resultados
                         </div>
@@ -202,12 +237,17 @@ export const CreateAppointment: React.FC = () => {
               rows={4} 
               placeholder={t('appointments.notesPlaceholder')}
               style={{ resize: 'vertical' }}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
             />
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem', paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)' }}>
-            <button type="button" className="btn btn-outline" onClick={() => window.history.back()}>{t('common.cancel')}</button>
-            <button type="button" className="btn btn-primary">{t('appointments.submitBtn')}</button>
+            <button type="button" className="btn btn-outline" onClick={() => navigate(-1)}>{t('common.cancel')}</button>
+            <button type="submit" className="btn btn-primary" disabled={!selectedPatientId}>
+              <CheckCircle size={18} style={{ marginRight: '0.5rem' }} />
+              {t('appointments.submitBtn')}
+            </button>
           </div>
         </form>
       </div>

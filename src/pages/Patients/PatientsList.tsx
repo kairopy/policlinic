@@ -1,16 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Plus, ChevronUp, ChevronDown } from 'lucide-react';
-import { mockPatients } from '../../data/mockData';
+import { Search, Filter, Plus, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
+import { getPatients } from '../../services/dataService';
+import type { Patient } from '../../services/dataService';
+import { useLanguage } from '../../context/LanguageContext';
 
 type SortField = 'id' | 'name' | 'phone' | 'lastVisit' | 'status';
 type SortDirection = 'asc' | 'desc';
 
+const SortIcon = ({ field, currentField, direction }: { field: SortField, currentField: SortField, direction: 'asc' | 'desc' }) => {
+  if (currentField !== field) return null;
+  return direction === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />;
+};
+
 export const PatientsList: React.FC = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      setLoading(true);
+      const data = await getPatients();
+      setPatients(data);
+      setLoading(false);
+    };
+    fetchPatients();
+  }, []);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -21,7 +41,7 @@ export const PatientsList: React.FC = () => {
     }
   };
 
-  const filteredPatients = mockPatients
+  const filteredPatients = patients
     .filter(p => 
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.id.toLowerCase().includes(searchTerm.toLowerCase())
@@ -34,11 +54,6 @@ export const PatientsList: React.FC = () => {
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
-
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return null;
-    return sortDirection === 'asc' ? <ChevronUp size={16} /> : <ChevronDown size={16} />;
-  };
 
   return (
     <div className="animate-fade-in">
@@ -79,7 +94,7 @@ export const PatientsList: React.FC = () => {
                   style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)', cursor: 'pointer', userSelect: 'none' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    ID <SortIcon field="id" />
+                    ID <SortIcon field="id" currentField={sortField} direction={sortDirection} />
                   </div>
                 </th>
                 <th 
@@ -87,7 +102,7 @@ export const PatientsList: React.FC = () => {
                   style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)', cursor: 'pointer', userSelect: 'none' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    Nombre <SortIcon field="name" />
+                    {t('patients.table.name')} <SortIcon field="name" currentField={sortField} direction={sortDirection} />
                   </div>
                 </th>
                 <th 
@@ -95,7 +110,7 @@ export const PatientsList: React.FC = () => {
                   style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)', cursor: 'pointer', userSelect: 'none' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    Contacto <SortIcon field="phone" />
+                    {t('patients.table.phone')} <SortIcon field="phone" currentField={sortField} direction={sortDirection} />
                   </div>
                 </th>
                 <th 
@@ -103,7 +118,7 @@ export const PatientsList: React.FC = () => {
                   style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)', cursor: 'pointer', userSelect: 'none' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    Última Visita <SortIcon field="lastVisit" />
+                    {t('patients.table.lastVisit')} <SortIcon field="lastVisit" currentField={sortField} direction={sortDirection} />
                   </div>
                 </th>
                 <th 
@@ -111,50 +126,86 @@ export const PatientsList: React.FC = () => {
                   style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)', cursor: 'pointer', userSelect: 'none' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    Estado <SortIcon field="status" />
+                    {t('patients.table.status')} <SortIcon field="status" currentField={sortField} direction={sortDirection} />
                   </div>
                 </th>
               </tr>
             </thead>
             <tbody>
-              {filteredPatients.map(patient => (
-                <tr 
-                  key={patient.id} 
-                  onClick={() => navigate(`/patients/${patient.id}`)}
-                  style={{ 
-                    borderBottom: '1px solid var(--color-border)', 
-                    transition: 'background-color var(--transition-fast)',
-                    cursor: 'pointer'
-                  }}
-                  className="hover-row hover-bg"
-                >
-                  <td style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>{patient.id}</td>
-                  <td style={{ padding: '1rem 1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div className="avatar" style={{ width: '32px', height: '32px', fontSize: '0.75rem' }}>
-                        {patient.name.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <span style={{ fontWeight: 600 }}>{patient.name}</span>
+              {loading ? (
+                <tr>
+                  <td colSpan={5} style={{ padding: '3rem', textAlign: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', color: 'var(--color-primary)' }}>
+                      <Loader2 size={32} className="animate-spin" />
+                      <span style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>Cargando pacientes...</span>
                     </div>
                   </td>
-                  <td style={{ padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
-                    <div>{patient.phone}</div>
-                    <div>{patient.email}</div>
-                  </td>
-                  <td style={{ padding: '1rem 1.5rem', color: 'var(--color-text-muted)' }}>{patient.lastVisit}</td>
-                  <td style={{ padding: '1rem 1.5rem' }}>
-                    <span className={`badge ${patient.status === 'Active' ? 'badge-success' : 'badge-warning'}`}>
-                      {patient.status === 'Active' ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
                 </tr>
-              ))}
-              {filteredPatients.length === 0 && (
+              ) : filteredPatients.length === 0 ? (
                 <tr>
                   <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
                     No se encontraron pacientes que coincidan con la búsqueda.
                   </td>
                 </tr>
+              ) : (
+                filteredPatients.map(patient => (
+                  <tr 
+                    key={patient.id} 
+                    onClick={() => navigate(`/patients/${patient.id}`)}
+                    style={{ 
+                      borderBottom: '1px solid var(--color-border)', 
+                      transition: 'background-color var(--transition-fast)',
+                      cursor: 'pointer'
+                    }}
+                    className="hover-row hover-bg"
+                  >
+                    <td style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>{patient.id}</td>
+                    <td style={{ padding: '1rem 1.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div className="avatar" style={{ width: '32px', height: '32px', fontSize: '0.75rem' }}>
+                          {patient.name.split(' ').map((n: string) => n[0]).join('')}
+                        </div>
+                        <span style={{ fontWeight: 600 }}>{patient.name}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '1rem 1.5rem', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+                      <div>{patient.phone}</div>
+                      <div>{patient.email}</div>
+                    </td>
+                    <td style={{ padding: '1rem 1.5rem', color: 'var(--color-text-muted)' }}>{patient.lastVisit}</td>
+                    <td style={{ padding: '1rem 1.5rem' }}>
+                      {(() => {
+                        let badgeClass = 'badge-muted';
+                        let label = patient.status;
+                        
+                        switch(patient.status) {
+                          case 'in_treatment':
+                            badgeClass = 'badge-primary';
+                            label = 'En Tratamiento';
+                            break;
+                          case 'medical_discharge':
+                            badgeClass = 'badge-success';
+                            label = 'Alta Médica';
+                            break;
+                          case 'maintenance':
+                            badgeClass = 'badge-info';
+                            label = 'Mantenimiento';
+                            break;
+                          case 'pending_control':
+                            badgeClass = 'badge-warning';
+                            label = 'Control Pendiente';
+                            break;
+                        }
+                        
+                        return (
+                          <span className={`badge ${badgeClass}`}>
+                            {label}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>

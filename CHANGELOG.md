@@ -67,3 +67,31 @@ All notable changes to the `policlinic` project will be documented in this file.
 - **Bilingual Architecture Expansion**: Expanded both the `en.ts` and `es.ts` dictionaries introducing an entire `consultation` mapping tree. Fully functional immediate locale swapping across the new interface.
 - **Multi-Field Standardized Templates**: Overhauled mockup templates representation branching into 5 contextual nodes (Symptoms, Treatment, Recommendations, Recovery Time, Notes). Clicking a template triggers direct full mapping inside the consultations flow form inputs rather than just general appends.
 - **Template Manager Panel Expansion**: The static reader is now a modular grid supporting individual layout nodes. Clicking 'Editar' allows mutating mock nodes across individual scoped bounds or declaring entire `Nueva Plantilla` empty scopes without losing view context frames.
+
+### Phase 6: Patient Status System Redefinition
+- **Podiatry-Specific Statuses**: Replaced generic statuses with "En Tratamiento", "Alta Médica", "Mantenimiento", and "Control Pendiente".
+- **Visual Status Badges**: Implemented unique color-coded badges in `PatientsList.tsx` for immediate visual triaging of patient states.
+- **Consultation Status Integration**: Added a premium status selector to `CreateConsultation.tsx`, allowing doctors to update the patient's global clinical status directly from the new encounter form.
+- **Dashboard Improvements**: Fixed empty space, implemented real trend calculations comparing with the previous month, and added a "Recent Patients" section.
+- **Comprehensive Localization**: Fully translated `PatientDetail.tsx` to Spanish and updated its status badge logic to match the new podiatry system.
+
+### Phase 7: Dashboard Analytics & Layout Optimization
+- **Dynamic Trend Engine**: Implemented real-time percentage calculations for all StatCards (Patients, Appointments, Consultations, Revenue) by comparing current month performance against the full previous month.
+- **Same-Day Historical Comparison**: The "Appointments Today" trend specifically compares current daily volume against the same calendar day of the previous month.
+- **Layout Expansion**: Resolved the "empty space" issue by introducing a **"Pacientes Recientes"** grid and a **"Consejo del Día"** informational panel.
+- **Visual Polish**: Upgraded StatCards with trend icons (ArrowUp/Down) and background-tinted badges for better data readability.
+- **Profile History Actions**: Fixed "Ver Detalles" and "Imprimir Reporte" buttons in the patient's consultation history by introducing a shared `ConsultationDetailModal` and connecting the reporting engine.
+- **Data Enrichment**: Expanded `mockData.ts` with detailed clinical records including symptoms and treatments for better UI testing.
+- **Patient Profile Editing**: Fixed the non-functional "Editar Perfil" button by refactoring the registration flow into a unified `PatientForm.tsx` that supports both creation and localized profile updates.
+- **Route Modernization**: Added `:id/edit` deep-linking for patients and updated `App.tsx` routing architecture.
+- **Full Profile Localization**: Refactored `PatientDetail.tsx` to support the new translation dictionary and podiatry-specific statuses.
+- **Refactor de Historial**: Se implementó el ordenamiento de tablas, filas clickables y se integró la acción de impresión en el modal de detalles.
+- **Corrección de Citas**: Se activó el botón de "Confirmar Cita" con lógica de persistencia y redirección.
+- **Traducción de Consultas**: Se corrigieron los tipos de consulta hardcodeados y se localizaron los estados del paciente.
+- **Consultation Details**: Integrated print action directly into the reusable `ConsultationDetailModal` and removed redundant action columns.
+### Phase 8: Google Workspace Integration & Production Hardening
+- **Dynamic Google Sheets/Calendar Sync**: Integrated n8n webhooks in `dataService.ts` for real-time patient and appointment synchronization with Google Workspace.
+- **Settings Dashboard**: Developed a premium configuration UI for linking Google accounts via Webhook URLs and Sheet/Calendar IDs.
+- **Strict Type Architecture**: Eliminated `any` types across `CreateAppointment`, `PatientForm`, and `Dashboard`. Standardized string-based IDs for project-wide consistency.
+- **Defensive Data Layer**: Implemented asynchronous loading states and robust error handling for external integration fallbacks.
+- **Production Hygiene**: Enforced `import type` declarations and resolved all critical linting errors for a clean production build.

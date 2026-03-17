@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Plus, Loader2 } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, startOfWeek, endOfMonth, endOfWeek, isSameMonth, isSameDay, addDays } from 'date-fns';
-import { mockAppointments } from '../../data/mockData';
+import { es } from 'date-fns/locale';
+import { getAppointments } from '../../services/dataService';
+import { useLanguage } from '../../context/LanguageContext';
 
 // define simple interface
 interface MockAppt {
@@ -13,9 +15,21 @@ interface MockAppt {
 }
 
 export const CalendarView: React.FC = () => {
-  // Sync currentDate with Today to see the new array correctly
+  const { t } = useLanguage();
   const [currentDate, setCurrentDate] = useState(new Date()); 
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
+  const [appointments, setAppointments] = useState<MockAppt[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      setLoading(true);
+      const data = await getAppointments();
+      setAppointments(data);
+      setLoading(false);
+    };
+    fetchAppointments();
+  }, []);
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -24,22 +38,30 @@ export const CalendarView: React.FC = () => {
     return (
       <header className="page-header flex-between" style={{ marginBottom: '1.5rem' }}>
         <div>
-          <h1 className="page-title">Appointments</h1>
-          <p className="page-description">Schedule and manage your clinical calendar.</p>
+          <h1 className="page-title">{t('sidebar.appointments')}</h1>
+          <p className="page-description">Programa y gestiona tu calendario clínico.</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <div style={{ display: 'flex', backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-md)', padding: '0.25rem', border: '1px solid var(--color-border)' }}>
-            <button className={`btn ${viewMode === 'month' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setViewMode('month')}>Month</button>
-            <button className={`btn ${viewMode === 'week' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setViewMode('week')}>Week</button>
-            <button className={`btn ${viewMode === 'day' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setViewMode('day')}>Day</button>
+            <button className={`btn ${viewMode === 'month' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setViewMode('month')}>Mes</button>
+            <button className={`btn ${viewMode === 'week' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setViewMode('week')}>Semana</button>
+            <button className={`btn ${viewMode === 'day' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setViewMode('day')}>Día</button>
           </div>
-          <button className="btn btn-primary"><Plus size={18} /> New Event</button>
+          <button className="btn btn-primary"><Plus size={18} /> {t('dashboard.newAppointment')}</button>
         </div>
       </header>
     );
   };
 
   const renderCells = () => {
+    if (loading) {
+      return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px', width: '100%' }}>
+          <Loader2 className="animate-spin" size={32} color="var(--color-primary)" />
+        </div>
+      );
+    }
+
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(monthStart);
     const startDate = startOfWeek(monthStart);
@@ -56,7 +78,7 @@ export const CalendarView: React.FC = () => {
         const cloneDay = day;
         
         // Find events for this day
-        const dayEvents = mockAppointments.filter((e: MockAppt) => isSameDay(e.date, cloneDay));
+        const dayEvents = appointments.filter((e: MockAppt) => isSameDay(e.date, cloneDay));
 
         days.push(
           <div 
@@ -67,7 +89,7 @@ export const CalendarView: React.FC = () => {
             <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {dayEvents.map((event: MockAppt) => (
                 <div key={event.id} className="event-badge">
-                  {format(event.date, "HH:mm")} - {event.title.split(' - ')[0]}
+                  {format(new Date(event.date), "HH:mm")} - {event.title.split(' - ')[0]}
                 </div>
               ))}
             </div>
@@ -93,8 +115,8 @@ export const CalendarView: React.FC = () => {
         <div className="calendar-controls">
           <div className="flex-center" style={{ gap: '1rem' }}>
             <button className="icon-btn" onClick={prevMonth}><ChevronLeft size={20} /></button>
-            <h2 style={{ fontSize: '1.25rem', minWidth: '150px', textAlign: 'center' }}>
-              {format(currentDate, "MMMM yyyy")}
+            <h2 style={{ fontSize: '1.25rem', minWidth: '150px', textAlign: 'center', textTransform: 'capitalize' }}>
+              {format(currentDate, "MMMM yyyy", { locale: es })}
             </h2>
             <button className="icon-btn" onClick={nextMonth}><ChevronRight size={20} /></button>
           </div>
@@ -102,7 +124,7 @@ export const CalendarView: React.FC = () => {
         
         <div className="calendar">
           <div className="days-header row">
-             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
+             {['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'].map((d, i) => (
                <div className="col col-center" key={i}>
                  {d}
                </div>
