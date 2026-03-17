@@ -16,12 +16,12 @@ export const PatientsList: React.FC = () => {
     <div className="animate-fade-in">
       <header className="page-header flex-between">
         <div>
-          <h1 className="page-title">Patients CRM</h1>
-          <p className="page-description">Manage your patient roster and access clinical records.</p>
+          <h1 className="page-title">Pacientes</h1>
+          <p className="page-description">Administra tu lista de pacientes y accede a sus expedientes clínicos.</p>
         </div>
         <button className="btn btn-primary">
           <Plus size={18} />
-          New Patient
+          Nuevo Paciente
         </button>
       </header>
 
