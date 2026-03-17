@@ -224,7 +224,7 @@ export const CreateConsultation: React.FC = () => {
                     onClick={() => { setSelectedTemplateId(''); setShowTemplateDropdown(false); setFormData({ symptoms: '', treatment: '', recommendations: '', recoveryTime: '', notes: '', cost: '' }); }}
                     style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}
                   >
-                    {t('consultation.selectTemplate') || "Ninguna"}
+                    {t('consultation.selectTemplate')}
                   </div>
                   {mockTemplates.map(template => (
                     <div 

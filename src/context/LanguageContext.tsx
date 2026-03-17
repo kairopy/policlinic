@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
-import { en } from '../i18n/en';
 import { es } from '../i18n/es';
 
-type Language = 'en' | 'es';
+type Language = 'es';
 
 interface LanguageContextType {
   language: Language;
@@ -11,14 +10,13 @@ interface LanguageContextType {
 }
 
 const dictionaries = {
-  en,
   es,
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>('es');
 
   const t = (key: string): string => {
     const keys = key.split('.');

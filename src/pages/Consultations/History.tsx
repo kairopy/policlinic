@@ -15,7 +15,7 @@ export const ConsultationHistory: React.FC = () => {
   // Enrich consultations with patient names
   const enrichedConsultations = mockConsultations.map(c => ({
     ...c,
-    patientName: mockPatients.find(p => p.id === c.patientId)?.name || 'Unknown Patient'
+    patientName: mockPatients.find(p => p.id === c.patientId)?.name || 'Paciente Desconocido'
   })).filter(c => {
     const matchesSearch = 
       c.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -64,12 +64,12 @@ export const ConsultationHistory: React.FC = () => {
     <div id="history-page-container" className="animate-fade-in" style={{ position: 'relative', padding: '1.5rem', height: '100%', boxSizing: 'border-box', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <header className="page-header flex-between" style={{ marginBottom: '2rem' }}>
         <div>
-          <h1 className="page-title">{t('history.title') || 'Consultation History'}</h1>
-          <p className="page-description">{t('history.description') || 'Review past medical records and visit summaries.'}</p>
+          <h1 className="page-title">{t('history.title')}</h1>
+          <p className="page-description">{t('history.description')}</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
           <button className="btn btn-outline" onClick={handleExport} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Download size={18} /> {t('history.export') || 'Exportar Registros'}
+            <Download size={18} /> {t('history.export')}
           </button>
           <button className="btn btn-primary" onClick={() => navigate('/consultations/new')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Plus size={18} /> Nueva Consulta
@@ -83,7 +83,7 @@ export const ConsultationHistory: React.FC = () => {
              <Search size={18} color="var(--color-text-muted)" style={{ position: 'absolute', left: '2rem' }} />
              <input 
                type="text" 
-               placeholder={t('history.searchPlaceholder') || 'Search by patient, doctor, or type...'} 
+               placeholder={t('history.searchPlaceholder')} 
                className="search-input"
                style={{ width: '100%', paddingLeft: '2.5rem', borderRadius: '12px', background: 'var(--color-background)' }}
                value={searchTerm}
@@ -104,12 +104,12 @@ export const ConsultationHistory: React.FC = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr style={{ backgroundColor: 'var(--color-background)', borderBottom: '1px solid var(--color-border)' }}>
-                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>{t('history.date') || 'Date'}</th>
-                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>{t('history.patient') || 'Patient'}</th>
-                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>{t('history.doctor') || 'Doctor'}</th>
-                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>{t('history.type') || 'Type'}</th>
-                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>{t('history.summary') || 'Summary'}</th>
-                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)', textAlign: 'center' }}>{t('history.actions') || 'Actions'}</th>
+                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>{t('history.date')}</th>
+                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>{t('history.patient')}</th>
+                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>{t('history.doctor')}</th>
+                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>{t('history.type')}</th>
+                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>{t('history.summary')}</th>
+                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)', textAlign: 'center' }}>{t('history.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -133,7 +133,7 @@ export const ConsultationHistory: React.FC = () => {
                       <button className="icon-btn" onClick={() => { setViewingRecord(consult); document.getElementById('history-page-container')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ width: '36px', height: '36px', borderRadius: '8px' }} title="View Details">
                         <Eye size={17} />
                       </button>
-                      <button className="icon-btn" onClick={() => window.open(`/print/consultation/${consult.id}`, '_blank')} style={{ width: '36px', height: '36px', borderRadius: '8px' }} title={t('history.export_doc') || 'Exportar Documento'}>
+                      <button className="icon-btn" onClick={() => window.open(`/print/consultation/${consult.id}`, '_blank')} style={{ width: '36px', height: '36px', borderRadius: '8px' }} title={t('history.export_doc')}>
                         <FileText size={17} />
                       </button>
                     </div>
@@ -143,7 +143,7 @@ export const ConsultationHistory: React.FC = () => {
               {enrichedConsultations.length === 0 && (
                 <tr>
                   <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-                     {t('history.noRecords') || 'No consultations found matching criteria.'}
+                     {t('history.noRecords')}
                   </td>
                 </tr>
               )}
@@ -159,14 +159,14 @@ export const ConsultationHistory: React.FC = () => {
             </button>
             
             <div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)', margin: '0 0 0.5rem 0' }}>{t('history.actions') || 'Detalles de Consulta'}</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--color-primary)', margin: '0 0 0.5rem 0' }}>Detalles de Consulta</h2>
               <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Ficha médica correspondiente a la visita del {viewingRecord.date}</p>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', padding: '1.25rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
-              <div><strong style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{t('history.patient') || 'Paciente'}:</strong> <div style={{ fontWeight: 600, marginTop: '0.2rem' }}>{viewingRecord.patientName}</div></div>
-              <div><strong style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{t('history.doctor') || 'Médico'}:</strong> <div style={{ fontWeight: 600, marginTop: '0.2rem' }}>{viewingRecord.doctor}</div></div>
-              <div><strong style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{t('history.type') || 'Tipo'}:</strong> <div style={{ marginTop: '0.2rem' }}><span className="badge badge-success">{viewingRecord.type}</span></div></div>
+              <div><strong style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{t('history.patient')}:</strong> <div style={{ fontWeight: 600, marginTop: '0.2rem' }}>{viewingRecord.patientName}</div></div>
+              <div><strong style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{t('history.doctor')}:</strong> <div style={{ fontWeight: 600, marginTop: '0.2rem' }}>{viewingRecord.doctor}</div></div>
+              <div><strong style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>{t('history.type')}:</strong> <div style={{ marginTop: '0.2rem' }}><span className="badge badge-success">{viewingRecord.type}</span></div></div>
               <div><strong style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>Costo:</strong> <div style={{ fontWeight: 600, marginTop: '0.2rem', color: 'var(--color-primary)' }}>{viewingRecord.cost ? `${viewingRecord.cost.toLocaleString('es-PY')} Gs` : 'N/A'}</div></div>
             </div>
 
@@ -174,7 +174,7 @@ export const ConsultationHistory: React.FC = () => {
               <div>
                 <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-main)' }}>
                   <div style={{ width: '4px', height: '16px', borderRadius: '4px', background: 'var(--color-primary)' }}></div>
-                  {t('consultation.symptoms') || 'Síntomas'}
+                  {t('consultation.symptoms')}
                 </h4>
                 <div style={{ padding: '0.75rem 1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '10px', color: 'var(--color-text-main)', fontSize: '0.95rem', lineHeight: '1.5' }}>
                   {viewingRecord.symptoms || 'No registrado'}
@@ -184,7 +184,7 @@ export const ConsultationHistory: React.FC = () => {
               <div>
                 <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text-main)' }}>
                   <div style={{ width: '4px', height: '16px', borderRadius: '4px', background: 'var(--color-primary)' }}></div>
-                  {t('consultation.treatment') || 'Tratamiento'}
+                  {t('consultation.treatment')}
                 </h4>
                 <div style={{ padding: '0.75rem 1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '10px', color: 'var(--color-text-main)', fontSize: '0.95rem', lineHeight: '1.5' }}>
                   {viewingRecord.treatment || 'No registrado'}
@@ -193,13 +193,13 @@ export const ConsultationHistory: React.FC = () => {
 
               <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.5rem' }}>
                 <div>
-                  <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>{t('consultation.recommendations') || 'Recomendaciones'}</h4>
+                  <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>{t('consultation.recommendations')}</h4>
                   <div style={{ padding: '1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '12px', fontSize: '0.95rem' }}>
                     {viewingRecord.recommendations || 'Ninguna'}
                   </div>
                 </div>
                 <div>
-                  <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>{t('consultation.recoveryTime') || 'Tiempo de Recuperación'}</h4>
+                  <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>{t('consultation.recoveryTime')}</h4>
                   <div style={{ padding: '1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '12px', fontSize: '0.95rem' }}>
                     {viewingRecord.recoveryTime || 'Inmediato'}
                   </div>
@@ -208,7 +208,7 @@ export const ConsultationHistory: React.FC = () => {
 
               {viewingRecord.notes && (
                 <div>
-                  <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>{t('consultation.notes') || 'Notas Clínicas'}</h4>
+                  <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', fontWeight: 600, color: 'var(--color-text-main)' }}>{t('consultation.notes')}</h4>
                   <div style={{ padding: '1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '12px', fontSize: '0.95rem', fontStyle: 'italic', borderLeft: '3px solid var(--color-primary)' }}>
                     {viewingRecord.notes}
                   </div>

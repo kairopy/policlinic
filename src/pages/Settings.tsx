@@ -1,10 +1,10 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
-import { Settings as SettingsIcon, Globe, Monitor } from 'lucide-react';
+import { Settings as SettingsIcon, Monitor } from 'lucide-react';
 
 export const Settings: React.FC = () => {
-  const { language, setLanguage, t } = useLanguage();
+  const { t } = useLanguage();
   const { theme, setTheme } = useTheme();
 
   return (
@@ -18,32 +18,6 @@ export const Settings: React.FC = () => {
 
       <div className="glass-panel" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
         
-        <section>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-            <div style={{ backgroundColor: 'var(--color-primary-light)', padding: '0.5rem', borderRadius: 'var(--radius-sm)', color: 'var(--color-primary)' }}>
-              <Globe size={18} />
-            </div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{t('settings.languagePreference')}</h3>
-          </div>
-          
-          <div style={{ display: 'flex', gap: '1rem', marginLeft: '3rem' }}>
-            <button 
-              className={`btn ${language === 'en' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => setLanguage('en')}
-            >
-              🇺🇸 {t('settings.english')}
-            </button>
-            <button 
-              className={`btn ${language === 'es' ? 'btn-primary' : 'btn-outline'}`}
-              onClick={() => setLanguage('es')}
-            >
-              🇪🇸 {t('settings.spanish')}
-            </button>
-          </div>
-        </section>
-
-        <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)' }} />
-
         <section>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
             <div style={{ backgroundColor: 'var(--color-primary-light)', padding: '0.5rem', borderRadius: 'var(--radius-sm)', color: 'var(--color-primary)' }}>
