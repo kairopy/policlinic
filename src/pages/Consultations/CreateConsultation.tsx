@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stethoscope, Image as ImageIcon, CheckCircle, UploadCloud, FileEdit, X, ChevronDown } from 'lucide-react';
+import { Stethoscope, Image as ImageIcon, CheckCircle, UploadCloud, FileEdit, X, ChevronDown, Clock } from 'lucide-react';
 import { isSameDay } from 'date-fns';
 import { mockAppointments, mockTemplates, mockConsultations } from '../../data/mockData';
 import { useLanguage } from '../../context/LanguageContext';
+import { SingleDatePicker } from '../../components/ui/SingleDatePicker';
 
 export const CreateConsultation: React.FC = () => {
   const navigate = useNavigate();
@@ -13,8 +14,11 @@ export const CreateConsultation: React.FC = () => {
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [showPatientDropdown, setShowPatientDropdown] = useState(false);
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  
   const patientDropdownRef = React.useRef<HTMLDivElement>(null);
   const templateDropdownRef = React.useRef<HTMLDivElement>(null);
+  const timeDropdownRef = React.useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     symptoms: '',
@@ -45,6 +49,9 @@ export const CreateConsultation: React.FC = () => {
       }
       if (templateDropdownRef.current && !templateDropdownRef.current.contains(event.target as Node)) {
         setShowTemplateDropdown(false);
+      }
+      if (timeDropdownRef.current && !timeDropdownRef.current.contains(event.target as Node)) {
+        setShowTimePicker(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -223,26 +230,42 @@ export const CreateConsultation: React.FC = () => {
         </div>
 
         {/* Date and Time Configuration */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', position: 'relative' }}>
+          
+          {/* Date Selector */}
           <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px' }}>
-            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem' }}>{t('consultation.date')}</label>
-            <input 
-              type="date" 
-              className="input-field" 
-              value={consultDate} 
-              onChange={e => setConsultDate(e.target.value)} 
-              style={{ borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)' }} 
-            />
+            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem', display: 'block', marginBottom: '0.5rem' }}>{t('consultation.date')}</label>
+            <SingleDatePicker date={consultDate} onChange={setConsultDate} />
           </div>
-          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px' }}>
-            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem' }}>{t('consultation.time')}</label>
-            <input 
-              type="time" 
-              className="input-field" 
-              value={consultTime} 
-              onChange={e => setConsultTime(e.target.value)} 
-              style={{ borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)' }} 
-            />
+
+          {/* Time Selector */}
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative', overflow: 'visible', zIndex: showTimePicker ? 50 : 1 }} ref={timeDropdownRef}>
+            <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem', display: 'block', marginBottom: '0.5rem' }}>{t('consultation.time')}</label>
+            <div style={{ position: 'relative' }}>
+              <div 
+                onClick={() => setShowTimePicker(!showTimePicker)} 
+                style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', transition: 'all 0.2s', width: '100%' }}
+                className="hover-border-primary"
+              >
+                <Clock size={18} color="var(--color-primary)" />
+                <span style={{ color: 'var(--color-text-main)', fontSize: '0.95rem', fontWeight: 500 }}>{consultTime}</span>
+              </div>
+
+              {showTimePicker && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 1000, background: 'var(--color-surface, white)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', borderRadius: '12px', border: '1px solid var(--color-border)', maxHeight: '200px', overflowY: 'auto', animation: 'slide-up 0.2s ease-out' }}>
+                  {["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00"].map(time => (
+                    <div 
+                      key={time} 
+                      onClick={() => { setConsultTime(time); setShowTimePicker(false); }}
+                      style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer', transition: 'background 0.2s', fontSize: '0.9rem', color: 'var(--color-text-main)' }}
+                      className="hover-bg"
+                    >
+                      {time}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
