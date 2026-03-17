@@ -121,7 +121,12 @@ export const PatientsList: React.FC = () => {
               {filteredPatients.map(patient => (
                 <tr 
                   key={patient.id} 
-                  style={{ borderBottom: '1px solid var(--color-border)', transition: 'background-color var(--transition-fast)' }}
+                  onClick={() => navigate(`/patients/${patient.id}`)}
+                  style={{ 
+                    borderBottom: '1px solid var(--color-border)', 
+                    transition: 'background-color var(--transition-fast)',
+                    cursor: 'pointer'
+                  }}
                   className="hover-row hover-bg"
                 >
                   <td style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>{patient.id}</td>
