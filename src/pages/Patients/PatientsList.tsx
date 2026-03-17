@@ -19,7 +19,7 @@ export const PatientsList: React.FC = () => {
           <h1 className="page-title">Pacientes</h1>
           <p className="page-description">Administra tu lista de pacientes y accede a sus expedientes clínicos.</p>
         </div>
-        <button className="btn btn-primary">
+        <button className="btn btn-primary" onClick={() => navigate('/patients/new')}>
           <Plus size={18} />
           Nuevo Paciente
         </button>
