@@ -19,13 +19,7 @@ export const Header: React.FC = () => {
           <Bell size={20} />
         </button>
         
-        <div className="user-profile">
-          <div className="avatar">Dr.</div>
-          <div className="user-info">
-            <span className="user-name">Dr. House</span>
-            <span className="user-role">Administrator</span>
-          </div>
-        </div>
+
       </div>
     </header>
   );
