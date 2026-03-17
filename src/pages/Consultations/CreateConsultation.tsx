@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stethoscope, Image as ImageIcon, CheckCircle, UploadCloud, FileEdit, X } from 'lucide-react';
+import { Stethoscope, Image as ImageIcon, CheckCircle, UploadCloud, FileEdit, X, ChevronDown } from 'lucide-react';
 import { isSameDay } from 'date-fns';
 import { mockAppointments, mockTemplates, mockConsultations } from '../../data/mockData';
 import { useLanguage } from '../../context/LanguageContext';
@@ -11,6 +11,10 @@ export const CreateConsultation: React.FC = () => {
   
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [showPatientDropdown, setShowPatientDropdown] = useState(false);
+  const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
+  const patientDropdownRef = React.useRef<HTMLDivElement>(null);
+  const templateDropdownRef = React.useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     symptoms: '',
@@ -34,28 +38,24 @@ export const CreateConsultation: React.FC = () => {
   const today = new Date();
   const appointmentsToday = mockAppointments.filter(app => isSameDay(app.date, today));
 
-
-
-
-
-  const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const templateId = e.target.value;
-    setSelectedTemplateId(templateId);
-    
-    if (templateId) {
-      const template = mockTemplates.find(t => t.id === parseInt(templateId));
-      if (template) {
-        setFormData({
-          symptoms: template.symptoms || '',
-          treatment: template.treatment || '',
-          recommendations: template.recommendations || '',
-          recoveryTime: template.recoveryTime || '',
-          notes: template.notes || '',
-          cost: (template as { cost?: string }).cost || '',
-        });
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (patientDropdownRef.current && !patientDropdownRef.current.contains(event.target as Node)) {
+        setShowPatientDropdown(false);
       }
-    }
-  };
+      if (templateDropdownRef.current && !templateDropdownRef.current.contains(event.target as Node)) {
+        setShowTemplateDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+
+
+
+
+
 
 
 
@@ -128,48 +128,97 @@ export const CreateConsultation: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
           
           {/* Patient Selection */}
-          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative', overflow: 'hidden' }}>
-
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative', overflow: 'visible', zIndex: showPatientDropdown ? 50 : 1 }} ref={patientDropdownRef}>
             <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem' }}>
               {t('consultation.patientSelection')} <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
-            {appointmentsToday.length > 0 ? (
-              <select 
-                className="input-field" 
-                value={selectedPatientId}
-                onChange={(e) => setSelectedPatientId(e.target.value)}
-                required
-                style={{ borderRadius: '12px', padding: '0.85rem 1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', cursor: 'pointer' }}
-              >
-                <option value="" disabled>{t('consultation.selectPatient')}</option>
-                {appointmentsToday.map(app => (
-                  <option key={app.id} value={app.patientId}>{app.title.split(' - ')[0]} ({app.type})</option>
-                ))}
-              </select>
-            ) : (
-              <div style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', color: 'var(--color-danger)', fontSize: '0.9rem', border: '1px dashed var(--color-danger)' }}>
-                {t('consultation.noAppointmentsToday')}
-              </div>
-            )}
+            <div style={{ position: 'relative' }}>
+              {appointmentsToday.length > 0 ? (
+                <>
+                  <div 
+                    onClick={() => setShowPatientDropdown(!showPatientDropdown)} 
+                    style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.2s' }}
+                    className="hover-border-primary"
+                  >
+                    <span style={{ color: selectedPatientId ? 'var(--color-text-main)' : 'var(--color-text-muted)', fontSize: '0.95rem' }}>
+                      {appointmentsToday.find(a => a.patientId === selectedPatientId)?.title.split(' - ')[0] || t('consultation.selectPatient')}
+                    </span>
+                    <ChevronDown size={16} color="var(--color-text-muted)" style={{ transform: showPatientDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                  </div>
+
+                  {showPatientDropdown && (
+                    <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 1000, background: 'var(--color-surface, white)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)', borderRadius: '12px', border: '1px solid var(--color-border)', maxHeight: '200px', overflowY: 'auto' }}>
+                      {appointmentsToday.map(app => (
+                        <div 
+                          key={app.id} 
+                          onClick={() => { setSelectedPatientId(app.patientId); setShowPatientDropdown(false); }}
+                          style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer', transition: 'background 0.2s' }}
+                          className="hover-bg"
+                        >
+                          <div style={{ fontWeight: 500, color: 'var(--color-text-main)', fontSize: '0.9rem' }}>{app.title.split(' - ')[0]}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{app.type}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', color: 'var(--color-danger)', fontSize: '0.9rem', border: '1px dashed var(--color-danger)' }}>
+                  {t('consultation.noAppointmentsToday')}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Template Selection */}
-          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative', overflow: 'hidden' }}>
-
+          <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative', overflow: 'visible', zIndex: showTemplateDropdown ? 50 : 1 }} ref={templateDropdownRef}>
             <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <FileEdit size={16} color="#8b5cf6" /> {t('consultation.templateSelection')}
             </label>
-            <select 
-              className="input-field"
-              value={selectedTemplateId}
-              onChange={handleTemplateChange}
-              style={{ borderRadius: '12px', padding: '0.85rem 1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', cursor: 'pointer' }}
-            >
-              <option value="">{t('consultation.selectTemplate')}</option>
-              {mockTemplates.map(template => (
-                <option key={template.id} value={template.id}>{template.title}</option>
-              ))}
-            </select>
+            <div style={{ position: 'relative' }}>
+              <div 
+                onClick={() => setShowTemplateDropdown(!showTemplateDropdown)} 
+                style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.2s' }}
+                className="hover-border-violet"
+              >
+                <span style={{ color: selectedTemplateId ? 'var(--color-text-main)' : 'var(--color-text-muted)', fontSize: '0.95rem' }}>
+                  {mockTemplates.find(t => t.id.toString() === selectedTemplateId)?.title || t('consultation.selectTemplate')}
+                </span>
+                <ChevronDown size={16} color="var(--color-text-muted)" style={{ transform: showTemplateDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+              </div>
+
+              {showTemplateDropdown && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 1000, background: 'var(--color-surface, white)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', borderRadius: '12px', border: '1px solid var(--color-border)', maxHeight: '200px', overflowY: 'auto' }}>
+                  <div 
+                    onClick={() => { setSelectedTemplateId(''); setShowTemplateDropdown(false); setFormData({ symptoms: '', treatment: '', recommendations: '', recoveryTime: '', notes: '', cost: '' }); }}
+                    style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}
+                  >
+                    {t('consultation.selectTemplate') || "Ninguna"}
+                  </div>
+                  {mockTemplates.map(template => (
+                    <div 
+                      key={template.id} 
+                      onClick={() => { 
+                        setSelectedTemplateId(template.id.toString()); 
+                        setShowTemplateDropdown(false); 
+                        setFormData({
+                          symptoms: template.symptoms || '',
+                          treatment: template.treatment || '',
+                          recommendations: template.recommendations || '',
+                          recoveryTime: template.recoveryTime || '',
+                          notes: template.notes || '',
+                          cost: (template as { cost?: string }).cost || '',
+                        });
+                      }}
+                      style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer', transition: 'background 0.2s' }}
+                      className="hover-bg"
+                    >
+                      <div style={{ fontWeight: 500, color: 'var(--color-text-main)', fontSize: '0.9rem' }}>{template.title}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
