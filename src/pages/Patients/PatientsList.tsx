@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Plus, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, Filter, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import { mockPatients } from '../../data/mockData';
 
 type SortField = 'id' | 'name' | 'phone' | 'lastVisit' | 'status';
@@ -114,7 +114,6 @@ export const PatientsList: React.FC = () => {
                     Estado <SortIcon field="status" />
                   </div>
                 </th>
-                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)', textAlign: 'center' }}>Acción</th>
               </tr>
             </thead>
             <tbody>
@@ -148,21 +147,11 @@ export const PatientsList: React.FC = () => {
                       {patient.status === 'Active' ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
-                  <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
-                    <button 
-                      className="btn btn-ghost" 
-                      onClick={() => navigate(`/patients/${patient.id}`)}
-                      style={{ padding: '0.5rem' }}
-                      aria-label="Ver Paciente"
-                    >
-                      <ChevronRight size={18} />
-                    </button>
-                  </td>
                 </tr>
               ))}
               {filteredPatients.length === 0 && (
                 <tr>
-                  <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                  <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
                     No se encontraron pacientes que coincidan con la búsqueda.
                   </td>
                 </tr>
