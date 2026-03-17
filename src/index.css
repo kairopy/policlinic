@@ -258,3 +258,24 @@ h3 { font-size: 1.5rem; }
 .animate-fade-in {
   animation: fadeIn var(--transition-normal) forwards;
 }
+
+/* Global Hover Helpers for absolute lists and dropdown options */
+.hover-bg {
+  transition: all 0.2s ease;
+}
+
+.hover-bg:hover {
+  background-color: var(--color-primary-light, #eff6ff) !important;
+}
+
+.hover-bg:hover div {
+  color: var(--color-primary) !important;
+}
+
+.hover-border-primary {
+  transition: all 0.2s ease;
+}
+
+.hover-border-primary:hover {
+  border-color: var(--color-primary) !important;
+}
