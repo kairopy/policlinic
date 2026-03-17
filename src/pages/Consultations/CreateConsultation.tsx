@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Stethoscope, Image as ImageIcon, CheckCircle, UploadCloud, FileEdit, X, ChevronDown, Clock } from 'lucide-react';
 import { isSameDay } from 'date-fns';
-import { mockAppointments, mockTemplates, mockConsultations, mockPatients } from '../../data/mockData';
+import { mockAppointments, mockTemplates, mockConsultations } from '../../data/mockData';
 import { useLanguage } from '../../context/LanguageContext';
 import { SingleDatePicker } from '../../components/ui/SingleDatePicker';
 
@@ -141,53 +141,61 @@ export const CreateConsultation: React.FC = () => {
               {t('consultation.patientSelection')} <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
             <div style={{ position: 'relative' }}>
-              <div 
-                onClick={() => setShowPatientDropdown(!showPatientDropdown)} 
-                style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.2s' }}
-                className="hover-border-primary"
-              >
-                <span style={{ color: selectedPatientId ? 'var(--color-text-main)' : 'var(--color-text-muted)', fontSize: '0.95rem' }}>
-                  {mockPatients.find(p => p.id === selectedPatientId)?.name || t('consultation.selectPatient')}
-                </span>
-                <ChevronDown size={16} color="var(--color-text-muted)" style={{ transform: showPatientDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
-              </div>
-
-              {showPatientDropdown && (
-                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 1000, background: 'var(--color-surface, white)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)', borderRadius: '12px', border: '1px solid var(--color-border)', maxHeight: '280px', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'slide-up 0.2s ease-out' }}>
-                  {/* Search Bar */}
-                  <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--color-border-light)', background: 'var(--color-surface)', position: 'sticky', top: 0, zIndex: 10 }}>
-                    <input 
-                      type="text" 
-                      placeholder="Buscar paciente..." 
-                      value={patientSearch}
-                      onChange={e => setPatientSearch(e.target.value)}
-                      style={{ padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid var(--color-border)', width: '100%', fontSize: '0.9rem', background: 'var(--color-background)', outline: 'none', transition: 'all 0.2s' }}
-                      onClick={e => e.stopPropagation()} 
-                      className="hover-border-primary"
-                    />
+              {appointmentsToday.length > 0 ? (
+                <>
+                  <div 
+                    onClick={() => setShowPatientDropdown(!showPatientDropdown)} 
+                    style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'all 0.2s' }}
+                    className="hover-border-primary"
+                  >
+                    <span style={{ color: selectedPatientId ? 'var(--color-text-main)' : 'var(--color-text-muted)', fontSize: '0.95rem' }}>
+                      {appointmentsToday.find(a => a.patientId === selectedPatientId)?.title.split(' - ')[0] || t('consultation.selectPatient')}
+                    </span>
+                    <ChevronDown size={16} color="var(--color-text-muted)" style={{ transform: showPatientDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
                   </div>
 
-                  {/* Options List */}
-                  <div style={{ flex: 1, overflowY: 'auto' }}>
-                    {mockPatients
-                      .filter(p => p.name.toLowerCase().includes(patientSearch.toLowerCase()) || p.id.toLowerCase().includes(patientSearch.toLowerCase()))
-                      .map(patient => (
-                        <div 
-                          key={patient.id} 
-                          onClick={() => { setSelectedPatientId(patient.id); setShowPatientDropdown(false); setPatientSearch(''); }}
-                          style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer', transition: 'background 0.2s' }}
-                          className="hover-bg"
-                        >
-                          <div style={{ fontWeight: 500, color: 'var(--color-text-main)', fontSize: '0.9rem' }}>{patient.name}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>ID: {patient.id}</div>
-                        </div>
-                      ))}
-                    {mockPatients.filter(p => p.name.toLowerCase().includes(patientSearch.toLowerCase()) || p.id.toLowerCase().includes(patientSearch.toLowerCase())).length === 0 && (
-                      <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-                        Sin resultados
+                  {showPatientDropdown && (
+                    <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 1000, background: 'var(--color-surface, white)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)', borderRadius: '12px', border: '1px solid var(--color-border)', maxHeight: '280px', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'slide-up 0.2s ease-out' }}>
+                      {/* Search Bar */}
+                      <div style={{ padding: '0.75rem', borderBottom: '1px solid var(--color-border-light)', background: 'var(--color-surface)', position: 'sticky', top: 0, zIndex: 10 }}>
+                        <input 
+                          type="text" 
+                          placeholder="Buscar cita..." 
+                          value={patientSearch}
+                          onChange={e => setPatientSearch(e.target.value)}
+                          style={{ padding: '0.85rem 1rem', borderRadius: '10px', border: '1px solid var(--color-border)', width: '100%', fontSize: '0.9rem', background: 'var(--color-background)', outline: 'none', transition: 'all 0.2s' }}
+                          onClick={e => e.stopPropagation()} 
+                          className="hover-border-primary"
+                        />
                       </div>
-                    )}
-                  </div>
+
+                      {/* Options List */}
+                      <div style={{ flex: 1, overflowY: 'auto' }}>
+                        {appointmentsToday
+                          .filter(app => app.title.toLowerCase().includes(patientSearch.toLowerCase()))
+                          .map(app => (
+                            <div 
+                              key={app.id} 
+                              onClick={() => { setSelectedPatientId(app.patientId); setShowPatientDropdown(false); setPatientSearch(''); }}
+                              style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer', transition: 'background 0.2s' }}
+                              className="hover-bg"
+                            >
+                              <div style={{ fontWeight: 500, color: 'var(--color-text-main)', fontSize: '0.9rem' }}>{app.title.split(' - ')[0]}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{app.type}</div>
+                            </div>
+                          ))}
+                        {appointmentsToday.filter(app => app.title.toLowerCase().includes(patientSearch.toLowerCase())).length === 0 && (
+                          <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
+                            Sin resultados
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', color: 'var(--color-danger)', fontSize: '0.9rem', border: '1px dashed var(--color-danger)' }}>
+                  {t('consultation.noAppointmentsToday')}
                 </div>
               )}
             </div>
