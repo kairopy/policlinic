@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Stethoscope, Image as ImageIcon, CheckCircle, UploadCloud, FileEdit, X } from 'lucide-react';
 import { isSameDay } from 'date-fns';
-import { mockAppointments, mockTemplates, mockConsultations, mockPatients } from '../../data/mockData';
+import { mockAppointments, mockTemplates, mockConsultations } from '../../data/mockData';
 import { useLanguage } from '../../context/LanguageContext';
 
 export const CreateConsultation: React.FC = () => {
@@ -36,7 +36,7 @@ export const CreateConsultation: React.FC = () => {
 
 
 
-  const selectedPatient = mockPatients.find(p => p.id === selectedPatientId);
+
 
   const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const templateId = e.target.value;
@@ -129,7 +129,7 @@ export const CreateConsultation: React.FC = () => {
           
           {/* Patient Selection */}
           <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--color-primary)' }}></div>
+
             <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem' }}>
               {t('consultation.patientSelection')} <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
@@ -155,7 +155,7 @@ export const CreateConsultation: React.FC = () => {
 
           {/* Template Selection */}
           <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: '24px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#8b5cf6' }}></div>
+
             <label className="form-label" style={{ fontWeight: 600, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <FileEdit size={16} color="#8b5cf6" /> {t('consultation.templateSelection')}
             </label>
