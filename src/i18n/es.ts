@@ -45,7 +45,7 @@ export const es = {
     connectGoogle: 'Vincular con Google',
     sheetsId: 'Google Sheets ID (Pacientes)',
     calendarId: 'Google Calendar ID (Citas)',
-    webhookUrl: 'n8n Webhook URL (Opcional)',
+    webhookUrl: 'Webhook de Sincronización (Opcional)',
   },
   patients: {
     createTitle: 'Registrar Paciente',

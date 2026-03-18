@@ -1,27 +1,65 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Edit, 
+  Trash2,
   FileText, 
   Activity, 
   User, 
   PlusCircle,
   Loader2 
 } from 'lucide-react';
-import { getPatients, getConsultations } from '../../services/dataService';
+import { getPatients, getConsultations, deletePatient } from '../../services/dataService';
 import type { Patient, Consultation } from '../../services/dataService';
 import { useLanguage } from '../../context/LanguageContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { ConsultationDetailModal } from '../../components/consultation/ConsultationDetailModal';
+import { SlidePanel } from '../../components/ui/SlidePanel';
+import { PatientForm } from './PatientForm';
+import { CreateConsultation } from '../Consultations/CreateConsultation';
 
 export const PatientDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { addNotification } = useNotifications();
   const [patient, setPatient] = React.useState<Patient | null>(null);
   const [consultations, setConsultations] = React.useState<Consultation[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [viewingConsultation, setViewingConsultation] = React.useState<Consultation | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  const [showEditPatient, setShowEditPatient] = React.useState(false);
+  const [showNewConsultation, setShowNewConsultation] = React.useState(false);
+
+  const refreshPatient = React.useCallback(async () => {
+    const allPatients = await getPatients();
+    const found = allPatients.find((p: Patient) => p.id === id);
+    if (found) setPatient(found);
+  }, [id]);
+
+  const handleDelete = async () => {
+    if (!patient) return;
+    setDeleting(true);
+    setShowDeleteConfirm(false);
+    try {
+      const patientName = patient.name;
+      await deletePatient(patient.id);
+      addNotification('Paciente Eliminado', `El expediente de ${patientName} ha sido eliminado.`, 'success');
+      navigate('/patients');
+    } catch (err) {
+      console.error('Error al eliminar paciente:', err);
+      setDeleting(false);
+    }
+  };
+
+  // Lock page scroll when delete modal is open
+  React.useEffect(() => {
+    document.body.style.overflow = showDeleteConfirm ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [showDeleteConfirm]);
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -96,10 +134,18 @@ export const PatientDetail: React.FC = () => {
              </div>
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <button className="btn btn-outline" style={{ borderRadius: '12px' }} onClick={() => navigate(`/patients/${id}/edit`)}>
+            <button
+              className="btn btn-outline"
+              style={{ borderRadius: '12px', color: 'var(--color-danger, #ef4444)', borderColor: 'var(--color-danger, #ef4444)' }}
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={deleting}
+            >
+              <Trash2 size={18} />{deleting ? ' Eliminando...' : ' Eliminar'}
+            </button>
+            <button className="btn btn-outline" style={{ borderRadius: '12px' }} onClick={() => setShowEditPatient(true)}>
               <Edit size={18} /> {t('patients.editProfile')}
             </button>
-            <button className="btn btn-primary" style={{ borderRadius: '12px', boxShadow: '0 8px 16px -4px rgba(2, 132, 199, 0.3)' }} onClick={() => navigate('/consultations/new')}>
+            <button className="btn btn-primary" style={{ borderRadius: '12px', boxShadow: '0 8px 16px -4px rgba(2, 132, 199, 0.3)' }} onClick={() => setShowNewConsultation(true)}>
               <PlusCircle size={18} /> {t('patients.newConsultation')}
             </button>
           </div>
@@ -184,6 +230,95 @@ export const PatientDetail: React.FC = () => {
           consultation={viewingConsultation} 
           onClose={() => setViewingConsultation(null)} 
         />
+      )}
+
+      {/* Edit Patient Slide Panel */}
+      <SlidePanel
+        isOpen={showEditPatient}
+        onClose={() => setShowEditPatient(false)}
+        title="Editar Perfil"
+      >
+        <PatientForm
+          mode="edit"
+          editPatientId={id}
+          onClose={() => setShowEditPatient(false)}
+          onSaved={refreshPatient}
+        />
+      </SlidePanel>
+
+      {/* New Consultation Slide Panel */}
+      <SlidePanel
+        isOpen={showNewConsultation}
+        onClose={() => setShowNewConsultation(false)}
+        title="Nueva Consulta"
+        width="900px"
+      >
+        <CreateConsultation onClose={() => setShowNewConsultation(false)} />
+      </SlidePanel>
+
+      {/* Custom Delete Confirmation Modal — rendered via Portal at document.body */}
+      {showDeleteConfirm && ReactDOM.createPortal(
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0,
+          width: '100vw', height: '100vh',
+          zIndex: 9999,
+          backgroundColor: 'rgba(10, 15, 30, 0.6)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <div className="glass-panel" style={{
+            padding: '2rem 2.5rem',
+            borderRadius: '24px',
+            maxWidth: '420px',
+            width: '90%',
+            textAlign: 'center',
+            boxShadow: '0 24px 60px rgba(0,0,0,0.4)',
+            border: '1px solid rgba(255,255,255,0.12)'
+          }}>
+            <div style={{
+              width: '56px', height: '56px', borderRadius: '50%',
+              backgroundColor: 'rgba(239,68,68,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 1.25rem'
+            }}>
+              <Trash2 size={26} color="#ef4444" />
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.6rem' }}>Eliminar paciente</h3>
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.75rem', lineHeight: 1.6 }}>
+              ¿Estás seguro de que deseas eliminar a <strong style={{ color: 'var(--color-text-main)' }}>{patient?.name}</strong>?<br />
+              Esta acción no se puede deshacer.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button
+                className="btn btn-outline"
+                style={{ borderRadius: '12px', flex: 1 }}
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+              >
+                Cancelar
+              </button>
+              <button
+                className="btn"
+                style={{
+                  borderRadius: '12px', flex: 1,
+                  backgroundColor: '#ef4444',
+                  color: '#fff',
+                  border: 'none',
+                  opacity: deleting ? 0.7 : 1
+                }}
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                <Trash2 size={16} />{deleting ? ' Eliminando...' : ' Eliminar'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

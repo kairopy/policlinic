@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { Search, Download, Plus, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 import { getConsultations, getPatients } from '../../services/dataService';
 import type { Consultation, Patient } from '../../services/dataService';
 import { useLanguage } from '../../context/LanguageContext';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { ConsultationDetailModal } from '../../components/consultation/ConsultationDetailModal';
+import { SlidePanel } from '../../components/ui/SlidePanel';
+import { CreateConsultation } from './CreateConsultation';
 
 type SortField = 'date' | 'patientName' | 'doctor' | 'type';
 
@@ -16,7 +18,6 @@ const SortIcon = ({ field, currentField, direction }: { field: SortField, curren
 
 export const ConsultationHistory: React.FC = () => {
   const { t } = useLanguage();
-  const navigate = useNavigate();
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,19 +27,22 @@ export const ConsultationHistory: React.FC = () => {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [viewingRecord, setViewingRecord] = useState<Consultation | null>(null);
+  const [showNewConsultation, setShowNewConsultation] = useState(false);
+
+  const loadData = async () => {
+    setLoading(true);
+    const [consultData, patientData] = await Promise.all([
+      getConsultations(),
+      getPatients()
+    ]);
+    setConsultations(consultData);
+    setPatients(patientData);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const [consultData, patientData] = await Promise.all([
-        getConsultations(),
-        getPatients()
-      ]);
-      setConsultations(consultData);
-      setPatients(patientData);
-      setLoading(false);
-    };
-    fetchData();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData();
   }, []);
 
   const handleSort = (field: SortField) => {
@@ -112,7 +116,7 @@ export const ConsultationHistory: React.FC = () => {
           <button className="btn btn-outline" onClick={handleExport} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Download size={18} /> {t('history.export')}
           </button>
-          <button className="btn btn-primary" onClick={() => navigate('/consultations/new')} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button className="btn btn-primary" onClick={() => setShowNewConsultation(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Plus size={18} /> Nueva Consulta
           </button>
         </div>
@@ -197,6 +201,20 @@ export const ConsultationHistory: React.FC = () => {
       {viewingRecord && (
         <ConsultationDetailModal consultation={viewingRecord} onClose={() => setViewingRecord(null)} />
       )}
+
+      <SlidePanel
+        isOpen={showNewConsultation}
+        onClose={() => setShowNewConsultation(false)}
+        title="Nueva Consulta"
+        width="900px"
+      >
+        <CreateConsultation 
+          onClose={() => {
+            setShowNewConsultation(false);
+            loadData();
+          }} 
+        />
+      </SlidePanel>
 
       <style>{`
         .hover-row:hover { background-color: var(--color-background) !important; opacity: 0.95; }

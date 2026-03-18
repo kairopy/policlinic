@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { FileText, Plus, Save, Search, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { mockTemplates } from '../../data/mockData';
+import { SlidePanel } from '../../components/ui/SlidePanel';
 
 export const Templates: React.FC = () => {
   const { t } = useLanguage();
   const [view, setView] = useState<'list' | 'edit'>('list');
   const [editData, setEditData] = useState({ ...mockTemplates[0] });
   const [searchTerm, setSearchTerm] = useState('');
+  const { addNotification } = useNotifications();
 
   const filteredTemplates = mockTemplates.filter(t => 
     t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -21,7 +24,7 @@ export const Templates: React.FC = () => {
 
   const handleNewClick = () => {
     setEditData({
-      id: Math.floor(Math.random() * 10000),
+      id: String(Math.floor(Math.random() * 10000)),
       title: 'Nueva Plantilla',
       symptoms: '',
       treatment: '',
@@ -42,86 +45,13 @@ export const Templates: React.FC = () => {
     const index = mockTemplates.findIndex(t => t.id === editData.id);
     if (index !== -1) {
       mockTemplates[index] = { ...editData };
+      addNotification('Plantilla Actualizada', `La plantilla "${editData.title}" ha sido actualizada.`, 'success');
     } else {
       mockTemplates.push({ ...editData });
+      addNotification('Plantilla Creada', `Nueva plantilla "${editData.title}" creada correctamente.`, 'success');
     }
     setView('list');
   };
-
-  if (view === 'edit') {
-    return (
-      <div className="animate-fade-in" style={{ padding: '2rem', height: '100%', display: 'flex', flexDirection: 'column', gap: '1.5rem', boxSizing: 'border-box' }}>
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <button className="btn btn-outline" onClick={() => setView('list')} style={{ borderRadius: '50%', width: '40px', height: '40px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ChevronRight style={{ transform: 'rotate(180deg)' }} size={20} />
-            </button>
-            <input 
-              type="text"
-              name="title"
-              value={editData.title} 
-              onChange={handleInputChange}
-              placeholder="Título de la Plantilla"
-              style={{ 
-                fontSize: '2rem', 
-                fontWeight: 700, 
-                border: 'none', 
-                background: 'transparent', 
-                color: 'var(--color-text-main)',
-                outline: 'none',
-                fontFamily: 'inherit',
-                letterSpacing: '-0.02em',
-                width: '100%',
-                maxWidth: '500px'
-              }}
-            />
-          </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button className="btn btn-outline" onClick={() => setView('list')}>{t('templates.cancel')}</button>
-            <button className="btn btn-primary" onClick={handleSave} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Save size={18} /> {t('templates.save')}
-            </button>
-          </div>
-        </header>
-
-        <div className="glass-panel" style={{ flex: 1, padding: '2rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.symptoms')}</label>
-              <textarea name="symptoms" value={editData.symptoms} onChange={handleInputChange} style={{ resize: 'none', minHeight: '120px', borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', padding: '0.75rem', color: 'var(--color-text-main)' }} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.treatment')}</label>
-              <textarea name="treatment" value={editData.treatment} onChange={handleInputChange} style={{ resize: 'none', minHeight: '120px', borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', padding: '0.75rem', color: 'var(--color-text-main)' }} />
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.recommendations')}</label>
-              <textarea name="recommendations" value={editData.recommendations} onChange={handleInputChange} style={{ resize: 'none', minHeight: '120px', borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', padding: '0.75rem', color: 'var(--color-text-main)' }} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.recoveryTime')}</label>
-              <input type="text" name="recoveryTime" value={editData.recoveryTime} onChange={handleInputChange} style={{ borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', padding: '0.75rem', color: 'var(--color-text-main)' }} />
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.cost')}</label>
-              <input type="text" name="cost" value={(editData as { cost?: string }).cost || ''} onChange={handleInputChange} placeholder="Ej. 50" style={{ borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', padding: '0.75rem', color: 'var(--color-text-main)' }} />
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.notes')}</label>
-            <textarea name="notes" value={editData.notes} onChange={handleInputChange} style={{ resize: 'none', minHeight: '150px', borderRadius: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', padding: '0.75rem', color: 'var(--color-text-main)' }} />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="animate-fade-in" style={{ padding: '2rem', height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -220,6 +150,72 @@ export const Templates: React.FC = () => {
           border-color: var(--color-primary) !important;
         }
       `}</style>
+
+      {/* SlidePanel Edit/Create Modal */}
+      <SlidePanel
+        isOpen={view === 'edit'}
+        onClose={() => setView('list')}
+        title={editData.title}
+        width="800px"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label className="form-label" style={{ fontWeight: 600 }}>Título de la Plantilla</label>
+            <input 
+              type="text"
+              name="title"
+              value={editData.title} 
+              onChange={handleInputChange}
+              className="input-field"
+              placeholder="Ej. Limpieza Profunda"
+              style={{ borderRadius: '12px', fontSize: '1.1rem', fontWeight: 600 }}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.symptoms')}</label>
+              <textarea className="input-field" name="symptoms" value={editData.symptoms} onChange={handleInputChange} style={{ resize: 'vertical', minHeight: '120px', borderRadius: '12px' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.treatment')}</label>
+              <textarea className="input-field" name="treatment" value={editData.treatment} onChange={handleInputChange} style={{ resize: 'vertical', minHeight: '120px', borderRadius: '12px' }} />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.recommendations')}</label>
+              <textarea className="input-field" name="recommendations" value={editData.recommendations} onChange={handleInputChange} style={{ resize: 'vertical', minHeight: '120px', borderRadius: '12px' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.recoveryTime')}</label>
+              <input className="input-field" type="text" name="recoveryTime" value={editData.recoveryTime} onChange={handleInputChange} style={{ borderRadius: '12px' }} />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.cost')}</label>
+              <input className="input-field" type="text" name="cost" value={(editData as { cost?: string }).cost || ''} onChange={handleInputChange} placeholder="Ej. 150000" style={{ borderRadius: '12px' }} />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.notes')}</label>
+            <textarea className="input-field" name="notes" value={editData.notes} onChange={handleInputChange} style={{ resize: 'vertical', minHeight: '150px', borderRadius: '12px' }} />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem', paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)' }}>
+            <button className="btn btn-outline" onClick={() => setView('list')} style={{ borderRadius: '999px', padding: '0.75rem 1.5rem' }}>
+              {t('templates.cancel')}
+            </button>
+            <button className="btn btn-primary" onClick={handleSave} style={{ borderRadius: '999px', padding: '0.75rem 2rem', boxShadow: '0 8px 16px -4px rgba(2, 132, 199, 0.3)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Save size={18} /> {t('templates.save')}
+            </button>
+          </div>
+        </div>
+      </SlidePanel>
     </div>
   );
 };

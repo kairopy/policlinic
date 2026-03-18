@@ -5,6 +5,10 @@ import { isSameDay, startOfMonth, endOfMonth, isWithinInterval, subMonths, forma
 import { getPatients, getAppointments, getConsultations } from '../services/dataService';
 import type { Patient, Appointment, Consultation } from '../services/dataService';
 import { useLanguage } from '../context/LanguageContext';
+import { SlidePanel } from '../components/ui/SlidePanel';
+import { PatientForm } from './Patients/PatientForm';
+import { CreateAppointment } from './Appointments/CreateAppointment';
+import { CreateConsultation } from './Consultations/CreateConsultation';
 
 interface StatCardProps {
   title: string;
@@ -53,21 +57,27 @@ export const Dashboard: React.FC = () => {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const [p, a, c] = await Promise.all([
-        getPatients(),
-        getAppointments(),
-        getConsultations()
-      ]);
-      setPatients(p);
-      setAppointments(a);
-      setConsultations(c);
-      setLoading(false);
-    };
-    fetchData();
+  const [showNewPatient, setShowNewPatient] = useState(false);
+  const [showNewAppointment, setShowNewAppointment] = useState(false);
+  const [showNewConsultation, setShowNewConsultation] = useState(false);
+
+  const fetchData = React.useCallback(async () => {
+    setLoading(true);
+    const [p, a, c] = await Promise.all([
+      getPatients(),
+      getAppointments(),
+      getConsultations()
+    ]);
+    setPatients(p);
+    setAppointments(a);
+    setConsultations(c);
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchData();
+  }, [fetchData]);
 
   // Logic Calculations (Based on March 2026 as current)
   const today = new Date('2026-03-16');
@@ -206,11 +216,11 @@ export const Dashboard: React.FC = () => {
           <div className="glass-panel" style={{ padding: '1.5rem' }}>
              <h3 style={{ marginBottom: '1.5rem' }}>{t('dashboard.quickActions')}</h3>
              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-               <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '1rem', borderRadius: '12px', fontSize: '1rem', boxShadow: '0 8px 20px -4px rgba(2, 132, 199, 0.4)' }} onClick={() => navigate('/consultations/new')}>
+               <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '1rem', borderRadius: '12px', fontSize: '1rem', boxShadow: '0 8px 20px -4px rgba(2, 132, 199, 0.4)' }} onClick={() => setShowNewConsultation(true)}>
                  {t('consultation.createTitle')}
                </button>
-               <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', padding: '0.85rem', borderRadius: '12px' }} onClick={() => navigate('/appointments/new')}>{t('dashboard.newAppointment')}</button>
-               <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', padding: '0.85rem', borderRadius: '12px' }} onClick={() => navigate('/patients/new')}>{t('dashboard.registerPatient')}</button>
+               <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', padding: '0.85rem', borderRadius: '12px' }} onClick={() => setShowNewAppointment(true)}>{t('dashboard.newAppointment')}</button>
+               <button className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', padding: '0.85rem', borderRadius: '12px' }} onClick={() => setShowNewPatient(true)}>{t('dashboard.registerPatient')}</button>
              </div>
           </div>
 
@@ -223,7 +233,45 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* SlidePanel Modals */}
+      <SlidePanel
+        isOpen={showNewPatient}
+        onClose={() => setShowNewPatient(false)}
+        title="Nuevo Paciente"
+      >
+        <PatientForm
+          mode="create"
+          onClose={() => setShowNewPatient(false)}
+          onSaved={fetchData}
+        />
+      </SlidePanel>
+
+      <SlidePanel
+        isOpen={showNewAppointment}
+        onClose={() => setShowNewAppointment(false)}
+        title="Nueva Cita"
+      >
+        <CreateAppointment 
+          onClose={() => setShowNewAppointment(false)} 
+          onSaved={fetchData} 
+        />
+      </SlidePanel>
+
+      <SlidePanel
+        isOpen={showNewConsultation}
+        onClose={() => setShowNewConsultation(false)}
+        title="Nueva Consulta"
+        width="900px"
+      >
+        <CreateConsultation 
+          onClose={() => {
+            setShowNewConsultation(false);
+            fetchData();
+          }} 
+        />
+      </SlidePanel>
+
     </div>
   );
 };
-

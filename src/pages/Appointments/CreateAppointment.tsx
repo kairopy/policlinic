@@ -1,27 +1,47 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, User, FileText, ChevronDown, CheckCircle } from 'lucide-react';
-import { getPatients, saveAppointment } from '../../services/dataService';
-import type { Patient } from '../../services/dataService';
+import { User, Calendar, Clock, FileText, ChevronDown, CheckCircle } from 'lucide-react';
+import { getPatients, saveAppointment, updateAppointment } from '../../services/dataService';
+import type { Patient, Appointment } from '../../services/dataService';
 import { useLanguage } from '../../context/LanguageContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { SingleDatePicker } from '../../components/ui/SingleDatePicker';
 
-export const CreateAppointment: React.FC = () => {
+interface CreateAppointmentProps {
+  onClose?: () => void;
+  onSaved?: () => void;
+  initialAppointment?: Appointment | null;
+}
+
+export const CreateAppointment: React.FC<CreateAppointmentProps> = ({ onClose, onSaved, initialAppointment }) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { addNotification } = useNotifications();
 
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [selectedPatientId, setSelectedPatientId] = useState('');
+  const [selectedPatientId, setSelectedPatientId] = useState(initialAppointment?.patientId || '');
   const [patientSearch, setPatientSearch] = useState('');
   const [showPatientDropdown, setShowPatientDropdown] = useState(false);
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState((initialAppointment as Appointment & { notes?: string })?.notes || '');
   
-  const [selectedApptType, setSelectedApptType] = useState('checkup');
+  const [selectedApptType, setSelectedApptType] = useState(() => {
+    if (!initialAppointment) return 'checkup';
+    const type = initialAppointment.type.toLowerCase();
+    if (type.includes('seguimiento') || type.includes('follow')) return 'followup';
+    if (type.includes('especialista') || type.includes('specialist')) return 'specialist';
+    if (type.includes('emergencia') || type.includes('emergency')) return 'emergency';
+    return 'checkup';
+  });
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 
   const now = new Date();
-  const [consultDate, setConsultDate] = useState(now.toISOString().split('T')[0]);
-  const [consultTime, setConsultTime] = useState(now.toTimeString().substring(0, 5));
+  const initDate = initialAppointment ? new Date(initialAppointment.date) : now;
+  const [consultDate, setConsultDate] = useState(initDate.toISOString().split('T')[0]);
+  const [consultTime, setConsultTime] = useState(
+    initialAppointment && initialAppointment.time 
+      ? initialAppointment.time 
+      : initDate.toTimeString().substring(0, 5)
+  );
   const [showTimePicker, setShowTimePicker] = useState(false);
 
   const patientDropdownRef = useRef<HTMLDivElement>(null);
@@ -59,26 +79,52 @@ export const CreateAppointment: React.FC = () => {
     const patient = patients.find((p: Patient) => p.id === selectedPatientId);
     if (!patient) return;
 
-    const newAppointment = {
-      id: Math.floor(Math.random() * 10000),
-      title: `${patient.name} - ${t('appointments.' + selectedApptType)}`,
-      date: new Date(`${consultDate}T${consultTime}:00`),
-      duration: 45,
-      type: t('appointments.' + selectedApptType),
-      status: 'Pending',
-      patientId: selectedPatientId,
-      notes: notes
+    const getApptTypeLabel = (type: string) => {
+      switch(type) {
+        case 'checkup': return t('appointments.general');
+        case 'followup': return t('appointments.followup');
+        case 'specialist': return t('appointments.specialist');
+        case 'emergency': return t('appointments.emergency');
+        default: return t('appointments.general');
+      }
     };
 
-    await saveAppointment(newAppointment);
-    navigate('/appointments');
+    const typeLabel = getApptTypeLabel(selectedApptType);
+
+    const appointmentData: Appointment & { notes?: string } = {
+      id: initialAppointment?.id || String(Math.floor(Math.random() * 10000)),
+      title: `${patient.name} - ${typeLabel}`,
+      date: new Date(`${consultDate}T${consultTime}:00`),
+      duration: 45,
+      time: consultTime,
+      type: typeLabel,
+      status: initialAppointment?.status || 'Pending',
+      patientId: selectedPatientId,
+    };
+    appointmentData.notes = notes;
+
+    if (initialAppointment) {
+      await updateAppointment(appointmentData);
+      addNotification('Cita Actualizada', `La cita para ${patient.name} ha sido actualizada.`, 'success');
+    } else {
+      await saveAppointment(appointmentData);
+      addNotification('Cita Agendada', `Nueva cita agendada para ${patient.name}.`, 'success');
+    }
+    
+    if (onSaved) onSaved();
+    
+    if (onClose) {
+      onClose();
+    } else {
+      navigate('/appointments');
+    }
   };
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
       <header className="page-header">
-        <h1 className="page-title">{t('appointments.createTitle')}</h1>
-        <p className="page-description">{t('appointments.createDescription')}</p>
+        <h1 className="page-title">{initialAppointment ? 'Editar Cita' : t('appointments.createTitle')}</h1>
+        <p className="page-description">{initialAppointment ? 'Modifica los detalles de la cita seleccionada.' : t('appointments.createDescription')}</p>
       </header>
 
       <div className="glass-panel" style={{ padding: '2rem' }}>
@@ -97,7 +143,7 @@ export const CreateAppointment: React.FC = () => {
                   className="hover-border-primary"
                 >
                   <span style={{ color: selectedPatientId ? 'var(--color-text-main)' : 'var(--color-text-muted)', fontSize: '0.95rem' }}>
-                    {patients.find((p: any) => p.id === selectedPatientId)?.name || t('appointments.selectPatient')}
+                    {patients.find((p: Patient) => p.id === selectedPatientId)?.name || t('appointments.selectPatient')}
                   </span>
                   <ChevronDown size={16} color="var(--color-text-muted)" style={{ transform: showPatientDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
                 </div>
@@ -120,8 +166,8 @@ export const CreateAppointment: React.FC = () => {
                     {/* Options List */}
                     <div style={{ flex: 1, overflowY: 'auto' }}>
                       {patients
-                        .filter((p: any) => p.name.toLowerCase().includes(patientSearch.toLowerCase()) || p.id.toLowerCase().includes(patientSearch.toLowerCase()))
-                        .map((patient: any) => (
+                        .filter((p: Patient) => p.name.toLowerCase().includes(patientSearch.toLowerCase()) || p.id.toLowerCase().includes(patientSearch.toLowerCase()))
+                        .map((patient: Patient) => (
                           <div 
                             key={patient.id} 
                             onClick={() => { setSelectedPatientId(patient.id); setShowPatientDropdown(false); setPatientSearch(''); }}
@@ -132,7 +178,7 @@ export const CreateAppointment: React.FC = () => {
                             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>ID: {patient.id}</div>
                           </div>
                         ))}
-                      {patients.filter((p: any) => p.name.toLowerCase().includes(patientSearch.toLowerCase()) || p.id.toLowerCase().includes(patientSearch.toLowerCase())).length === 0 && (
+                      {patients.filter((p: Patient) => p.name.toLowerCase().includes(patientSearch.toLowerCase()) || p.id.toLowerCase().includes(patientSearch.toLowerCase())).length === 0 && (
                         <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
                           Sin resultados
                         </div>
@@ -242,8 +288,11 @@ export const CreateAppointment: React.FC = () => {
             />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem', paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)' }}>
-            <button type="button" className="btn btn-outline" onClick={() => navigate(-1)}>{t('common.cancel')}</button>
+          {/* Action Footer */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem', paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)' }}>
+          <button type="button" className="btn btn-outline" onClick={() => onClose ? onClose() : navigate(-1)} style={{ borderRadius: '999px', padding: '0.75rem 1.5rem' }}>
+            {t('common.cancel')}
+          </button>
             <button type="submit" className="btn btn-primary" disabled={!selectedPatientId}>
               <CheckCircle size={18} style={{ marginRight: '0.5rem' }} />
               {t('appointments.submitBtn')}

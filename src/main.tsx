@@ -4,12 +4,15 @@ import App from './App.tsx';
 import './index.css';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { NotificationProvider } from './context/NotificationContext';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       <LanguageProvider>
-        <App />
+        <NotificationProvider>
+          <App />
+        </NotificationProvider>
       </LanguageProvider>
     </ThemeProvider>
   </StrictMode>,

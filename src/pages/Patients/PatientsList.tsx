@@ -4,6 +4,8 @@ import { Search, Filter, Plus, ChevronUp, ChevronDown, Loader2 } from 'lucide-re
 import { getPatients } from '../../services/dataService';
 import type { Patient } from '../../services/dataService';
 import { useLanguage } from '../../context/LanguageContext';
+import { SlidePanel } from '../../components/ui/SlidePanel';
+import { PatientForm } from './PatientForm';
 
 type SortField = 'id' | 'name' | 'phone' | 'lastVisit' | 'status';
 type SortDirection = 'asc' | 'desc';
@@ -21,15 +23,18 @@ export const PatientsList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [showNewPatient, setShowNewPatient] = useState(false);
+
+  const loadData = async () => {
+    setLoading(true);
+    const data = await getPatients();
+    setPatients(data);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchPatients = async () => {
-      setLoading(true);
-      const data = await getPatients();
-      setPatients(data);
-      setLoading(false);
-    };
-    fetchPatients();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadData();
   }, []);
 
   const handleSort = (field: SortField) => {
@@ -43,12 +48,12 @@ export const PatientsList: React.FC = () => {
 
   const filteredPatients = patients
     .filter(p => 
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.id.toLowerCase().includes(searchTerm.toLowerCase())
+      (p.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.id ?? '').toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
-      const aValue = a[sortField];
-      const bValue = b[sortField];
+      const aValue = a[sortField] ?? '';
+      const bValue = b[sortField] ?? '';
       
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
@@ -62,7 +67,7 @@ export const PatientsList: React.FC = () => {
           <h1 className="page-title">Pacientes</h1>
           <p className="page-description">Administra tu lista de pacientes y accede a sus expedientes clínicos.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => navigate('/patients/new')}>
+        <button className="btn btn-primary" onClick={() => setShowNewPatient(true)}>
           <Plus size={18} />
           Nuevo Paciente
         </button>
@@ -216,6 +221,18 @@ export const PatientsList: React.FC = () => {
           background-color: var(--color-primary-light);
         }
       `}</style>
+
+      <SlidePanel
+        isOpen={showNewPatient}
+        onClose={() => setShowNewPatient(false)}
+        title="Nuevo Paciente"
+      >
+        <PatientForm
+          mode="create"
+          onClose={() => setShowNewPatient(false)}
+          onSaved={loadData}
+        />
+      </SlidePanel>
     </div>
   );
 };

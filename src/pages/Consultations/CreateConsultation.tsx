@@ -3,16 +3,34 @@ import { useNavigate } from 'react-router-dom';
 import { Stethoscope, Image as ImageIcon, CheckCircle, UploadCloud, FileEdit, X, ChevronDown, Clock, Activity, Loader2 } from 'lucide-react';
 import { isSameDay } from 'date-fns';
 import { useLanguage } from '../../context/LanguageContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { SingleDatePicker } from '../../components/ui/SingleDatePicker';
 import { getPatients, getAppointments, saveConsultation, getTemplates, updatePatientStatus } from '../../services/dataService';
+import type { Patient, Appointment } from '../../services/dataService';
 
-export const CreateConsultation: React.FC = () => {
+interface Template {
+  id: string | number;
+  title: string;
+  symptoms?: string;
+  treatment?: string;
+  recommendations?: string;
+  recoveryTime?: string;
+  notes?: string;
+  cost?: string;
+}
+
+interface CreateConsultationProps {
+  onClose?: () => void;
+}
+
+export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose }) => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { addNotification } = useNotifications();
   
-  const [patients, setPatients] = useState<any[]>([]);
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [templates, setTemplates] = useState<any[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [selectedPatientId, setSelectedPatientId] = useState('');
@@ -49,7 +67,7 @@ export const CreateConsultation: React.FC = () => {
   const [consultTime, setConsultTime] = useState(now.toTimeString().substring(0, 5));
 
   const today = new Date();
-  const appointmentsToday = appointments.filter((app: any) => isSameDay(new Date(app.date), today));
+  const appointmentsToday = appointments.filter((app: Appointment) => isSameDay(new Date(app.date), today));
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,7 +106,7 @@ export const CreateConsultation: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev: typeof formData) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleTextareaResize = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -144,7 +162,14 @@ export const CreateConsultation: React.FC = () => {
     
     await updatePatientStatus(selectedPatientId, patientStatus);
     await saveConsultation(newConsultation);
-    navigate('/dashboard');
+
+    addNotification('Consulta Registrada', 'La evaluación clínica ha sido guardada en el historial del paciente.', 'success');
+    
+    if (onClose) {
+      onClose();
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   if (loading) {
@@ -183,7 +208,7 @@ export const CreateConsultation: React.FC = () => {
                 className="hover-border-primary"
               >
                 <span style={{ color: selectedPatientId ? 'var(--color-text-main)' : 'var(--color-text-muted)', fontSize: '0.95rem' }}>
-                  {patients.find((p: any) => p.id === selectedPatientId)?.name || t('consultation.selectPatient')}
+                  {patients.find((p: Patient) => p.id === selectedPatientId)?.name || t('consultation.selectPatient')}
                 </span>
                 <ChevronDown size={16} color="var(--color-text-muted)" style={{ transform: showPatientDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
               </div>
@@ -206,8 +231,8 @@ export const CreateConsultation: React.FC = () => {
                   {/* Options List */}
                   <div style={{ flex: 1, overflowY: 'auto' }}>
                     {patients
-                      .filter((p: any) => p.name.toLowerCase().includes(patientSearch.toLowerCase()))
-                      .map((p: any) => (
+                      .filter((p: Patient) => p.name.toLowerCase().includes(patientSearch.toLowerCase()))
+                      .map((p: Patient) => (
                         <div 
                           key={p.id} 
                           onClick={() => { setSelectedPatientId(p.id); setShowPatientDropdown(false); setPatientSearch(''); }}
@@ -218,7 +243,7 @@ export const CreateConsultation: React.FC = () => {
                           <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>ID: {p.id}</div>
                         </div>
                       ))}
-                    {patients.filter((p: any) => p.name.toLowerCase().includes(patientSearch.toLowerCase())).length === 0 && (
+                    {patients.filter((p: Patient) => p.name.toLowerCase().includes(patientSearch.toLowerCase())).length === 0 && (
                       <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
                         Sin resultados
                       </div>
@@ -241,7 +266,7 @@ export const CreateConsultation: React.FC = () => {
                 className="hover-border-violet"
               >
                 <span style={{ color: selectedTemplateId ? 'var(--color-text-main)' : 'var(--color-text-muted)', fontSize: '0.95rem' }}>
-                  {templates.find((t: any) => t.id.toString() === selectedTemplateId)?.title || t('consultation.selectTemplate')}
+                  {templates.find((t: Template) => t.id.toString() === selectedTemplateId)?.title || t('consultation.selectTemplate')}
                 </span>
                 <ChevronDown size={16} color="var(--color-text-muted)" style={{ transform: showTemplateDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
               </div>
@@ -254,7 +279,7 @@ export const CreateConsultation: React.FC = () => {
                   >
                     {t('consultation.selectTemplate')}
                   </div>
-                  {templates.map((template: any) => (
+                  {templates.map((template: Template) => (
                     <div 
                       key={template.id} 
                       onClick={() => { 
@@ -539,7 +564,7 @@ export const CreateConsultation: React.FC = () => {
 
         {/* Action Footer */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-          <button type="button" className="btn btn-outline" onClick={() => navigate(-1)} style={{ borderRadius: '999px', padding: '0.75rem 1.5rem' }}>
+          <button type="button" className="btn btn-outline" onClick={() => onClose ? onClose() : navigate(-1)} style={{ borderRadius: '999px', padding: '0.75rem 1.5rem' }}>
             {t('common.cancel')}
           </button>
           <button type="submit" className="btn btn-primary" disabled={!selectedPatientId || appointmentsToday.length === 0} style={{ borderRadius: '999px', padding: '0.75rem 2rem', boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.4)' }}>
