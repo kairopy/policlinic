@@ -24,7 +24,7 @@ export const es = {
     upcomingAppointments: 'Citas Próximas de Hoy',
     quickActions: 'Acciones Rápidas',
     noMoreAppointments: 'No hay más citas para hoy.',
-    newAppointment: '+ Nueva Cita',
+    newAppointment: 'Nueva Cita',
     registerPatient: '+ Registrar Paciente',
     recentPatients: 'Pacientes Recientes',
     viewAll: 'Ver Todos',

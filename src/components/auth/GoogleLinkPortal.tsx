@@ -4,13 +4,19 @@ import { LogIn, AlertCircle, Cloud } from 'lucide-react';
 import { isGoogleLinked } from '../../services/dataService';
 import { useNotifications } from '../../context/NotificationContext';
 
-const GOOGLE_CLIENT_ID = '397167111848-uatagrevtsjnhef1a2imt55vd5hf3v08.apps.googleusercontent.com';
-
 export const GoogleLinkPortal: React.FC = () => {
   const { addNotification } = useNotifications();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    // Check for callback parameters from backend
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('connected') === 'true') {
+      localStorage.setItem('google_connected', 'true');
+      addNotification('Vinculación Exitosa', 'Cuenta de Google vinculada mediante el servidor.', 'success');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     // Check if linked on mount and every few seconds (to handle cross-tab changes if any)
     const checkStatus = () => {
       const linked = isGoogleLinked();
@@ -20,29 +26,10 @@ export const GoogleLinkPortal: React.FC = () => {
     checkStatus();
     const interval = setInterval(checkStatus, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [addNotification]);
 
   const handleLinkGoogle = () => {
-    if (!window.google) {
-      addNotification('Error', 'Google SDK no cargado. Reintenta en unos segundos.', 'error');
-      return;
-    }
-
-    const client = window.google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.metadata.readonly',
-      callback: (response: { access_token: string }) => {
-        if (response.access_token) {
-          localStorage.setItem('google_access_token', response.access_token);
-          localStorage.setItem('google_connected', 'true');
-          addNotification('Vinculación Exitosa', 'Cuenta de Google vinculada correctamente.', 'success');
-          setIsVisible(false);
-          // Small delay before reload to show notification or just reload
-          setTimeout(() => window.location.reload(), 800);
-        }
-      },
-    });
-    client.requestAccessToken();
+    window.location.href = 'http://localhost:3001/auth/google';
   };
 
   if (!isVisible) return null;

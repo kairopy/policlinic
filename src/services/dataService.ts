@@ -46,27 +46,72 @@ export interface Consultation {
   notes?: string;
 }
 
-export const isGoogleLinked = () => !!localStorage.getItem(GOOGLE_ACCESS_TOKEN_KEY);
+export const isGoogleLinked = () => 
+  !!localStorage.getItem(GOOGLE_CONNECTED_KEY) || !!localStorage.getItem(GOOGLE_ACCESS_TOKEN_KEY);
 
 const callGoogleApi = async (url: string, method: string = 'GET', body?: unknown) => {
-  const token = localStorage.getItem(GOOGLE_ACCESS_TOKEN_KEY);
-  if (!token) return null;
+  let token = localStorage.getItem(GOOGLE_ACCESS_TOKEN_KEY);
 
-  try {
-    const response = await fetch(url, {
+  // If we don't have a token, try to grab a fresh one from the backend
+  if (!token) {
+    try {
+      const tokenRes = await fetch('http://localhost:3001/api/token');
+      if (tokenRes.ok) {
+        const data = await tokenRes.json();
+        token = data.access_token as string;
+        localStorage.setItem(GOOGLE_ACCESS_TOKEN_KEY, token);
+        localStorage.setItem(GOOGLE_CONNECTED_KEY, 'true');
+      } else {
+        localStorage.removeItem(GOOGLE_ACCESS_TOKEN_KEY);
+        localStorage.removeItem(GOOGLE_CONNECTED_KEY);
+        return null;
+      }
+    } catch (e) {
+      console.error('Backend token provider unreachable', e);
+      return null;
+    }
+  }
+
+  const makeRequest = async (currentToken: string) => {
+    return fetch(url, {
       method,
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${currentToken}`,
         'Content-Type': 'application/json',
       },
       body: body ? JSON.stringify(body) : undefined,
     });
+  };
+
+  try {
+    let response = await makeRequest(token as string);
 
     if (response.status === 401) {
-      // Token expired
-      localStorage.removeItem(GOOGLE_ACCESS_TOKEN_KEY);
-      localStorage.removeItem(GOOGLE_CONNECTED_KEY);
-      return null;
+      // Token expired, attempt refresh
+      try {
+        const tokenRes = await fetch('http://localhost:3001/api/token');
+        if (tokenRes.ok) {
+          const data = await tokenRes.json();
+          token = data.access_token as string;
+          localStorage.setItem(GOOGLE_ACCESS_TOKEN_KEY, token);
+          localStorage.setItem(GOOGLE_CONNECTED_KEY, 'true');
+          
+          // Retry the request ONCE with the new token
+          response = await makeRequest(token);
+          if (response.status === 401) {
+            localStorage.removeItem(GOOGLE_ACCESS_TOKEN_KEY);
+            localStorage.removeItem(GOOGLE_CONNECTED_KEY);
+            return null;
+          }
+        } else {
+          localStorage.removeItem(GOOGLE_ACCESS_TOKEN_KEY);
+          localStorage.removeItem(GOOGLE_CONNECTED_KEY);
+          return null;
+        }
+      } catch (e) {
+        console.error('Failed to retry with fresh token', e);
+        return null;
+      }
     }
 
     if (!response.ok) {
