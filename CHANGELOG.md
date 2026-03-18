@@ -94,4 +94,11 @@ All notable changes to the `policlinic` project will be documented in this file.
 - **Settings Dashboard**: Developed a premium configuration UI for linking Google accounts via Webhook URLs and Sheet/Calendar IDs.
 - **Strict Type Architecture**: Eliminated `any` types across `CreateAppointment`, `PatientForm`, and `Dashboard`. Standardized string-based IDs for project-wide consistency.
 - **Defensive Data Layer**: Implemented asynchronous loading states and robust error handling for external integration fallbacks.
-- **Production Hygiene**: Enforced `import type` declarations and resolved all critical linting errors for a clean production build.
+- **Auto-Read Logic**: Implemented intelligent state management to mark all as read or clear the history directly from the dropdown UI.
+- **Production-Grade Refinement**: Resolved all Fast Refresh and strict type warnings in the notification logic to maintain a 100% clean lint status.
+
+### Phase 10: Mandatory Google Connection Gate
+- **Authentication Gateway Modal**: Implemented `GoogleLinkPortal.tsx` to ensure core data integrity. If a new session detects an unlinked state, an un-dismissable React Portal modal is injected at the root layer.
+- **Premium Onboarding UX**: Styled with deep glassmorphism aesthetics, utilizing the application's signature gradients and iconography to provide a frictionless onboarding flow.
+- **Embedded OAuth2 Authorization**: Integrated the Google Identity Services SDK directly into the modal action button, allowing users to authenticate without leaving the application context.
+- **State Aware**: Utilizes the `isGoogleLinked` utility injected automatically in `MainLayout.tsx` and constantly polls for link state to support multi-tab concurrent authentications.

@@ -2,11 +2,13 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { GoogleLinkPortal } from '../auth/GoogleLinkPortal';
 import './layout.css';
 
 export const MainLayout: React.FC = () => {
   return (
     <div className="layout-wrapper">
+      <GoogleLinkPortal />
       <Sidebar />
       <main className="main-content">
         <Header />
