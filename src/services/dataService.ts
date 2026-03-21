@@ -179,15 +179,15 @@ const HEADER_MAP: Record<string, keyof Patient> = {
 
 const CONSULT_HEADER_MAP: Record<string, keyof Consultation> = {
   'id': 'id',
-  'patientid': 'patientId',
-  'patientname': 'patientName',
-  'date': 'date',
-  'summary': 'summary',
-  'symptoms': 'symptoms',
-  'treatment': 'treatment',
-  'recommendations': 'recommendations',
-  'cost': 'cost',
-  'doctor': 'doctor'
+  'patientid': 'patientId', 'id paciente': 'patientId', 'paciente id': 'patientId',
+  'patientname': 'patientName', 'nombre': 'patientName', 'nombre paciente': 'patientName', 'paciente': 'patientName',
+  'date': 'date', 'fecha': 'date', 'fecha de consulta': 'date',
+  'summary': 'summary', 'resumen': 'summary', 'motivo': 'summary',
+  'symptoms': 'symptoms', 'síntomas': 'symptoms', 'sintomas': 'symptoms',
+  'treatment': 'treatment', 'tratamiento': 'treatment',
+  'recommendations': 'recommendations', 'recomendaciones': 'recommendations',
+  'cost': 'cost', 'costo': 'cost', 'precio': 'cost',
+  'doctor': 'doctor', 'médico': 'doctor', 'medico': 'doctor', 'especialista': 'doctor'
 };
 
 export const getPatients = async (): Promise<Patient[]> => {
@@ -272,7 +272,9 @@ export const getConsultations = async (): Promise<Consultation[]> => {
           if (key) colMap[i] = key;
         });
 
-        return dataRows.map((row): Consultation => {
+        return dataRows
+          .filter(row => row.some(cell => cell?.trim())) // Skip empty rows
+          .map((row): Consultation => {
           const c: Partial<Consultation> = {};
           Object.entries(colMap).forEach(([idxStr, key]) => {
             const val = row[Number(idxStr)] ?? '';
