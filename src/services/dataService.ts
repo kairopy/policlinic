@@ -111,56 +111,81 @@ const SPREADSHEET_NAME = 'Lic Karina Pacientes';
 const PATIENTS_HEADERS = ['ID', 'Nombre', 'Edad', 'Email', 'Teléfono', 'Estado', 'Última Visita', 'Fecha Creación', 'Notas'];
 const CONSULTATIONS_HEADERS = ['ID', 'PatientID', 'PatientName', 'Date', 'Summary', 'Symptoms', 'Treatment', 'Recommendations', 'Cost', 'Doctor'];
 
+let ensurePromise: Promise<string | null> | null = null;
+
 /**
  * Returns a valid spreadsheet ID and ensures required tabs exist.
+ * Optimized to cache the layout verification so it only runs once per device profile, skipping 3 redundant API calls on every render.
  */
 const ensureSpreadsheetExists = async (): Promise<string | null> => {
-  const cached = localStorage.getItem(SHEETS_ID_KEY);
-  let sheetsId = cached;
+  if (ensurePromise) return ensurePromise;
 
-  // 1. Validate or Find Spreadsheet
-  if (!sheetsId || sheetsId === 'undefined' || sheetsId === 'null') {
-    const q = encodeURIComponent(`name='${SPREADSHEET_NAME}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`);
-    const searchResult = await callGoogleApi(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=1`);
-    
-    if (searchResult && searchResult.files && searchResult.files.length > 0) {
-      sheetsId = searchResult.files[0].id as string;
-    } else {
-      // Create new
-      const newSheet = await callGoogleApi('https://sheets.googleapis.com/v4/spreadsheets', 'POST', {
-        properties: { title: SPREADSHEET_NAME },
-        sheets: [{ properties: { title: 'Sheet1' } }]
-      });
-      if (newSheet) sheetsId = newSheet.spreadsheetId;
+  ensurePromise = (async () => {
+    try {
+      const cached = localStorage.getItem(SHEETS_ID_KEY);
+      const isEnsured = localStorage.getItem('policlinic_sheet_ensured');
+      
+      // Fast path: if we already verified tabs and headers in a previous session, skip heavy checks!
+      if (cached && cached !== 'undefined' && cached !== 'null' && isEnsured === 'true') {
+        return cached;
+      }
+
+      let sheetsId = cached;
+
+      // 1. Validate or Find Spreadsheet
+      if (!sheetsId || sheetsId === 'undefined' || sheetsId === 'null') {
+        const q = encodeURIComponent(`name='${SPREADSHEET_NAME}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`);
+        const searchResult = await callGoogleApi(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=1`);
+        
+        if (searchResult && searchResult.files && searchResult.files.length > 0) {
+          sheetsId = searchResult.files[0].id as string;
+        } else {
+          // Create new
+          const newSheet = await callGoogleApi('https://sheets.googleapis.com/v4/spreadsheets', 'POST', {
+            properties: { title: SPREADSHEET_NAME },
+            sheets: [{ properties: { title: 'Sheet1' } }]
+          });
+          if (newSheet) sheetsId = newSheet.spreadsheetId;
+        }
+      }
+
+      if (!sheetsId) return null;
+      localStorage.setItem(SHEETS_ID_KEY, sheetsId);
+
+      // 2. Ensure Tabs and Headers exist
+      const meta = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}?fields=sheets(properties(title))`);
+      if (!meta) return sheetsId;
+
+      const sheetTitles = (meta.sheets as Array<{ properties: { title: string } }>).map(s => s.properties.title);
+      
+      // Ensure "Sheet1" (Patients) has headers
+      if (sheetTitles.includes('Sheet1')) {
+        const data = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1!A1:1`);
+        if (!data || !data.values) {
+          await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1!A1`, 'PUT', { values: [PATIENTS_HEADERS] });
+        }
+      }
+
+      // Ensure "Consultas" tab exists
+      if (!sheetTitles.includes('Consultas')) {
+        await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}:batchUpdate`, 'POST', {
+          requests: [{ addSheet: { properties: { title: 'Consultas' } } }]
+        });
+        await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Consultas!A1`, 'PUT', { values: [CONSULTATIONS_HEADERS] });
+      }
+
+      // Mark as fully verified so future data fetches bypass this 2-3 second bottleneck
+      localStorage.setItem('policlinic_sheet_ensured', 'true');
+      
+      return sheetsId;
+    } finally {
+      // Clear the promise so if caching fails or needs a retry, we don't lock forever. 
+      // Successful runs are cached by localStorage synchronously above anyway.
+      ensurePromise = null;
     }
-  }
+  })();
 
-  if (!sheetsId) return null;
-  localStorage.setItem(SHEETS_ID_KEY, sheetsId);
-
-  // 2. Ensure Tabs and Headers exist
-  const meta = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}?fields=sheets(properties(title))`);
-  if (!meta) return sheetsId;
-
-  const sheetTitles = (meta.sheets as Array<{ properties: { title: string } }>).map(s => s.properties.title);
-  
-  // Ensure "Sheet1" (Patients) has headers
-  if (sheetTitles.includes('Sheet1')) {
-    const data = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1!A1:1`);
-    if (!data || !data.values) {
-      await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1!A1`, 'PUT', { values: [PATIENTS_HEADERS] });
-    }
-  }
-
-  // Ensure "Consultas" tab exists
-  if (!sheetTitles.includes('Consultas')) {
-    await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}:batchUpdate`, 'POST', {
-      requests: [{ addSheet: { properties: { title: 'Consultas' } } }]
-    });
-    await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Consultas!A1`, 'PUT', { values: [CONSULTATIONS_HEADERS] });
-  }
-
-  return sheetsId;
+  return ensurePromise;
 };
 
 
