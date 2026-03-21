@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { format, addMonths, subMonths, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -11,17 +12,31 @@ interface SingleDatePickerProps {
 export const SingleDatePicker: React.FC<SingleDatePickerProps> = ({ date, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [viewDate, setViewDate] = useState(date ? new Date(date + 'T12:00:00') : new Date()); // avoid TZ issues
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
   const pickerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node) && 
+          triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useLayoutEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  }, [isOpen]);
 
   const handlePrevMonth = () => setViewDate(subMonths(viewDate, 1));
   const handleNextMonth = () => setViewDate(addMonths(viewDate, 1));
@@ -46,8 +61,9 @@ export const SingleDatePicker: React.FC<SingleDatePickerProps> = ({ date, onChan
   const weekDays = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa', 'Do'];
 
   return (
-    <div style={{ position: 'relative', width: '100%' }} ref={pickerRef}>
+    <div style={{ position: 'relative', width: '100%' }}>
       <div 
+        ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
         style={{ padding: '0.85rem 1rem', background: 'var(--color-background)', borderRadius: '12px', border: '1px solid var(--color-border)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', transition: 'all 0.2s' }}
         className="hover-border-primary"
@@ -56,8 +72,23 @@ export const SingleDatePicker: React.FC<SingleDatePickerProps> = ({ date, onChan
         <span style={{ color: 'var(--color-text-main)', fontSize: '0.95rem', fontWeight: 500 }}>{date || "Seleccionar fecha"}</span>
       </div>
 
-      {isOpen && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 1000, background: 'var(--color-surface, white)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)', borderRadius: '12px', padding: '1rem', width: '260px', border: '1px solid var(--color-border)', animation: 'slide-up 0.2s ease-out' }}>
+      {isOpen && ReactDOM.createPortal(
+        <div 
+          ref={pickerRef}
+          style={{ 
+            position: 'absolute', 
+            top: `${coords.top + 4}px`, 
+            left: `${coords.left}px`, 
+            zIndex: 10000, 
+            background: 'var(--color-surface, white)', 
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.14)', 
+            borderRadius: '12px', 
+            padding: '1rem', 
+            width: '260px', 
+            border: '1px solid var(--color-border)', 
+            animation: 'fadeIn 0.2s ease-out' 
+          }}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <button onClick={handlePrevMonth} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-text-main)' }}><ChevronLeft size={20} /></button>
             <div style={{ fontWeight: 700, fontSize: '1rem', textTransform: 'capitalize', color: 'var(--color-text-main)' }}>{format(viewDate, 'MMMM yyyy', { locale: es })}</div>
@@ -82,7 +113,8 @@ export const SingleDatePicker: React.FC<SingleDatePickerProps> = ({ date, onChan
               );
             })}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

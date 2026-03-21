@@ -7,8 +7,8 @@ export const PrintConsultation = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  const consultRaw = mockConsultations.find(c => String(c.id) === id);
-  const patient = consultRaw ? mockPatients.find(p => String(p.id) === consultRaw.patientId) : null;
+  const consultRaw = mockConsultations.find((c: import('../../data/mockData').Consultation) => String(c.id) === id);
+  const patient = consultRaw ? mockPatients.find((p: import('../../data/mockData').Patient) => String(p.id) === String(consultRaw.patientId)) : null;
   
   const consult = React.useMemo(() => {
     return consultRaw ? {

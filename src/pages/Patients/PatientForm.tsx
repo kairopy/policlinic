@@ -66,7 +66,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
+    setFormData((prev: Partial<Patient>) => ({
       ...prev,
       [name]: type === 'number' ? parseInt(value) || 0 : value,
     }));

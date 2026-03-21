@@ -116,8 +116,8 @@ export const Dashboard: React.FC = () => {
   const consultTrend = calculateTrend(currentMonthConsults.length, lastMonthConsults.length);
 
   // 4. Monthly Revenue (Total Month vs Previous Month)
-  const monthlyRevenue = currentMonthConsults.reduce((sum, c) => sum + (c.cost || 0), 0);
-  const lastMonthRevenue = lastMonthConsults.reduce((sum, c) => sum + (c.cost || 0), 0);
+  const monthlyRevenue = currentMonthConsults.reduce((sum, c) => sum + (Number(c.cost) || 0), 0);
+  const lastMonthRevenue = lastMonthConsults.reduce((sum, c) => sum + (Number(c.cost) || 0), 0);
   const revenueTrend = calculateTrend(monthlyRevenue, lastMonthRevenue);
 
   // Recent Patients (Last 4)

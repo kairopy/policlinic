@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { LogIn, AlertCircle, Cloud } from 'lucide-react';
-import { isGoogleLinked } from '../../services/dataService';
+import { isGoogleLinked, syncLoginStatusWithBackend } from '../../services/dataService';
 import { useNotifications } from '../../context/NotificationContext';
 
 export const GoogleLinkPortal: React.FC = () => {
@@ -17,8 +17,11 @@ export const GoogleLinkPortal: React.FC = () => {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    // Check if linked on mount and every few seconds (to handle cross-tab changes if any)
-    const checkStatus = () => {
+    // Check if linked on mount and every few seconds
+    const checkStatus = async () => {
+      // First try to sync with backend (needed for Desktop app to detect browser-based login)
+      await syncLoginStatusWithBackend();
+      
       const linked = isGoogleLinked();
       setIsVisible(!linked);
     };
@@ -29,7 +32,14 @@ export const GoogleLinkPortal: React.FC = () => {
   }, [addNotification]);
 
   const handleLinkGoogle = () => {
-    window.location.href = 'http://localhost:3001/auth/google';
+    const isElectron = navigator.userAgent.toLowerCase().includes('electron');
+    if (isElectron) {
+      // In Electron, we use window.open so the Main process can intercept it 
+      // and redirect to the system's default browser (Chrome/Edge/etc).
+      window.open('http://localhost:3001/auth/google', '_blank');
+    } else {
+      window.location.href = 'http://localhost:3001/auth/google';
+    }
   };
 
   if (!isVisible) return null;

@@ -1,53 +1,34 @@
-import { mockPatients, mockAppointments, mockConsultations, mockTemplates } from '../data/mockData';
+import { 
+  mockPatients, 
+  mockAppointments, 
+  mockConsultations, 
+  mockTemplates,
+} from '../data/mockData';
+import type { Patient, Appointment, Consultation } from '../data/mockData';
+
+export type { Patient, Appointment, Consultation };
 
 const GOOGLE_CONNECTED_KEY = 'google_connected';
 const SHEETS_ID_KEY = 'google_sheets_id';
 const GOOGLE_ACCESS_TOKEN_KEY = 'google_access_token';
 
-export interface Patient {
-  id: string;
-  name: string;
-  age: number;
-  email: string;
-  phone: string;
-  status: 'active' | 'inactive' | 'in_treatment' | 'pending_control' | 'completed' | string;
-  lastVisit: string;
-  createdAt: string;
-  notes?: string;
-  appointments?: Appointment[];
-}
-
-export interface Appointment {
-  id: string | number;
-  patientId: string;
-  title: string;
-  date: Date | string;
-  duration: number;
-  time?: string;
-  type: string;
-  status: string;
-}
-
-export interface Consultation {
-  id: string;
-  patientId: string;
-  patientName?: string;
-  date: string;
-  time?: string;
-  doctor: string;
-  summary: string;
-  type: string;
-  status: string;
-  cost: number;
-  symptoms: string;
-  treatment: string;
-  recommendations: string;
-  recoveryTime: string;
-  notes?: string;
-}
-
 export const isGoogleLinked = () => 
   !!localStorage.getItem(GOOGLE_CONNECTED_KEY) || !!localStorage.getItem(GOOGLE_ACCESS_TOKEN_KEY);
+
+export const syncLoginStatusWithBackend = async () => {
+  try {
+    const response = await fetch('http://localhost:3001/api/token');
+    if (response.ok) {
+      const data = await response.json();
+      localStorage.setItem(GOOGLE_ACCESS_TOKEN_KEY, data.access_token);
+      localStorage.setItem(GOOGLE_CONNECTED_KEY, 'true');
+      return true;
+    }
+  } catch {
+    // Ignore errors, backend might be down or no token present
+  }
+  return false;
+};
 
 const callGoogleApi = async (url: string, method: string = 'GET', body?: unknown) => {
   let token = localStorage.getItem(GOOGLE_ACCESS_TOKEN_KEY);
@@ -127,66 +108,59 @@ const callGoogleApi = async (url: string, method: string = 'GET', body?: unknown
 };
 
 const SPREADSHEET_NAME = 'Lic Karina Pacientes';
-const HEADERS = ['ID', 'Nombre', 'Edad', 'Email', 'Teléfono', 'Estado', 'Última Visita', 'Fecha Creación', 'Notas'];
+const PATIENTS_HEADERS = ['ID', 'Nombre', 'Edad', 'Email', 'Teléfono', 'Estado', 'Última Visita', 'Fecha Creación', 'Notas'];
+const CONSULTATIONS_HEADERS = ['ID', 'PatientID', 'PatientName', 'Date', 'Summary', 'Symptoms', 'Treatment', 'Recommendations', 'Cost', 'Doctor'];
 
 /**
- * Returns a valid spreadsheet ID.
- * 1. Check cache (localStorage)
- * 2. Search Google Drive for an existing sheet by name
- * 3. If not found, create a new one with headers
+ * Returns a valid spreadsheet ID and ensures required tabs exist.
  */
 const ensureSpreadsheetExists = async (): Promise<string | null> => {
   const cached = localStorage.getItem(SHEETS_ID_KEY);
+  let sheetsId = cached;
 
-  // Validate any cached ID with a lightweight ping
-  if (cached && cached !== 'undefined' && cached !== 'null') {
-    const validation = await callGoogleApi(
-      `https://sheets.googleapis.com/v4/spreadsheets/${cached}?fields=spreadsheetId`
-    );
-    if (validation && validation.spreadsheetId) {
-      return cached;
+  // 1. Validate or Find Spreadsheet
+  if (!sheetsId || sheetsId === 'undefined' || sheetsId === 'null') {
+    const q = encodeURIComponent(`name='${SPREADSHEET_NAME}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`);
+    const searchResult = await callGoogleApi(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=1`);
+    
+    if (searchResult && searchResult.files && searchResult.files.length > 0) {
+      sheetsId = searchResult.files[0].id as string;
+    } else {
+      // Create new
+      const newSheet = await callGoogleApi('https://sheets.googleapis.com/v4/spreadsheets', 'POST', {
+        properties: { title: SPREADSHEET_NAME },
+        sheets: [{ properties: { title: 'Sheet1' } }]
+      });
+      if (newSheet) sheetsId = newSheet.spreadsheetId;
     }
-    localStorage.removeItem(SHEETS_ID_KEY);
   }
 
-  // Search in Drive for an existing sheet named exactly SPREADSHEET_NAME
-  const q = encodeURIComponent(
-    `name='${SPREADSHEET_NAME}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`
-  );
-  const searchResult = await callGoogleApi(
-    `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=1`
-  );
+  if (!sheetsId) return null;
+  localStorage.setItem(SHEETS_ID_KEY, sheetsId);
 
-  if (searchResult && searchResult.files && searchResult.files.length > 0) {
-    const id = searchResult.files[0].id as string;
-    localStorage.setItem(SHEETS_ID_KEY, id);
-    console.log('Hoja existente encontrada:', id);
-    return id;
-  }
+  // 2. Ensure Tabs and Headers exist
+  const meta = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}?fields=sheets(properties(title))`);
+  if (!meta) return sheetsId;
 
-  // Create a brand new spreadsheet with headers pre-loaded
-  console.log(`Creando base de datos "${SPREADSHEET_NAME}"...`);
-  const newSheet = await callGoogleApi(
-    'https://sheets.googleapis.com/v4/spreadsheets',
-    'POST',
-    {
-      properties: { title: SPREADSHEET_NAME },
-      sheets: [{
-        properties: { title: 'Sheet1' },
-        data: [{ rowData: [{ values: HEADERS.map(h => ({ userEnteredValue: { stringValue: h } })) }] }]
-      }]
+  const sheetTitles = (meta.sheets as Array<{ properties: { title: string } }>).map(s => s.properties.title);
+  
+  // Ensure "Sheet1" (Patients) has headers
+  if (sheetTitles.includes('Sheet1')) {
+    const data = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1!A1:1`);
+    if (!data || !data.values) {
+      await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1!A1`, 'PUT', { values: [PATIENTS_HEADERS] });
     }
-  );
-
-  if (newSheet && newSheet.spreadsheetId) {
-    const id = newSheet.spreadsheetId as string;
-    localStorage.setItem(SHEETS_ID_KEY, id);
-    console.log('Nueva hoja creada:', id);
-    return id;
   }
 
-  console.error('No se pudo crear la hoja de cálculo.');
-  return null;
+  // Ensure "Consultas" tab exists
+  if (!sheetTitles.includes('Consultas')) {
+    await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}:batchUpdate`, 'POST', {
+      requests: [{ addSheet: { properties: { title: 'Consultas' } } }]
+    });
+    await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Consultas!A1`, 'PUT', { values: [CONSULTATIONS_HEADERS] });
+  }
+
+  return sheetsId;
 };
 
 
@@ -201,6 +175,19 @@ const HEADER_MAP: Record<string, keyof Patient> = {
   'última visita': 'lastVisit', 'ultima visita': 'lastVisit', 'lastvisit': 'lastVisit',
   'fecha creación': 'createdAt', 'fecha creacion': 'createdAt', 'createdat': 'createdAt',
   'notas': 'notes', 'notes': 'notes',
+};
+
+const CONSULT_HEADER_MAP: Record<string, keyof Consultation> = {
+  'id': 'id',
+  'patientid': 'patientId',
+  'patientname': 'patientName',
+  'date': 'date',
+  'summary': 'summary',
+  'symptoms': 'symptoms',
+  'treatment': 'treatment',
+  'recommendations': 'recommendations',
+  'cost': 'cost',
+  'doctor': 'doctor'
 };
 
 export const getPatients = async (): Promise<Patient[]> => {
@@ -273,6 +260,44 @@ export const getAppointments = async (): Promise<Appointment[]> => {
 };
 
 export const getConsultations = async (): Promise<Consultation[]> => {
+  if (isGoogleLinked()) {
+    const sheetsId = await ensureSpreadsheetExists();
+    if (sheetsId) {
+      const data = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Consultas`);
+      if (data && data.values && data.values.length > 1) {
+        const [headerRow, ...dataRows] = data.values as string[][];
+        const colMap: Record<number, keyof Consultation> = {};
+        headerRow.forEach((h, i) => {
+          const key = CONSULT_HEADER_MAP[h.trim().toLowerCase()];
+          if (key) colMap[i] = key;
+        });
+
+        return dataRows.map((row): Consultation => {
+          const c: Partial<Consultation> = {};
+          Object.entries(colMap).forEach(([idxStr, key]) => {
+            const val = row[Number(idxStr)] ?? '';
+            if (key === 'cost') (c as Record<string, unknown>)[key] = Number(val) || 0;
+            else (c as Record<string, unknown>)[key] = val;
+          });
+          return {
+            id: c.id || '',
+            patientId: c.patientId || '',
+            patientName: c.patientName,
+            date: c.date || '',
+            doctor: c.doctor || '',
+            summary: c.summary || '',
+            type: c.type || 'Regular',
+            status: c.status || 'completed',
+            cost: c.cost || 0,
+            symptoms: c.symptoms || '',
+            treatment: c.treatment || '',
+            recommendations: c.recommendations || '',
+            recoveryTime: c.recoveryTime || 'Inmediata'
+          };
+        });
+      }
+    }
+  }
   return mockConsultations as Consultation[];
 };
 
@@ -500,6 +525,28 @@ export const deleteAppointment = async (appointmentId: string | number) => {
 };
 
 export const saveConsultation = async (consultation: Consultation) => {
+  if (isGoogleLinked()) {
+    const sheetsId = await ensureSpreadsheetExists();
+    if (sheetsId) {
+      const values = [[
+        consultation.id,
+        consultation.patientId,
+        consultation.patientName || '',
+        consultation.date,
+        consultation.summary,
+        consultation.symptoms,
+        consultation.treatment,
+        consultation.recommendations,
+        consultation.cost,
+        consultation.doctor
+      ]];
+      await callGoogleApi(
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Consultas!A1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+        'POST',
+        { values }
+      );
+    }
+  }
   mockConsultations.push(consultation);
 };
 
@@ -510,4 +557,67 @@ export const getTemplates = async () => {
 export const updatePatientStatus = async (patientId: string, status: string) => {
   const patient = mockPatients.find((p: Patient) => p.id === patientId);
   if (patient) patient.status = status;
+};
+
+export interface SearchResult {
+  id: string;
+  title: string;
+  subtitle: string;
+  type: 'patient' | 'appointment' | 'consultation';
+  link: string;
+}
+
+export const globalSearch = async (query: string): Promise<SearchResult[]> => {
+  if (!query || query.length < 2) return [];
+
+  const lowerQuery = query.toLowerCase();
+  const results: SearchResult[] = [];
+
+  try {
+    // 1. Search Patients
+    const patients = await getPatients();
+    const matchedPatients = patients.filter(p => 
+      p.name.toLowerCase().includes(lowerQuery) || 
+      p.id.toLowerCase().includes(lowerQuery) ||
+      (p.email && p.email.toLowerCase().includes(lowerQuery))
+    );
+    matchedPatients.forEach(p => results.push({
+      id: p.id,
+      title: p.name,
+      subtitle: `Paciente • ID: ${p.id}`,
+      type: 'patient',
+      link: `/patients/${p.id}`
+    }));
+
+    // 2. Search Appointments
+    const appointments = await getAppointments();
+    const matchedAppointments = appointments.filter(a => 
+      a.title.toLowerCase().includes(lowerQuery)
+    );
+    matchedAppointments.forEach(a => results.push({
+      id: String(a.id),
+      title: a.title,
+      subtitle: `Cita • ${new Date(a.date).toLocaleDateString()}`,
+      type: 'appointment',
+      link: `/appointments`
+    }));
+
+    // 3. Search Consultations
+    const consultations = await getConsultations();
+    const matchedConsultations = consultations.filter(c => 
+      (c.patientName && c.patientName.toLowerCase().includes(lowerQuery)) ||
+      (c.summary && c.summary.toLowerCase().includes(lowerQuery))
+    );
+    matchedConsultations.forEach(c => results.push({
+      id: c.id,
+      title: c.patientName || 'Consulta de Paciente',
+      subtitle: `Evaluación • ${c.summary}`,
+      type: 'consultation',
+      link: `/consultations/${c.id}`
+    }));
+  } catch (error) {
+    console.error('Error in globalSearch:', error);
+  }
+
+  return results.slice(0, 10); // Return top 10 matches
 };

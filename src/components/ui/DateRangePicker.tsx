@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { format, addMonths, subMonths, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, startOfMonth, endOfMonth, isAfter, isBefore } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react';
@@ -12,7 +13,9 @@ interface DateRangePickerProps {
 export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, endDate, onRangeChange }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [viewDate, setViewDate] = useState(new Date());
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
   const pickerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Parse strings back to Local Dates to avoid timezone offsets
   const parseLocal = (str: string) => {
@@ -26,13 +29,25 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node) &&
+          triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useLayoutEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width
+      });
+    }
+  }, [isOpen]);
 
   const handlePrevMonth = () => setViewDate(subMonths(viewDate, 1));
   const handleNextMonth = () => setViewDate(addMonths(viewDate, 1));
@@ -85,10 +100,11 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
   };
 
   return (
-    <div style={{ position: 'relative' }} ref={pickerRef}>
+    <div style={{ position: 'relative' }}>
       
       {/* Trigger Button */}
       <button 
+        ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
         style={{ 
           display: 'flex', 
@@ -122,20 +138,23 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
       </button>
 
       {/* Dropdown Calendar Panel */}
-      {isOpen && (
-        <div style={{ 
-          position: 'absolute', 
-          top: 'calc(100% + 8px)', 
-          right: 0, 
-          zIndex: 1000, 
-          background: 'var(--color-surface, white)', 
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', 
-          borderRadius: '14px', 
-          padding: '1rem', 
-          width: '260px', 
-          border: '1px solid var(--color-border)',
-          animation: 'slide-up 0.2s ease-out'
-        }}>
+      {isOpen && ReactDOM.createPortal(
+        <div 
+          ref={pickerRef}
+          style={{ 
+            position: 'absolute', 
+            top: `${coords.top + 8}px`, 
+            left: `${coords.left + coords.width - 260}px`, // Align right
+            zIndex: 10000, 
+            background: 'var(--color-surface, white)', 
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.14)', 
+            borderRadius: '14px', 
+            padding: '1rem', 
+            width: '260px', 
+            border: '1px solid var(--color-border)',
+            animation: 'fadeIn 0.2s ease-out'
+          }}
+        >
           
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -207,10 +226,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
               );
             })}
           </div>
-
-          {/* Presets footer or similar controls if needed can be added here */}
-
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

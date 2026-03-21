@@ -1,22 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Stethoscope, Image as ImageIcon, CheckCircle, UploadCloud, FileEdit, X, ChevronDown, Clock, Activity, Loader2 } from 'lucide-react';
-import { isSameDay } from 'date-fns';
 import { useLanguage } from '../../context/LanguageContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { SingleDatePicker } from '../../components/ui/SingleDatePicker';
-import { getPatients, getAppointments, saveConsultation, getTemplates, updatePatientStatus } from '../../services/dataService';
-import type { Patient, Appointment } from '../../services/dataService';
+import { getPatients, saveConsultation, getTemplates, updatePatientStatus } from '../../services/dataService';
+import type { Patient, Consultation } from '../../services/dataService';
 
 interface Template {
-  id: string | number;
+  id: string;
   title: string;
   symptoms?: string;
   treatment?: string;
   recommendations?: string;
   recoveryTime?: string;
   notes?: string;
-  cost?: string;
+  cost?: number;
 }
 
 interface CreateConsultationProps {
@@ -29,7 +28,6 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
   const { addNotification } = useNotifications();
   
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,6 +39,7 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [patientStatus, setPatientStatus] = useState('in_treatment');
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   
   const patientDropdownRef = useRef<HTMLDivElement>(null);
   const templateDropdownRef = useRef<HTMLDivElement>(null);
@@ -66,19 +65,15 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
   const [consultDate, setConsultDate] = useState(now.toISOString().split('T')[0]);
   const [consultTime, setConsultTime] = useState(now.toTimeString().substring(0, 5));
 
-  const today = new Date();
-  const appointmentsToday = appointments.filter((app: Appointment) => isSameDay(new Date(app.date), today));
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const [p, a, tpl] = await Promise.all([
+      const [p, tpl] = await Promise.all([
         getPatients(),
-        getAppointments(),
         getTemplates()
       ]);
       setPatients(p);
-      setAppointments(a);
       setTemplates(tpl);
       setLoading(false);
     };
@@ -141,34 +136,43 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPatientId) return;
+    if (!selectedPatientId || submitting) return;
 
-    const newConsultation = {
-      id: `C-${Math.floor(Math.random() * 10000)}`,
-      patientId: selectedPatientId,
-      date: consultDate,
-      time: consultTime,
-      doctor: 'Dr. Admin',
-      summary: formData.symptoms.substring(0, 50) + '...',
-      type: t('consultation.type'),
-      status: 'Completed',
-      cost: Number(formData.cost) || 0,
-      symptoms: formData.symptoms,
-      treatment: formData.treatment,
-      recommendations: formData.recommendations,
-      recoveryTime: formData.recoveryTime,
-      notes: formData.notes
-    };
-    
-    await updatePatientStatus(selectedPatientId, patientStatus);
-    await saveConsultation(newConsultation);
+    setSubmitting(true);
+    try {
+      const newConsultation: Consultation = {
+        id: `C-${Math.floor(Math.random() * 10000)}`,
+        patientId: selectedPatientId,
+        patientName: patients.find(p => p.id === selectedPatientId)?.name,
+        date: consultDate,
+        time: consultTime,
+        doctor: 'Lic. Karina',
+        summary: formData.symptoms.substring(0, 50) + (formData.symptoms.length > 50 ? '...' : ''),
+        type: t('consultation.type'),
+        status: 'Completed',
+        cost: Number(formData.cost) || 0,
+        symptoms: formData.symptoms,
+        treatment: formData.treatment,
+        recommendations: formData.recommendations,
+        recoveryTime: formData.recoveryTime,
+        notes: formData.notes
+      };
+      
+      await updatePatientStatus(selectedPatientId, patientStatus);
+      await saveConsultation(newConsultation);
 
-    addNotification('Consulta Registrada', 'La evaluación clínica ha sido guardada en el historial del paciente.', 'success');
-    
-    if (onClose) {
-      onClose();
-    } else {
-      navigate('/dashboard');
+      addNotification('Consulta Registrada', 'La evaluación clínica ha sido guardada en el historial del paciente.', 'success');
+      
+      if (onClose) {
+        onClose();
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Submit error:', error);
+      addNotification('Error al Guardar', 'No se pudo sincronizar la consulta. Intente nuevamente.', 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -235,7 +239,7 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
                       .map((p: Patient) => (
                         <div 
                           key={p.id} 
-                          onClick={() => { setSelectedPatientId(p.id); setShowPatientDropdown(false); setPatientSearch(''); }}
+                          onClick={() => { setSelectedPatientId(String(p.id)); setShowPatientDropdown(false); setPatientSearch(''); }}
                           style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer', transition: 'background 0.2s' }}
                           className="hover-bg"
                         >
@@ -291,7 +295,7 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
                           recommendations: template.recommendations || '',
                           recoveryTime: template.recoveryTime || '',
                           notes: template.notes || '',
-                          cost: (template as { cost?: string }).cost || '',
+                          cost: String(template.cost || ''),
                         });
                       }}
                       style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--color-border-light)', cursor: 'pointer', transition: 'background 0.2s' }}
@@ -567,9 +571,13 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
           <button type="button" className="btn btn-outline" onClick={() => onClose ? onClose() : navigate(-1)} style={{ borderRadius: '999px', padding: '0.75rem 1.5rem' }}>
             {t('common.cancel')}
           </button>
-          <button type="submit" className="btn btn-primary" disabled={!selectedPatientId || appointmentsToday.length === 0} style={{ borderRadius: '999px', padding: '0.75rem 2rem', boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.4)' }}>
-            <CheckCircle size={18} style={{ marginRight: '0.5rem' }} />
-            {t('consultation.submitBtn')}
+          <button type="submit" className="btn btn-primary" disabled={!selectedPatientId || submitting} style={{ borderRadius: '999px', padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.4)' }}>
+            {submitting ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <CheckCircle size={18} />
+            )}
+            {submitting ? 'Guardando...' : t('consultation.submitBtn')}
           </button>
         </div>
 

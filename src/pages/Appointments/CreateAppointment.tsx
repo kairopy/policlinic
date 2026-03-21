@@ -166,7 +166,7 @@ export const CreateAppointment: React.FC<CreateAppointmentProps> = ({ onClose, o
                     {/* Options List */}
                     <div style={{ flex: 1, overflowY: 'auto' }}>
                       {patients
-                        .filter((p: Patient) => p.name.toLowerCase().includes(patientSearch.toLowerCase()) || p.id.toLowerCase().includes(patientSearch.toLowerCase()))
+                        .filter((p: Patient) => p.name.toLowerCase().includes(patientSearch.toLowerCase()) || String(p.id).toLowerCase().includes(patientSearch.toLowerCase()))
                         .map((patient: Patient) => (
                           <div 
                             key={patient.id} 
@@ -178,7 +178,7 @@ export const CreateAppointment: React.FC<CreateAppointmentProps> = ({ onClose, o
                             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>ID: {patient.id}</div>
                           </div>
                         ))}
-                      {patients.filter((p: Patient) => p.name.toLowerCase().includes(patientSearch.toLowerCase()) || p.id.toLowerCase().includes(patientSearch.toLowerCase())).length === 0 && (
+                      {patients.filter((p: Patient) => p.name.toLowerCase().includes(patientSearch.toLowerCase()) || String(p.id).toLowerCase().includes(patientSearch.toLowerCase())).length === 0 && (
                         <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
                           Sin resultados
                         </div>

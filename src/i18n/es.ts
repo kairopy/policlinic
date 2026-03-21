@@ -76,6 +76,12 @@ export const es = {
     viewDetails: 'Ver Detalles',
     printReport: 'Imprimir Reporte',
     id: 'ID',
+    table: {
+      name: 'Nombre del Paciente',
+      phone: 'Teléfono',
+      lastVisit: 'Última Visita',
+      status: 'Estado'
+    }
   },
   appointments: {
     createTitle: 'Agendar Cita',

@@ -15,6 +15,7 @@
   flex-direction: column;
   transition: width var(--transition-normal);
   z-index: 10;
+  padding-top: 32px; /* Space for Electron Custom Title Bar Overlay */
 }
 
 .sidebar-header {
@@ -97,7 +98,7 @@
 
 /* Header */
 .top-header {
-  height: 72px;
+  height: 104px; /* 72px original + 32px title bar space */
   background-color: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -105,12 +106,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
+  padding: 32px 2rem 0; /* Top padding for title bar space */
   z-index: 5;
 }
 
 .dark .top-header {
   background-color: rgba(30, 41, 59, 0.8);
+}
+
+.header-search-wrapper {
+  position: relative;
+  z-index: 1001;
 }
 
 .header-search {
@@ -138,6 +144,79 @@
   width: 100%;
   color: var(--color-text-main);
   font-size: 0.875rem;
+}
+
+.search-results-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  width: 400px;
+  max-height: 480px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-glass);
+  overflow: hidden;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.search-no-results {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+.search-results-list {
+  padding: 0.5rem;
+  overflow-y: auto;
+  max-height: 460px;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.search-result-item:hover {
+  background-color: var(--color-primary-light);
+}
+
+.result-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.result-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.result-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-subtitle {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
 }
 
 .header-actions {
@@ -361,3 +440,29 @@
   color: var(--color-text-muted);
   margin-top: 0.25rem;
 }
+
+/* Electron Specific Adjustments - Overlay Strategy */
+.electron-app {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+}
+
+.electron-app .layout-wrapper {
+  height: 100vh; /* Occupy full screen, padding handled by children */
+}
+
+/* Ensure glass panels in Electron have proper contrast */
+.electron-app .glass-panel {
+  background: var(--color-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-border);
+}
+
+.electron-app .top-header {
+  /* Match the title bar transition */
+  border-top: none;
+}
+

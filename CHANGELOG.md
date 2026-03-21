@@ -102,3 +102,9 @@ All notable changes to the `policlinic` project will be documented in this file.
 - **Premium Onboarding UX**: Styled with deep glassmorphism aesthetics, utilizing the application's signature gradients and iconography to provide a frictionless onboarding flow.
 - **Embedded OAuth2 Authorization**: Integrated the Google Identity Services SDK directly into the modal action button, allowing users to authenticate without leaving the application context.
 - **State Aware**: Utilizes the `isGoogleLinked` utility injected automatically in `MainLayout.tsx` and constantly polls for link state to support multi-tab concurrent authentications.
+
+### Phase 11: Backend OAuth Provider (Bypass 1-hour limits)
+- **Node.js Gateway**: Created an independent Node.js / Express backend using `googleapis` to manage authentication robustly.
+- **Offline Refresh Flow**: Migrated OAuth consent process to `access_type=offline` to obtain a permanent `refresh_token`.
+- **Frontend Proxying**: Frontend `dataService.ts` now securely proxies through the local backend port 3001 to fetch renewed access tokens automatically without user intervention.
+- **Zero-downtime Token Renewals**: The system checks for 401 Unauthorized API responses from Google and silently replaces the token on-the-fly, creating a seamless eternal session.

@@ -31,14 +31,17 @@ export const Templates: React.FC = () => {
       recommendations: '',
       recoveryTime: '',
       notes: '',
-      cost: ''
+      cost: 0
     });
     setView('edit');
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setEditData(prev => ({ ...prev, [name]: value }));
+    setEditData(prev => ({ 
+      ...prev, 
+      [name]: name === 'cost' ? (Number(value) || 0) : value 
+    }));
   };
 
   const handleSave = () => {
@@ -110,9 +113,9 @@ export const Templates: React.FC = () => {
                 </div>
                 <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h3 style={{ margin: 0, fontWeight: 600, fontSize: '1.1rem', color: 'var(--color-text-main)' }}>{template.title}</h3>
-                  {(template as { cost?: string }).cost && (
+                  {template.cost && (
                     <span style={{ fontSize: '0.8rem', background: 'var(--color-primary-light)', color: 'var(--color-primary)', padding: '0.2rem 0.6rem', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                      {!isNaN(Number((template as { cost?: string }).cost)) ? Number((template as { cost?: string }).cost).toLocaleString('es-PY') : (template as { cost?: string }).cost} Gs
+                      {Number(template.cost).toLocaleString('es-PY')} Gs
                     </span>
                   )}
                 </div>
@@ -197,7 +200,7 @@ export const Templates: React.FC = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <label className="form-label" style={{ fontWeight: 600 }}>{t('consultation.cost')}</label>
-              <input className="input-field" type="text" name="cost" value={(editData as { cost?: string }).cost || ''} onChange={handleInputChange} placeholder="Ej. 150000" style={{ borderRadius: '12px' }} />
+              <input className="input-field" type="number" name="cost" value={editData.cost || ''} onChange={handleInputChange} placeholder="Ej. 150000" style={{ borderRadius: '12px' }} />
             </div>
           </div>
 

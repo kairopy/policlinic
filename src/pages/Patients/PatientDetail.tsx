@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -11,6 +10,7 @@ import {
   PlusCircle,
   Loader2 
 } from 'lucide-react';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { getPatients, getConsultations, deletePatient } from '../../services/dataService';
 import type { Patient, Consultation } from '../../services/dataService';
 import { useLanguage } from '../../context/LanguageContext';
@@ -45,30 +45,26 @@ export const PatientDetail: React.FC = () => {
     setDeleting(true);
     setShowDeleteConfirm(false);
     try {
-      const patientName = patient.name;
-      await deletePatient(patient.id);
-      addNotification('Paciente Eliminado', `El expediente de ${patientName} ha sido eliminado.`, 'success');
+     if (window.confirm(t('patients.deleteConfirm'))) {
+      await deletePatient(String(patient.id));
+      addNotification(t('common.success'), t('patients.deleteSuccess'), 'success');
       navigate('/patients');
+    }
     } catch (err) {
       console.error('Error al eliminar paciente:', err);
       setDeleting(false);
     }
   };
 
-  // Lock page scroll when delete modal is open
-  React.useEffect(() => {
-    document.body.style.overflow = showDeleteConfirm ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [showDeleteConfirm]);
 
   React.useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const allPatients = await getPatients();
-      const allConsultations = await getConsultations();
+      const allPatients: Patient[] = await getPatients();
+      const allConsultations: Consultation[] = await getConsultations();
       
-      const foundPatient = allPatients.find((p: Patient) => p.id === id);
-      const patientConsultations = allConsultations.filter((c: Consultation) => c.patientId === id);
+      const foundPatient: Patient | undefined = allPatients.find((p: Patient) => p.id === id);
+      const patientConsultations: Consultation[] = allConsultations.filter((c: Consultation) => c.patientId === id);
       
       setPatient(foundPatient || null);
       setConsultations(patientConsultations);
@@ -118,7 +114,7 @@ export const PatientDetail: React.FC = () => {
         <div className="flex-between">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
              <div className="avatar" style={{ width: '64px', height: '64px', fontSize: '1.5rem', backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)', fontWeight: 700 }}>
-                {patient.name.split(' ').map(n => n[0]).join('')}
+                {patient.name.split(' ').map((n: string) => n[0]).join('')}
              </div>
              <div>
                <h1 className="page-title" style={{ fontSize: '2.3rem', fontWeight: 800 }}>{patient.name}</h1>
@@ -256,70 +252,16 @@ export const PatientDetail: React.FC = () => {
         <CreateConsultation onClose={() => setShowNewConsultation(false)} />
       </SlidePanel>
 
-      {/* Custom Delete Confirmation Modal — rendered via Portal at document.body */}
-      {showDeleteConfirm && ReactDOM.createPortal(
-        <div style={{
-          position: 'fixed',
-          top: 0, left: 0,
-          width: '100vw', height: '100vh',
-          zIndex: 9999,
-          backgroundColor: 'rgba(10, 15, 30, 0.6)',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <div className="glass-panel" style={{
-            padding: '2rem 2.5rem',
-            borderRadius: '24px',
-            maxWidth: '420px',
-            width: '90%',
-            textAlign: 'center',
-            boxShadow: '0 24px 60px rgba(0,0,0,0.4)',
-            border: '1px solid rgba(255,255,255,0.12)'
-          }}>
-            <div style={{
-              width: '56px', height: '56px', borderRadius: '50%',
-              backgroundColor: 'rgba(239,68,68,0.15)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 1.25rem'
-            }}>
-              <Trash2 size={26} color="#ef4444" />
-            </div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.6rem' }}>Eliminar paciente</h3>
-            <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.75rem', lineHeight: 1.6 }}>
-              ¿Estás seguro de que deseas eliminar a <strong style={{ color: 'var(--color-text-main)' }}>{patient?.name}</strong>?<br />
-              Esta acción no se puede deshacer.
-            </p>
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-              <button
-                className="btn btn-outline"
-                style={{ borderRadius: '12px', flex: 1 }}
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={deleting}
-              >
-                Cancelar
-              </button>
-              <button
-                className="btn"
-                style={{
-                  borderRadius: '12px', flex: 1,
-                  backgroundColor: '#ef4444',
-                  color: '#fff',
-                  border: 'none',
-                  opacity: deleting ? 0.7 : 1
-                }}
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                <Trash2 size={16} />{deleting ? ' Eliminando...' : ' Eliminar'}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Eliminar paciente"
+        message={`¿Estás seguro de que deseas eliminar a ${patient.name}? Esta acción no se puede deshacer.`}
+        confirmText={deleting ? 'Eliminando...' : 'Eliminar'}
+        cancelText="Cancelar"
+        isDanger={true}
+        onClose={() => !deleting && setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 };

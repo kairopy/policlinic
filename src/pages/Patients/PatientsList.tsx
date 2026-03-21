@@ -49,7 +49,7 @@ export const PatientsList: React.FC = () => {
   const filteredPatients = patients
     .filter(p => 
       (p.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.id ?? '').toLowerCase().includes(searchTerm.toLowerCase())
+      String(p.id).toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
       const aValue = a[sortField] ?? '';

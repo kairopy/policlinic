@@ -1,31 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNotifications } from '../context/NotificationContext';
 import { Settings as SettingsIcon, Monitor, LogIn, LogOut, CheckCircle } from 'lucide-react';
 
-declare global {
-  interface Window {
-    google: {
-      accounts: {
-        oauth2: {
-          initTokenClient: (config: {
-            client_id: string;
-            scope: string;
-            callback: (response: { access_token: string }) => void;
-          }) => { requestAccessToken: () => void };
-        };
-      };
-    };
-  }
-}
+import { isGoogleLinked } from '../services/dataService';
 
-const GOOGLE_CLIENT_ID = '397167111848-uatagrevtsjnhef1a2imt55vd5hf3v08.apps.googleusercontent.com';
-
+// No client-side oauth config needed here as it's handled by the backend
 export const Settings: React.FC = () => {
   const { t } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { addNotification } = useNotifications();
+  const [isLinked, setIsLinked] = useState(isGoogleLinked());
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      // Small delay to let the background portal sync first if needed
+      const status = isGoogleLinked();
+      if (status !== isLinked) {
+        setIsLinked(status);
+      }
+    };
+
+    const interval = setInterval(checkAuth, 2000);
+    return () => clearInterval(interval);
+  }, [isLinked]);
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '800px' }}>
@@ -82,38 +81,40 @@ export const Settings: React.FC = () => {
             </p>
 
             <button 
-              className={`btn ${localStorage.getItem('google_access_token') ? 'btn-outline' : 'btn-primary'}`}
+              className={`btn ${isLinked ? 'btn-outline' : 'btn-primary'}`}
               style={{ alignSelf: 'flex-start', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-              onClick={() => {
-                const token = localStorage.getItem('google_access_token');
-                if (token) {
+              onClick={async () => {
+                const isLinked = localStorage.getItem('google_connected');
+                if (isLinked) {
+                  // 1. Tell the backend to clear tokens.json
+                  try {
+                    await fetch('http://localhost:3001/api/logout', { method: 'POST' });
+                  } catch (e) {
+                    console.error('Failed to logout from backend', e);
+                  }
+
+                  // 2. Clear frontend state
                   localStorage.removeItem('google_access_token');
                   localStorage.removeItem('google_connected');
                   localStorage.removeItem('google_sheets_id');
                   addNotification('Desvinculado', 'Cuenta de Google desconectada.', 'warning');
                   setTimeout(() => window.location.reload(), 500);
                 } else {
-                  const client = window.google.accounts.oauth2.initTokenClient({
-                    client_id: GOOGLE_CLIENT_ID,
-                    scope: 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.metadata.readonly',
-                    callback: (response: { access_token: string }) => {
-                      if (response.access_token) {
-                        localStorage.setItem('google_access_token', response.access_token);
-                        localStorage.setItem('google_connected', 'true');
-                        addNotification('Vinculación Exitosa', 'Cuenta de Google vinculada correctamente.', 'success');
-                        setTimeout(() => window.location.reload(), 500);
-                      }
-                    },
-                  });
-                  client.requestAccessToken();
+                  // Use the same logic as GoogleLinkPortal.tsx
+                  const isElectron = navigator.userAgent.toLowerCase().includes('electron');
+                  if (isElectron) {
+                    window.open('http://localhost:3001/auth/google', '_blank');
+                  } else {
+                    window.location.href = 'http://localhost:3001/auth/google';
+                  }
                 }
               }}
             >
-              {localStorage.getItem('google_access_token') ? <LogOut size={18} /> : <LogIn size={18} />}
-              {localStorage.getItem('google_access_token') ? t('settings.googleDisconnected') : t('settings.connectGoogle')}
+              {isLinked ? <LogOut size={18} /> : <LogIn size={18} />}
+              {isLinked ? t('settings.googleDisconnected') : t('settings.connectGoogle')}
             </button>
 
-            {localStorage.getItem('google_access_token') && (
+            {isLinked && (
               <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--color-success)', fontWeight: 600 }}>
                 <CheckCircle size={16} /> {t('settings.googleConnected')}
               </p>
