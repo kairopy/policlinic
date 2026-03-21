@@ -197,14 +197,28 @@ export const getPatients = async (): Promise<Patient[]> => {
       const data = await callGoogleApi(
         `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1`
       );
-      if (data && data.values && data.values.length > 1) {
-        const [headerRow, ...dataRows] = data.values as string[][];
-        // Build index map: columnIndex → Patient key
+      if (data && data.values && data.values.length > 0) {
+        const firstRow = data.values[0] as string[];
         const colMap: Record<number, keyof Patient> = {};
-        headerRow.forEach((h, i) => {
-          const key = HEADER_MAP[h.trim().toLowerCase()];
-          if (key) colMap[i] = key;
+        let mappedCount = 0;
+        
+        firstRow.forEach((h, i) => {
+          const key = HEADER_MAP[h?.trim().toLowerCase() || ''];
+          if (key) {
+            colMap[i] = key;
+            mappedCount++;
+          }
         });
+
+        let dataRows = data.values.slice(1) as string[][];
+
+        if (mappedCount === 0) {
+          dataRows = data.values as string[][];
+          PATIENTS_HEADERS.forEach((h, i) => {
+            const key = HEADER_MAP[h.toLowerCase()] || HEADER_MAP[h.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()];
+            if (key) colMap[i] = key;
+          });
+        }
 
         return dataRows
           .filter(row => row.some(cell => cell?.trim()))  // skip fully empty rows
@@ -264,13 +278,28 @@ export const getConsultations = async (): Promise<Consultation[]> => {
     const sheetsId = await ensureSpreadsheetExists();
     if (sheetsId) {
       const data = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Consultas`);
-      if (data && data.values && data.values.length > 1) {
-        const [headerRow, ...dataRows] = data.values as string[][];
+      if (data && data.values && data.values.length > 0) {
+        const firstRow = data.values[0] as string[];
         const colMap: Record<number, keyof Consultation> = {};
-        headerRow.forEach((h, i) => {
-          const key = CONSULT_HEADER_MAP[h.trim().toLowerCase()];
-          if (key) colMap[i] = key;
+        let mappedCount = 0;
+        
+        firstRow.forEach((h, i) => {
+          const key = CONSULT_HEADER_MAP[h?.trim().toLowerCase() || ''];
+          if (key) {
+            colMap[i] = key;
+            mappedCount++;
+          }
         });
+
+        let dataRows = data.values.slice(1) as string[][];
+
+        if (mappedCount === 0) {
+          dataRows = data.values as string[][];
+          CONSULTATIONS_HEADERS.forEach((h, i) => {
+            const key = CONSULT_HEADER_MAP[h.toLowerCase()];
+            if (key) colMap[i] = key;
+          });
+        }
 
         return dataRows
           .filter(row => row.some(cell => cell?.trim())) // Skip empty rows
