@@ -215,7 +215,26 @@ const CONSULT_HEADER_MAP: Record<string, keyof Consultation> = {
   'doctor': 'doctor', 'médico': 'doctor', 'medico': 'doctor', 'especialista': 'doctor'
 };
 
-export const getPatients = async (): Promise<Patient[]> => {
+let patientsCache: Patient[] | null = null;
+let patientsCacheTime = 0;
+let consultationsCache: Consultation[] | null = null;
+let consultationsCacheTime = 0;
+let appointmentsCache: Appointment[] | null = null;
+let appointmentsCacheTime = 0;
+const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
+
+export const clearDataCache = () => {
+  patientsCache = null;
+  consultationsCache = null;
+  appointmentsCache = null;
+};
+
+export const getPatients = async (forceRefresh = false): Promise<Patient[]> => {
+  const now = Date.now();
+  if (!forceRefresh && patientsCache && (now - patientsCacheTime < CACHE_TTL)) {
+    return [...patientsCache];
+  }
+
   if (isGoogleLinked()) {
     const sheetsId = await ensureSpreadsheetExists();
     if (sheetsId) {
@@ -245,7 +264,7 @@ export const getPatients = async (): Promise<Patient[]> => {
           });
         }
 
-        return dataRows
+        const parsed = dataRows
           .filter(row => row.some(cell => cell?.trim()))  // skip fully empty rows
           .map((row): Patient => {
             const p: Partial<Patient> = {};
@@ -266,18 +285,27 @@ export const getPatients = async (): Promise<Patient[]> => {
               notes: p.notes || '',
             };
           });
+
+        patientsCache = [...parsed];
+        patientsCacheTime = Date.now();
+        return parsed;
       }
     }
   }
-  return mockPatients;
+  return [...(mockPatients as Patient[])];
 };
 
-export const getAppointments = async (): Promise<Appointment[]> => {
+export const getAppointments = async (forceRefresh = false): Promise<Appointment[]> => {
+  const now = Date.now();
+  if (!forceRefresh && appointmentsCache && (now - appointmentsCacheTime < CACHE_TTL)) {
+    return [...appointmentsCache];
+  }
+
   if (isGoogleLinked()) {
     const calendarId = 'primary';
     const data = await callGoogleApi(`https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events`);
     if (data && data.items) {
-      return (data.items as { id: string, summary: string, description?: string, start: { dateTime?: string, date?: string } }[]).map((item) => {
+      const parsed = (data.items as { id: string, summary: string, description?: string, start: { dateTime?: string, date?: string } }[]).map((item) => {
         let parsedType = 'Consulta';
         if (item.description && item.description.includes('Cita de tipo:')) {
           parsedType = item.description.replace('Cita de tipo:', '').trim();
@@ -293,12 +321,21 @@ export const getAppointments = async (): Promise<Appointment[]> => {
           status: 'confirmed'
         };
       });
+
+      appointmentsCache = [...parsed];
+      appointmentsCacheTime = Date.now();
+      return parsed;
     }
   }
-  return mockAppointments;
+  return [...(mockAppointments as Appointment[])];
 };
 
-export const getConsultations = async (): Promise<Consultation[]> => {
+export const getConsultations = async (forceRefresh = false): Promise<Consultation[]> => {
+  const now = Date.now();
+  if (!forceRefresh && consultationsCache && (now - consultationsCacheTime < CACHE_TTL)) {
+    return [...consultationsCache];
+  }
+
   if (isGoogleLinked()) {
     const sheetsId = await ensureSpreadsheetExists();
     if (sheetsId) {
@@ -326,7 +363,7 @@ export const getConsultations = async (): Promise<Consultation[]> => {
           });
         }
 
-        return dataRows
+        const parsed = dataRows
           .filter(row => row.some(cell => cell?.trim())) // Skip empty rows
           .map((row): Consultation => {
           const c: Partial<Consultation> = {};
@@ -351,10 +388,14 @@ export const getConsultations = async (): Promise<Consultation[]> => {
             recoveryTime: c.recoveryTime || 'Inmediata'
           };
         });
+
+        consultationsCache = [...parsed];
+        consultationsCacheTime = Date.now();
+        return parsed;
       }
     }
   }
-  return mockConsultations as Consultation[];
+  return [...(mockConsultations as Consultation[])];
 };
 
 export const savePatient = async (patient: Partial<Patient>) => {
@@ -381,6 +422,7 @@ export const savePatient = async (patient: Partial<Patient>) => {
     }
   }
   (mockPatients as Patient[]).push(patient as Patient);
+  clearDataCache();
 };
 
 /**
@@ -428,6 +470,7 @@ export const updatePatient = async (patient: Patient) => {
   // Fallback: update mock data only
   const mockIdx = (mockPatients as Patient[]).findIndex(p => p.id === patient.id);
   if (mockIdx !== -1) (mockPatients as Patient[])[mockIdx] = patient;
+  clearDataCache();
 };
 
 /**
@@ -475,6 +518,7 @@ export const deletePatient = async (patientId: string) => {
   // Remove from mock data
   const mockIdx = (mockPatients as Patient[]).findIndex(p => p.id === patientId);
   if (mockIdx !== -1) (mockPatients as Patient[]).splice(mockIdx, 1);
+  clearDataCache();
 };
 
 export const saveAppointment = async (appointment: Appointment) => {
@@ -513,6 +557,7 @@ export const saveAppointment = async (appointment: Appointment) => {
     );
   }
   (mockAppointments as Appointment[]).push(appointment);
+  clearDataCache();
 };
 
 export const updateAppointment = async (appointment: Appointment) => {
@@ -559,6 +604,7 @@ export const updateAppointment = async (appointment: Appointment) => {
   if (mockIdx !== -1) {
     (mockAppointments as Appointment[])[mockIdx] = appointment;
   }
+  clearDataCache();
 };
 
 export const deleteAppointment = async (appointmentId: string | number) => {
@@ -578,6 +624,7 @@ export const deleteAppointment = async (appointmentId: string | number) => {
   if (mockIdx !== -1) {
     (mockAppointments as Appointment[]).splice(mockIdx, 1);
   }
+  clearDataCache();
 };
 
 export const saveConsultation = async (consultation: Consultation) => {
@@ -604,6 +651,7 @@ export const saveConsultation = async (consultation: Consultation) => {
     }
   }
   mockConsultations.push(consultation);
+  clearDataCache();
 };
 
 export const getTemplates = async () => {
