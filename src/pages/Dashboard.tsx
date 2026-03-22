@@ -79,8 +79,8 @@ export const Dashboard: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  // Logic Calculations (Based on March 2026 as current)
-  const today = new Date('2026-03-16');
+  // Logic Calculations
+  const today = new Date();
   const currentMonthStart = startOfMonth(today);
   const currentMonthEnd = endOfMonth(today);
   
