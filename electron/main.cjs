@@ -28,6 +28,10 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
+  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+    console.log(`[Electron Browser Console] ${message} (line ${line} in ${sourceId})`);
+  });
+
   // Intercept links to Google Auth or external sites to open in the user's default Chrome/Edge/Firefox!
   // This is CRUCIAL for Google OAuth, as Google blocks embedded Chromium browsers.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {

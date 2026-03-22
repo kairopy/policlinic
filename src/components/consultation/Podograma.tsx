@@ -20,6 +20,7 @@ interface PodogramaProps {
   readOnly?: boolean;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const MarkerTypes = [
   { type: 'callus', label: 'Callo / Hiperqueratosis', color: '#eab308', icon: <MapPin size={16} /> },
   { type: 'wart', label: 'Verruga / Papiloma', color: '#ef4444', icon: <AlertCircle size={16} /> },
@@ -40,6 +41,7 @@ export const Podograma: React.FC<PodogramaProps> = ({ data, onChange, readOnly =
     if (data) {
       try {
         const parsed = JSON.parse(data);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setState({
           imageUrl: parsed.imageUrl || null,
           markers: Array.isArray(parsed.markers) ? parsed.markers : []
@@ -165,29 +167,10 @@ export const Podograma: React.FC<PodogramaProps> = ({ data, onChange, readOnly =
           {state.imageUrl ? (
             <img src={state.imageUrl} alt="Podograma Real" className="canvas-bg-img" />
           ) : (
-            <div className="canvas-generic-template">
-              {/* Plantilla SVG genérica de pies */}
-              <svg viewBox="0 0 800 600" width="100%" height="100%" className="foot-svg">
-                <g fill="#f8f9fa" stroke="#e2e8f0" strokeWidth="4">
-                  {/* Pie Izquierdo simplificado */}
-                  <path d="M 250,500 C 250,560 150,560 150,500 C 150,300 180,150 250,150 C 300,150 280,300 250,500 Z" />
-                  <circle cx="250" cy="110" r="25" />
-                  <circle cx="210" cy="95" r="18" />
-                  <circle cx="175" cy="100" r="15" />
-                  <circle cx="145" cy="115" r="12" />
-                  <circle cx="120" cy="140" r="10" />
-
-                  {/* Pie Derecho simplificado */}
-                  <path d="M 550,500 C 550,560 650,560 650,500 C 650,300 620,150 550,150 C 500,150 520,300 550,500 Z" />
-                  <circle cx="550" cy="110" r="25" />
-                  <circle cx="590" cy="95" r="18" />
-                  <circle cx="625" cy="100" r="15" />
-                  <circle cx="655" cy="115" r="12" />
-                  <circle cx="680" cy="140" r="10" />
-                </g>
-              </svg>
+            <div className="canvas-generic-template" style={{ backgroundColor: 'transparent' }}>
+              <img src="/plantilla-pies.png" alt="Plantilla Base" className="foot-svg" style={{ objectFit: 'contain' }} />
               <div className="template-hint">
-                <span>Plantilla Genérica (Vista Plantar)</span>
+                <span>Plantilla Base (Dorsal/Vista Superior)</span>
               </div>
             </div>
           )}

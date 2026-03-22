@@ -20,7 +20,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className={isElectron ? 'electron-app' : 'min-h-screen flex flex-col'}>
+      <div className="min-h-screen flex flex-col relative w-full h-[100vh] overflow-hidden bg-[var(--color-background)]">
         {isElectron && <TitleBar />}
         <Routes>
           <Route path="/" element={<MainLayout />}>

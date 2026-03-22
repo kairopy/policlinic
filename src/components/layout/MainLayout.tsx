@@ -6,6 +6,7 @@ import { GoogleLinkPortal } from '../auth/GoogleLinkPortal';
 import './layout.css';
 
 export const MainLayout: React.FC = () => {
+  console.log("MAIN LAYOUT RENDERING", window.location.pathname);
   return (
     <div className="layout-wrapper">
       <GoogleLinkPortal />

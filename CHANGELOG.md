@@ -115,3 +115,8 @@ All notable changes to the `policlinic` project will be documented in this file.
 - **Draggable Coordinate Markers**: Built a positional coordinate system (`x%`, `y%`) leveraging `lucide-react` iconography for distinct pathology types (Warts, Calluses, Ulcers, Fungal Infections).
 - **Relational Persistence (`dataService.ts`)**: Expanded the Google Sheets consultation matrix schema, adding the `PodogramaData` tail column to absorb the JSON-stringified visual payload (imageUrl, distinct point clouds, clinical notes).
 - **Omnipresent Readability (`ConsultationDetailModal.tsx`)**: Rendered the same visualizer module in a `readOnly={true}` configuration mapped atop historical consultations for zero-friction medical reviews.
+
+### Phase 13: Electron Production Hotfixes (GUI Validation)
+- **Resolved Invisible DOM**: Tracked down a white-screen rendering issue within the native Windows Electron build. Discovered an overflow constraint caused by `electron-app` wrapper interacting unpredictably with `100vh` boundaries.
+- **Refactored Root Scope**: Eliminated `.electron-app` dependency in favor of robust, pre-calculated Tailwind CSS primitives (`min-h-screen`, `w-full`, `h-[100vh]`) guaranteeing global viewport occupation.
+- **Podogram Static Background**: Upgraded the `Podograma.tsx` architecture to point to an external `plantilla-pies.png` image base natively instead of an inline SVG, enabling immediate customization for clinical templates.
