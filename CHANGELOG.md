@@ -108,3 +108,10 @@ All notable changes to the `policlinic` project will be documented in this file.
 - **Offline Refresh Flow**: Migrated OAuth consent process to `access_type=offline` to obtain a permanent `refresh_token`.
 - **Frontend Proxying**: Frontend `dataService.ts` now securely proxies through the local backend port 3001 to fetch renewed access tokens automatically without user intervention.
 - **Zero-downtime Token Renewals**: The system checks for 401 Unauthorized API responses from Google and silently replaces the token on-the-fly, creating a seamless eternal session.
+
+### Phase 12: Interactive Podogram Module (Phase 4 of MVP)
+- **Interactive Foot Mapping Canvas (`Podograma.tsx`)**: Created a dedicated, encapsulated React component to host an interactive visual map for clinical pathology plotting.
+- **Architectural Flexibility**: The component defaults to a generalized plantar SVG topology but accepts custom real-foot photography uploads via an embedded file reader, satisfying real clinical variance.
+- **Draggable Coordinate Markers**: Built a positional coordinate system (`x%`, `y%`) leveraging `lucide-react` iconography for distinct pathology types (Warts, Calluses, Ulcers, Fungal Infections).
+- **Relational Persistence (`dataService.ts`)**: Expanded the Google Sheets consultation matrix schema, adding the `PodogramaData` tail column to absorb the JSON-stringified visual payload (imageUrl, distinct point clouds, clinical notes).
+- **Omnipresent Readability (`ConsultationDetailModal.tsx`)**: Rendered the same visualizer module in a `readOnly={true}` configuration mapped atop historical consultations for zero-friction medical reviews.

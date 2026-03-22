@@ -109,7 +109,7 @@ const callGoogleApi = async (url: string, method: string = 'GET', body?: unknown
 
 const SPREADSHEET_NAME = 'Lic Karina Pacientes';
 const PATIENTS_HEADERS = ['ID', 'Nombre', 'Edad', 'Email', 'Teléfono', 'Estado', 'Última Visita', 'Fecha Creación', 'Notas'];
-const CONSULTATIONS_HEADERS = ['ID', 'PatientID', 'PatientName', 'Date', 'Summary', 'Symptoms', 'Treatment', 'Recommendations', 'Cost', 'Doctor'];
+const CONSULTATIONS_HEADERS = ['ID', 'PatientID', 'PatientName', 'Date', 'Summary', 'Symptoms', 'Treatment', 'Recommendations', 'Cost', 'Doctor', 'PodogramaData'];
 
 let ensurePromise: Promise<string | null> | null = null;
 
@@ -212,7 +212,8 @@ const CONSULT_HEADER_MAP: Record<string, keyof Consultation> = {
   'treatment': 'treatment', 'tratamiento': 'treatment',
   'recommendations': 'recommendations', 'recomendaciones': 'recommendations',
   'cost': 'cost', 'costo': 'cost', 'precio': 'cost',
-  'doctor': 'doctor', 'médico': 'doctor', 'medico': 'doctor', 'especialista': 'doctor'
+  'doctor': 'doctor', 'médico': 'doctor', 'medico': 'doctor', 'especialista': 'doctor',
+  'podogramadata': 'podograma_data', 'podograma': 'podograma_data'
 };
 
 let patientsCache: Patient[] | null = null;
@@ -385,7 +386,8 @@ export const getConsultations = async (forceRefresh = false): Promise<Consultati
             symptoms: c.symptoms || '',
             treatment: c.treatment || '',
             recommendations: c.recommendations || '',
-            recoveryTime: c.recoveryTime || 'Inmediata'
+            recoveryTime: c.recoveryTime || 'Inmediata',
+            podograma_data: c.podograma_data || ''
           };
         });
 
@@ -641,7 +643,8 @@ export const saveConsultation = async (consultation: Consultation) => {
         consultation.treatment,
         consultation.recommendations,
         consultation.cost,
-        consultation.doctor
+        consultation.doctor,
+        consultation.podograma_data || ''
       ]];
       await callGoogleApi(
         `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Consultas!A1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,

@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { X, Printer } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { Podograma } from './Podograma';
 import type { Consultation } from '../../services/dataService';
 
 interface ConsultationDetailModalProps {
@@ -196,6 +197,17 @@ export const ConsultationDetailModal: React.FC<ConsultationDetailModalProps> = (
               </h4>
               <div style={{ padding: '1.5rem', background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.1)', borderRadius: '20px', fontSize: '1rem', fontStyle: 'italic', color: 'var(--color-text-main)', borderLeft: '5px solid var(--color-primary)' }}>
                 {consultation.notes}
+              </div>
+            </div>
+          )}
+          
+          {consultation.podograma_data && (
+            <div>
+              <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
+                {t('consultation.podogramTitle') || 'Mapa Podológico (Podograma)'}
+              </h4>
+              <div style={{ padding: '1rem', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '20px' }}>
+                <Podograma data={consultation.podograma_data} readOnly />
               </div>
             </div>
           )}

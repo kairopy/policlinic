@@ -39,6 +39,7 @@ export interface Consultation {
   recommendations: string;
   recoveryTime: string;
   notes?: string;
+  podograma_data?: string;
 }
 
 export const mockPatients: Patient[] = [

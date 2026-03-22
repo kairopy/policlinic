@@ -4,6 +4,7 @@ import { Stethoscope, Image as ImageIcon, CheckCircle, UploadCloud, FileEdit, X,
 import { useLanguage } from '../../context/LanguageContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { SingleDatePicker } from '../../components/ui/SingleDatePicker';
+import { Podograma } from '../../components/consultation/Podograma';
 import { getPatients, saveConsultation, getTemplates, updatePatientStatus } from '../../services/dataService';
 import type { Patient, Consultation } from '../../services/dataService';
 
@@ -60,6 +61,8 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
 
   const beforeInputRef = useRef<HTMLInputElement>(null);
   const afterInputRef = useRef<HTMLInputElement>(null);
+
+  const [podogramaData, setPodogramaData] = useState<string>('');
 
   const now = new Date();
   const [consultDate, setConsultDate] = useState(now.toISOString().split('T')[0]);
@@ -155,7 +158,8 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
         treatment: formData.treatment,
         recommendations: formData.recommendations,
         recoveryTime: formData.recoveryTime,
-        notes: formData.notes
+        notes: formData.notes,
+        podograma_data: podogramaData
       };
       
       await updatePatientStatus(selectedPatientId, patientStatus);
@@ -466,6 +470,14 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
               style={{ resize: 'none', overflow: 'hidden', minHeight: '100px', borderRadius: '12px', background: 'var(--color-background)', fontFamily: 'var(--font-mono)', width: '100%' }} 
             />
           </div>
+        </div>
+
+        {/* Podogram Module */}
+        <div className="glass-panel" style={{ padding: '2rem', borderRadius: '24px' }}>
+          <h3 style={{ margin: '0 0 1.5rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
+            <ImageIcon size={18} color="var(--color-primary)" /> Mapa Podológico (Podograma)
+          </h3>
+          <Podograma data={podogramaData} onChange={setPodogramaData} />
         </div>
 
         {/* Media Upload Dropzones (Before/After) */}
