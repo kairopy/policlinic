@@ -1,24 +1,37 @@
-import React, { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { mockConsultations, mockPatients } from '../../data/mockData';
-import { FileText, ArrowLeft } from 'lucide-react';
+import { getConsultations, getPatients } from '../../services/dataService';
+import type { Consultation, Patient } from '../../services/dataService';
+import { FileText, ArrowLeft, Loader2 } from 'lucide-react';
 
 export const PrintConsultation = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  const consultRaw = mockConsultations.find((c: import('../../data/mockData').Consultation) => String(c.id) === id);
-  const patient = consultRaw ? mockPatients.find((p: import('../../data/mockData').Patient) => String(p.id) === String(consultRaw.patientId)) : null;
-  
-  const consult = React.useMemo(() => {
-    return consultRaw ? {
-      ...consultRaw,
-      patientName: patient ? patient.name : 'Desconocido'
-    } : null;
-  }, [consultRaw, patient]);
+  const [consult, setConsult] = useState<(Consultation & { patientName: string }) | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (consult) {
+    const fetchData = async () => {
+      setLoading(true);
+      const [consultationsList, patientsList] = await Promise.all([getConsultations(), getPatients()]);
+      
+      const consultRaw = consultationsList.find((c: Consultation) => String(c.id) === id);
+      const patient = consultRaw ? patientsList.find((p: Patient) => String(p.id) === String(consultRaw.patientId)) : null;
+      
+      if (consultRaw) {
+        setConsult({
+          ...consultRaw,
+          patientName: consultRaw.patientName || (patient ? patient.name : 'Desconocido')
+        });
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, [id]);
+
+  useEffect(() => {
+    if (consult && !loading) {
       // Trigger print automatically after a short delay for rendering
       const timer = setTimeout(() => {
         const originalTitle = document.title;
@@ -28,7 +41,16 @@ export const PrintConsultation = () => {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [consult]);
+  }, [consult, loading]);
+
+  if (loading) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center', background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <Loader2 size={48} className="animate-spin" color="#0284c7" />
+        <p style={{ marginTop: '1rem', color: '#64748b' }}>Preparando documento para impresión...</p>
+      </div>
+    );
+  }
 
   if (!consult) {
     return (
