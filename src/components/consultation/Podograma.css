@@ -112,6 +112,14 @@
   max-width: 80%;
   max-height: 90%;
   pointer-events: none;
+  mix-blend-mode: multiply; /* Drops the white background */
+  filter: contrast(1.2);    /* Sharpens the remaining black lines */
+}
+
+/* Dark mode adaptive mapping */
+.dark .foot-svg {
+  mix-blend-mode: screen;   /* Drops the black background */
+  filter: invert(1) contrast(1.2); /* Inverts original image (white bg -> black bg, black lines -> white lines) */
 }
 
 .template-hint {

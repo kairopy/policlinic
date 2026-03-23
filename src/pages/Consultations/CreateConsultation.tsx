@@ -139,7 +139,12 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPatientId || submitting) return;
+    if (submitting) return;
+
+    if (!selectedPatientId) {
+      addNotification('Atención', 'Debe seleccionar un paciente para poder guardar la consulta.', 'warning');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -583,7 +588,7 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
           <button type="button" className="btn btn-outline" onClick={() => onClose ? onClose() : navigate(-1)} style={{ borderRadius: '999px', padding: '0.75rem 1.5rem' }}>
             {t('common.cancel')}
           </button>
-          <button type="submit" className="btn btn-primary" disabled={!selectedPatientId || submitting} style={{ borderRadius: '999px', padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.4)' }}>
+          <button type="submit" className="btn btn-primary" disabled={submitting} style={{ borderRadius: '999px', padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.4)' }}>
             {submitting ? (
               <Loader2 size={18} className="animate-spin" />
             ) : (
