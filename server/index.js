@@ -214,6 +214,9 @@ app.post('/api/logout', (req, res) => {
   res.json({ success: true });
 });
 
+// 5. Serve static frontend files (used for proxying Print previews to native Chrome/Edge)
+app.use(express.static(path.join(__dirname, '../dist')));
+
 const startServer = () => {
   return app.listen(PORT, () => {
     console.log(`Backend server running on http://localhost:${PORT}`);

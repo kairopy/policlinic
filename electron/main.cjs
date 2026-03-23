@@ -33,7 +33,6 @@ function createWindow() {
   });
 
   // Intercept links to Google Auth or external sites to open in the user's default Chrome/Edge/Firefox!
-  // This is CRUCIAL for Google OAuth, as Google blocks embedded Chromium browsers.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     // If it's a google auth link OR our local auth trigger, send to system browser
     if (
@@ -44,6 +43,18 @@ function createWindow() {
       shell.openExternal(url);
       return { action: 'deny' };
     }
+
+    // Proxy Print routes to native OS browser for rich PDF generation
+    if (url.includes('/print/')) {
+      if (isDev) {
+        shell.openExternal(url);
+      } else {
+        const hashParams = url.split('#')[1] || '';
+        shell.openExternal(`http://localhost:3001/#${hashParams}`);
+      }
+      return { action: 'deny' };
+    }
+
     return { action: 'allow' };
   });
 
@@ -55,6 +66,14 @@ function createWindow() {
     ) {
       event.preventDefault();
       shell.openExternal(url);
+    } else if (url.includes('/print/')) {
+      event.preventDefault();
+      if (isDev) {
+        shell.openExternal(url);
+      } else {
+        const hashParams = url.split('#')[1] || '';
+        shell.openExternal(`http://localhost:3001/#${hashParams}`);
+      }
     }
   });
 }
