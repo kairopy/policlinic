@@ -156,7 +156,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       
       {/* Toast Portal - Rendered at the absolute top of the DOM */}
       {document.body && createPortal(
-        <div style={{ position: 'fixed', top: '70px', right: '20px', zIndex: 9999999, display: 'flex', flexDirection: 'column', gap: '10px', pointerEvents: 'none' }}>
+        <div style={{ position: 'fixed', top: '90px', right: '20px', zIndex: 9999999, display: 'flex', flexDirection: 'column', gap: '10px', pointerEvents: 'none' }}>
           {activeToasts.map(toast => (
             <div 
               key={toast.id} 

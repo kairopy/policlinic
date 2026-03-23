@@ -291,6 +291,11 @@ export const getPatients = async (forceRefresh = false): Promise<Patient[]> => {
         patientsCacheTime = Date.now();
         return parsed;
       }
+      
+      // If Google is linked but sheet is empty (or only headers), return empty and cache
+      patientsCache = [];
+      patientsCacheTime = Date.now();
+      return [];
     }
   }
   return [...(mockPatients as Patient[])];
@@ -327,6 +332,11 @@ export const getAppointments = async (forceRefresh = false): Promise<Appointment
       appointmentsCacheTime = Date.now();
       return parsed;
     }
+    
+    // If Google is linked but no appointments exist, return empty array
+    appointmentsCache = [];
+    appointmentsCacheTime = Date.now();
+    return [];
   }
   return [...(mockAppointments as Appointment[])];
 };
@@ -395,6 +405,11 @@ export const getConsultations = async (forceRefresh = false): Promise<Consultati
         consultationsCacheTime = Date.now();
         return parsed;
       }
+      
+      // If Google is linked but sheet is completely empty, return empty array
+      consultationsCache = [];
+      consultationsCacheTime = Date.now();
+      return [];
     }
   }
   return [...(mockConsultations as Consultation[])];
