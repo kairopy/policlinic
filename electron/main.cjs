@@ -1,6 +1,6 @@
 const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const path = require('path');
-const isDev = require('electron-is-dev');
+const isDev = !app.isPackaged;
 const { startServer } = require('../server/index.js');
 
 let mainWindow;
