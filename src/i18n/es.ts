@@ -18,7 +18,7 @@ export const es = {
     description: 'Este es el resumen de tu clínica de hoy.',
     totalPatients: 'Pacientes Totales',
     appointmentsToday: 'Citas de Hoy',
-    activeConsultations: 'Consultas Activas',
+    activeConsultations: 'Consultas del Mes',
     monthlyRevenue: 'Ingreso Mensual',
     vsLastMonth: 'vs mes pasado',
     upcomingAppointments: 'Citas Próximas de Hoy',
