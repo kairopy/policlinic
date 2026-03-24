@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from './components/layout/MainLayout';
 import { Dashboard } from './pages/Dashboard';
 import { PatientsList } from './pages/Patients/PatientsList';
@@ -19,7 +19,7 @@ function App() {
   const isElectron = win.process && win.process.type === 'renderer';
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <div className="min-h-screen flex flex-col relative w-full h-[100vh] overflow-hidden bg-[var(--color-background)]">
         {isElectron && <TitleBar />}
         <Routes>
@@ -46,7 +46,7 @@ function App() {
           <Route path="print/consultation/:id" element={<PrintConsultation />} />
         </Routes>
       </div>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

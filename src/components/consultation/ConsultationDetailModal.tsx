@@ -62,7 +62,7 @@ export const ConsultationDetailModal: React.FC<ConsultationDetailModalProps> = (
       >
         <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', display: 'flex', gap: '0.75rem', zIndex: 10 }}>
           <button 
-            onClick={() => window.open(`/print/consultation/${consultation.id}`, '_blank')} 
+            onClick={() => window.open(`#/print/consultation/${consultation.id}`, '_blank')} 
             style={{ 
               background: 'var(--color-background)', 
               border: '1px solid var(--color-border)', 

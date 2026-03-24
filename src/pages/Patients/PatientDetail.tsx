@@ -206,7 +206,7 @@ export const PatientDetail: React.FC = () => {
                   <button
                     className="btn btn-ghost btn-sm"
                     style={{ fontWeight: 600 }}
-                    onClick={() => window.open(`/print/consultation/${c.id}`, '_blank')}
+                    onClick={() => window.open(`#/print/consultation/${c.id}`, '_blank')}
                   >
                     {t('patients.printReport')}
                   </button>

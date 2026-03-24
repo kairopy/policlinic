@@ -1,4 +1,4 @@
-﻿# Logs
+# Logs
 logs
 *.log
 npm-debug.log*
@@ -23,4 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 dist-electron/
+.builder-cache/
 electron_dom_dump.html
+server/tokens.json
+server/tokens.json.backup
