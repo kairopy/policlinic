@@ -168,7 +168,7 @@ export const Podograma: React.FC<PodogramaProps> = ({ data, onChange, readOnly =
             <img src={state.imageUrl} alt="Podograma Real" className="canvas-bg-img" />
           ) : (
             <div className="canvas-generic-template" style={{ backgroundColor: 'transparent' }}>
-              <img src="/plantilla-pies.png" alt="Plantilla Base" className="foot-svg" style={{ objectFit: 'contain' }} />
+              <img src="plantilla-pies.png" alt="Plantilla Base" className="foot-svg" style={{ objectFit: 'contain' }} />
               <div className="template-hint">
                 <span>Plantilla Base (Dorsal/Vista Superior)</span>
               </div>
