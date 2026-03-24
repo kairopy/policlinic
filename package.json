@@ -22,7 +22,8 @@
     "files": [
       "dist/**/*",
       "electron/**/*",
-      "server/**/*"
+      "server/**/*",
+      "server/.env"
     ],
     "win": {
       "target": "nsis"
