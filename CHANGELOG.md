@@ -1,6 +1,24 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to the `policlinic` project will be documented in this file.
+
+## [Phase 14] - 2026-03-28 - Fisioterapia a Domicilio (Ariel Cespedes)
+
+### Added
+- geocoding.ts (NEW): Extrae coords de URLs de Google Maps (regex), fallback Nominatim, cache sessionStorage, sanitizacion XSS.
+- RoutesPage.tsx (NEW): Mapa Leaflet + OSRM, origen Club Olimpia, marcadores numerados, itinerario lateral, navegacion de fechas.
+
+### Modified
+- mockData.ts: Campo location en Patient.
+- dataService.ts: Hoja renombrada, columna Ubicacion J con CRUD completo.
+- PatientForm.tsx: Campo location con previsualizacion link.
+- PatientDetail.tsx: Ubicacion como link seguro a Google Maps o texto plano.
+- Sidebar.tsx: Item Rutas (Navigation icon), rebrand a Ariel Cespedes.
+- App.tsx: Ruta /routes registrada.
+
+### Security
+- sanitizeGoogleMapsUrl() previene XSS.
+- Links externos con rel=noopener noreferrer.
 
 ## [Unreleased] - Initial MVP Scaffold
 
@@ -21,6 +39,24 @@ All notable changes to the `policlinic` project will be documented in this file.
 # Changelog
 
 All notable changes to the `policlinic` project will be documented in this file.
+
+## [Phase 14] - 2026-03-28 - Fisioterapia a Domicilio (Ariel Cespedes)
+
+### Added
+- geocoding.ts (NEW): Extrae coords de URLs de Google Maps (regex), fallback Nominatim, cache sessionStorage, sanitizacion XSS.
+- RoutesPage.tsx (NEW): Mapa Leaflet + OSRM, origen Club Olimpia, marcadores numerados, itinerario lateral, navegacion de fechas.
+
+### Modified
+- mockData.ts: Campo location en Patient.
+- dataService.ts: Hoja renombrada, columna Ubicacion J con CRUD completo.
+- PatientForm.tsx: Campo location con previsualizacion link.
+- PatientDetail.tsx: Ubicacion como link seguro a Google Maps o texto plano.
+- Sidebar.tsx: Item Rutas (Navigation icon), rebrand a Ariel Cespedes.
+- App.tsx: Ruta /routes registrada.
+
+### Security
+- sanitizeGoogleMapsUrl() previene XSS.
+- Links externos con rel=noopener noreferrer.
 
 ## [Unreleased] - Initial MVP Scaffold
 
@@ -127,3 +163,4 @@ All notable changes to the `policlinic` project will be documented in this file.
 - **Consultation Print Decoupling**: Conducted a final global search for static data traces and discovered `PrintConsultation.tsx` was directly hardcoded to the local mock database. Refactored the print view to consume the unified `dataService.ts` asynchronously, guaranteeing printable records match live Google Sheet elements flawlessly.
 - **Native OS Print Proxy**: Configured the internal Node backend to serve Vite static bundles, and deployed an Electron IPC interceptor for all `/print/` endpoints. All print requests are now safely proxy-routed out of the Chromium Electron constraints directly into the user's native system browser (e.g. Chrome/Edge), allowing for full, uninhibited PDF generation and preview capabilities.
 - **Production Asset Encapsulation**: Updated the `electron-builder` NSIS configuration within `package.json` to explicitly whitelist strict inclusion of the `server/.env` file. This guarantees that Google OAuth credentials survive the application bundling process and execute flawlessly on local clients.
+
