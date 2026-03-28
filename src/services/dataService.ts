@@ -107,8 +107,8 @@ const callGoogleApi = async (url: string, method: string = 'GET', body?: unknown
   }
 };
 
-const SPREADSHEET_NAME = 'Lic Karina Pacientes';
-const PATIENTS_HEADERS = ['ID', 'Nombre', 'Edad', 'Email', 'Teléfono', 'Estado', 'Última Visita', 'Fecha Creación', 'Notas'];
+const SPREADSHEET_NAME = 'Ariel Cespedes Pacientes';
+const PATIENTS_HEADERS = ['ID', 'Nombre', 'Edad', 'Email', 'Teléfono', 'Estado', 'Última Visita', 'Fecha Creación', 'Notas', 'Ubicación'];
 const CONSULTATIONS_HEADERS = ['ID', 'PatientID', 'PatientName', 'Date', 'Summary', 'Symptoms', 'Treatment', 'Recommendations', 'Cost', 'Doctor', 'PodogramaData'];
 
 let ensurePromise: Promise<string | null> | null = null;
@@ -200,6 +200,7 @@ const HEADER_MAP: Record<string, keyof Patient> = {
   'última visita': 'lastVisit', 'ultima visita': 'lastVisit', 'lastvisit': 'lastVisit',
   'fecha creación': 'createdAt', 'fecha creacion': 'createdAt', 'createdat': 'createdAt',
   'notas': 'notes', 'notes': 'notes',
+  'ubicación': 'location', 'ubicacion': 'location', 'location': 'location',
 };
 
 const CONSULT_HEADER_MAP: Record<string, keyof Consultation> = {
@@ -284,6 +285,7 @@ export const getPatients = async (forceRefresh = false): Promise<Patient[]> => {
               lastVisit: p.lastVisit || '',
               createdAt: p.createdAt || '',
               notes: p.notes || '',
+              location: p.location || '',
             };
           });
 
@@ -428,7 +430,8 @@ export const savePatient = async (patient: Partial<Patient>) => {
         patient.status ?? '',
         patient.lastVisit ?? '',
         patient.createdAt ?? '',
-        patient.notes ?? ''
+        patient.notes ?? '',
+        patient.location ?? ''
       ]];
       // Correct append URL: range before :append, options as query params
       await callGoogleApi(
@@ -469,10 +472,11 @@ export const updatePatient = async (patient: Patient) => {
             patient.status,
             patient.lastVisit,
             patient.createdAt,
-            patient.notes ?? ''
+            patient.notes ?? '',
+            patient.location ?? ''
           ]];
           await callGoogleApi(
-            `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1!A${rowNum}:I${rowNum}?valueInputOption=USER_ENTERED`,
+            `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1!A${rowNum}:J${rowNum}?valueInputOption=USER_ENTERED`,
             'PUT',
             { values }
           );

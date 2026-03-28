@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { User, Phone, Mail, FileText, ArrowLeft, Save } from 'lucide-react';
+import { User, Phone, Mail, FileText, ArrowLeft, Save, MapPin, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { getPatients, savePatient, updatePatient } from '../../services/dataService';
+import { sanitizeGoogleMapsUrl } from '../../services/geocoding';
 import type { Patient } from '../../services/dataService';
 
 interface PatientFormProps {
@@ -39,6 +40,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     phone: '',
     email: '',
     notes: '',
+    location: '',
     status: 'pending_control',
   });
   const [saving, setSaving] = useState(false);
@@ -56,6 +58,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             phone: patient.phone,
             email: patient.email,
             notes: patient.notes || '',
+            location: patient.location || '',
             status: patient.status as Patient['status'],
           });
         }
@@ -85,6 +88,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         phone: formData.phone || '',
         email: formData.email || '',
         notes: formData.notes || '',
+        location: formData.location || '',
         lastVisit: new Date().toISOString().split('T')[0],
         status: (formData.status as Patient['status']) || 'in_treatment',
         createdAt: new Date().toISOString().split('T')[0],
@@ -209,12 +213,46 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             <textarea
               name="notes"
               className="input-field"
-              rows={5}
+              rows={4}
               placeholder={t('patients.notesPlaceholder')}
               value={formData.notes}
               onChange={handleChange}
               style={{ resize: 'vertical', borderRadius: '16px', padding: '1rem' }}
             />
+          </div>
+
+          <div className="input-group">
+            <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 600 }}>
+              <MapPin size={18} color="var(--color-primary)" /> Ubicación (Google Maps)
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                name="location"
+                type="text"
+                className="input-field"
+                placeholder="Pega aquí el link de Google Maps o escribe la dirección"
+                value={formData.location || ''}
+                onChange={handleChange}
+                style={{ borderRadius: '12px', paddingRight: formData.location ? '3rem' : '1rem' }}
+              />
+              {formData.location && sanitizeGoogleMapsUrl(formData.location) && (
+                <a
+                  href={sanitizeGoogleMapsUrl(formData.location) || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Ver en Google Maps"
+                  style={{
+                    position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)',
+                    color: 'var(--color-primary)', display: 'flex', alignItems: 'center'
+                  }}
+                >
+                  <ExternalLink size={16} />
+                </a>
+              )}
+            </div>
+            <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: '0.4rem' }}>
+              Ejemplo: copia el enlace desde Google Maps → Compartir → Copiar enlace
+            </p>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1.25rem', marginTop: '1rem', paddingTop: '2rem', borderTop: '1px solid var(--color-border)', flexDirection: 'column', alignItems: 'flex-end' }}>

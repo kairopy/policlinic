@@ -6,7 +6,8 @@ import {
   FileText,
   Settings,
   Activity,
-  LayoutDashboard
+  LayoutDashboard,
+  Navigation
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import './layout.css';
@@ -18,6 +19,7 @@ export const Sidebar: React.FC = () => {
     { to: '/', icon: LayoutDashboard, label: t('sidebar.dashboard') },
     { to: '/patients', icon: Users, label: t('sidebar.patients') },
     { to: '/appointments', icon: CalendarIcon, label: t('sidebar.appointments') },
+    { to: '/routes', icon: Navigation, label: 'Rutas' },
     { to: '/consultations', icon: Activity, label: t('sidebar.history') },
     { to: '/templates', icon: FileText, label: t('sidebar.templates') },
   ];
@@ -26,7 +28,7 @@ export const Sidebar: React.FC = () => {
     <aside className="sidebar">
       <div className="sidebar-header">
         <Activity className="logo-icon" />
-        <span className="brand-name">Lic Karina Podología</span>
+        <span className="brand-name">Ariel Céspedes<br /><small style={{ fontSize: '0.65rem', opacity: 0.7, fontWeight: 400 }}>Fisioterapia a Domicilio</small></span>
       </div>
 
       <nav className="nav-menu">

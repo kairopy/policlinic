@@ -1,4 +1,4 @@
-// Mock Data for UI presentation - Tailored for Podiatry & Paraguayan Names
+// Mock Data for UI presentation - Tailored for Physiotherapy & Paraguayan Names
 
 export interface Patient {
   id: string;
@@ -10,6 +10,8 @@ export interface Patient {
   lastVisit: string;
   createdAt: string;
   notes?: string;
+  /** Google Maps URL or text address for home visit routing */
+  location?: string;
 }
 
 export interface Appointment {
@@ -52,7 +54,8 @@ export const mockPatients: Patient[] = [
     status: 'active',
     lastVisit: '2024-03-10',
     createdAt: '2024-01-15',
-    notes: 'Paciente diabético, requiere control preventivo mensual.'
+    notes: 'Lesión de hombro izquierdo. En proceso de rehabilitación.',
+    location: 'https://www.google.com/maps?q=-25.2867,-57.6470'
   },
   {
     id: 'PAC-002',
@@ -63,7 +66,8 @@ export const mockPatients: Patient[] = [
     status: 'pending_control',
     lastVisit: '2024-02-28',
     createdAt: '2024-02-01',
-    notes: 'Tratamiento de onicocriptosis en proceso.'
+    notes: 'Recuperación post-operatoria rodilla derecha.',
+    location: 'https://www.google.com/maps?q=-25.3010,-57.6350'
   },
   {
     id: 'PAC-003',
@@ -74,7 +78,8 @@ export const mockPatients: Patient[] = [
     status: 'active',
     lastVisit: '2024-03-15',
     createdAt: '2023-11-20',
-    notes: 'Uso de plantillas ortopédicas.'
+    notes: 'Dolor lumbar crónico. Sesiones de fisioterapia semanal.',
+    location: 'Av. Mariscal López 1234, Asunción'
   }
 ];
 

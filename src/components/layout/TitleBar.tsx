@@ -51,43 +51,22 @@ const TitleBar: React.FC = () => {
       >
         <button 
           onClick={handleMinimize}
-          className="hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center"
-          style={{
-            width: '46px',
-            height: '100%',
-            background: 'transparent',
-            border: 'none',
-            color: 'var(--color-text-main)',
-            cursor: 'default',
-          }}
+          className="window-control-btn"
+          title="Minimizar"
         >
           <Minus size={16} strokeWidth={1.5} />
         </button>
         <button 
           onClick={handleMaximize}
-          className="hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center"
-          style={{
-            width: '46px',
-            height: '100%',
-            background: 'transparent',
-            border: 'none',
-            color: 'var(--color-text-main)',
-            cursor: 'default',
-          }}
+          className="window-control-btn"
+          title="Maximizar"
         >
           <Square size={12} strokeWidth={1.5} />
         </button>
         <button 
           onClick={handleClose}
-          className="hover:bg-[#e81123] hover:text-white transition-colors flex items-center justify-center"
-          style={{
-            width: '46px',
-            height: '100%',
-            background: 'transparent',
-            border: 'none',
-            color: 'var(--color-text-main)',
-            cursor: 'default',
-          }}
+          className="window-control-btn close-btn"
+          title="Cerrar"
         >
           <X size={16} strokeWidth={1.5} />
         </button>

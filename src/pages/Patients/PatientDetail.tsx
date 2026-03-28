@@ -8,11 +8,14 @@ import {
   Activity, 
   User, 
   PlusCircle,
-  Loader2 
+  Loader2,
+  MapPin,
+  ExternalLink
 } from 'lucide-react';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { getPatients, getConsultations, deletePatient } from '../../services/dataService';
 import type { Patient, Consultation } from '../../services/dataService';
+import { sanitizeGoogleMapsUrl } from '../../services/geocoding';
 import { useLanguage } from '../../context/LanguageContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { ConsultationDetailModal } from '../../components/consultation/ConsultationDetailModal';
@@ -160,10 +163,29 @@ export const PatientDetail: React.FC = () => {
                 <span style={{ color: 'var(--color-text-muted)' }}>{t('patients.phone')}</span>
                 <span style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>{patient.phone}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem' }}>
                 <span style={{ color: 'var(--color-text-muted)' }}>{t('patients.email')}</span>
                 <span style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>{patient.email}</span>
               </div>
+              {patient.location && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                  <span style={{ color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+                    <MapPin size={14} /> Ubicación
+                  </span>
+                  {sanitizeGoogleMapsUrl(patient.location) ? (
+                    <a
+                      href={sanitizeGoogleMapsUrl(patient.location) || '#'}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontWeight: 600, color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.85rem', textAlign: 'right', wordBreak: 'break-all' }}
+                    >
+                      Ver en Google Maps <ExternalLink size={12} />
+                    </a>
+                  ) : (
+                    <span style={{ fontWeight: 600, color: 'var(--color-text-main)', fontSize: '0.88rem', textAlign: 'right' }}>{patient.location}</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
