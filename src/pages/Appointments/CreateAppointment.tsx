@@ -72,10 +72,30 @@ export const CreateAppointment: React.FC<CreateAppointmentProps> = ({ onClose, o
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    // If we're editing an appointment, automatically try to find the correct patient ID 
+    // based on the appointment's title (which has format "Patient Name - Type")
+    if (patients.length > 0 && initialAppointment && (!selectedPatientId || !patients.some(p => p.id === selectedPatientId))) {
+       const titleName = initialAppointment.title.split('-')[0].trim().toLowerCase();
+       const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+       const normTitle = normalize(titleName);
+       
+       const match = 
+         // exact match
+         patients.find(p => normalize(p.name) === normTitle) ||
+         // partial match
+         patients.find(p => normalize(p.name).includes(normTitle) || normTitle.includes(normalize(p.name)));
+       
+       if (match) {
+         setSelectedPatientId(match.id);
+       } else {
+         setSelectedPatientId(''); // Clear out the garbage ID so the user is forced to pick manually
+       }
+    }
+  }, [patients, initialAppointment, selectedPatientId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPatientId) return;
-
     const patient = patients.find((p: Patient) => p.id === selectedPatientId);
     if (!patient) return;
 
@@ -103,12 +123,17 @@ export const CreateAppointment: React.FC<CreateAppointmentProps> = ({ onClose, o
     };
     appointmentData.notes = notes;
 
-    if (initialAppointment) {
-      await updateAppointment(appointmentData);
-      addNotification('Cita Actualizada', `La cita para ${patient.name} ha sido actualizada.`, 'success');
-    } else {
-      await saveAppointment(appointmentData);
-      addNotification('Cita Agendada', `Nueva cita agendada para ${patient.name}.`, 'success');
+    try {
+      if (initialAppointment) {
+        await updateAppointment(appointmentData);
+        addNotification('Cita Actualizada', `La cita para ${patient.name} ha sido actualizada.`, 'success');
+      } else {
+        await saveAppointment(appointmentData);
+        addNotification('Cita Agendada', `Nueva cita agendada para ${patient.name}.`, 'success');
+      }
+    } catch (err) {
+      console.error('Error saving:', err);
+      addNotification('Error', 'No se pudo guardar la cita.', 'error');
     }
     
     if (onSaved) onSaved();
@@ -119,6 +144,8 @@ export const CreateAppointment: React.FC<CreateAppointmentProps> = ({ onClose, o
       navigate('/appointments');
     }
   };
+
+  const isValidPatient = patients.some(p => p.id === selectedPatientId);
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
@@ -293,7 +320,7 @@ export const CreateAppointment: React.FC<CreateAppointmentProps> = ({ onClose, o
           <button type="button" className="btn btn-outline" onClick={() => onClose ? onClose() : navigate(-1)} style={{ borderRadius: '999px', padding: '0.75rem 1.5rem' }}>
             {t('common.cancel')}
           </button>
-            <button type="submit" className="btn btn-primary" disabled={!selectedPatientId}>
+            <button type="submit" className="btn btn-primary" disabled={!isValidPatient}>
               <CheckCircle size={18} style={{ marginRight: '0.5rem' }} />
               {t('appointments.submitBtn')}
             </button>
