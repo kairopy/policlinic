@@ -101,7 +101,7 @@ export const RoutesPage: React.FC = () => {
   const [showDebug, setShowDebug] = useState(false);
 
   // ── Inline location editor state ─────────────────────────────────────────────
-  type EditingStop = { stopIndex: number; patientId: string; currentValue: string };
+  type EditingStop = { stopIndex: number; patientId: string; patientName: string; currentValue: string };
   const [editingStop, setEditingStop] = useState<EditingStop | null>(null);
   const [locationInput, setLocationInput] = useState('');
   const [savingLocation, setSavingLocation] = useState(false);
@@ -176,44 +176,40 @@ export const RoutesPage: React.FC = () => {
           return;
         }
 
-        // Geocode each appointment's patient location
-        const resolvedStops: RouteStop[] = [];
-        for (let i = 0; i < dayAppts.length; i++) {
-          const appt = dayAppts[i];
-
-          // 1st try: match by patientId (set when appointment was created in the app)
-          // 2nd try: match by patient name extracted from the appointment title
+        // Geocode all appointments in parallel (massive speedup for un-cached locations)
+        const geocodePromises = dayAppts.map(async (appt, i) => {
           const titleName = appt.title.split(' - ')[0].trim();
           const patient =
             patientMap.get(appt.patientId) ||
             patientByName.get(normalize(titleName)) ||
-            // 3rd try: partial name match (handles "Juan P." vs "Juan Pérez")
             patients.find(p =>
               normalize(p.name).includes(normalize(titleName)) ||
               normalize(titleName).includes(normalize(p.name))
             );
 
           const location = patient?.location || '';
-          debugLines.push(`  🔍 "${titleName}" → paciente: ${patient ? '"'+patient.name+'"' : 'NO ENCONTRADO'} → ubicación: "${location || '(vacía)'}"`);
-
+          
           let coords: [number, number] | null = null;
           if (location) {
             coords = await geocodeLocation(location);
-            debugLines.push(`  📍 Geocodificación: ${coords ? `[${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}]` : 'FALLÓ'}`);
           }
 
-          resolvedStops.push({
-            index: i + 1,
+          setGeocodingProgress(prev => Math.min(100, prev + Math.round(100 / dayAppts.length)));
+
+          return {
+            index: i + 1, // original sorted order
             patientName: appt.title.split(' - ')[0],
             time: format(new Date(appt.date), 'HH:mm'),
             location: location || 'Sin ubicación registrada',
             coords,
             appointment: appt,
-          });
+          };
+        });
 
-          setGeocodingProgress(Math.round(((i + 1) / dayAppts.length) * 100));
-        }
+        const resolvedStops = await Promise.all(geocodePromises);
 
+        // Sort just in case parallel resolution finishes out of order (though Promise.all preserves mapped index order)
+        // Since mapped array gives elements in the exact original array order, we're good.
         setStops(resolvedStops);
         setDebugInfo(debugLines);
         drawMapRoute(resolvedStops);
@@ -309,34 +305,51 @@ export const RoutesPage: React.FC = () => {
   /**
    * Persists a new location string to the patient record and immediately
    * re-geocodes the stop on the map without reloading the whole route.
+   *
+   * Falls back to name-matching when patientId is empty (Google Calendar events
+   * don't carry a patientId, so we normalise + fuzzy-match like the route loader does).
    */
   const handleSaveLocation = async () => {
     if (!editingStop || !locationInput.trim()) return;
     setSavingLocation(true);
     try {
-      const [, patients] = await Promise.all([Promise.resolve(), getPatients()]);
-      const patient = patients.find(p => p.id === editingStop.patientId);
-      if (patient) {
-        const updated = { ...patient, location: locationInput.trim() };
-        await updatePatient(updated);
+      const patients = await getPatients();
+      const normalize = (s: string) =>
+        s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+      const normName = normalize(editingStop.patientName);
 
-        // Re-geocode the updated location
-        const newCoords = await geocodeLocation(locationInput.trim());
+      // 1st: exact ID match; 2nd: exact name match; 3rd: partial name match
+      const patient =
+        (editingStop.patientId ? patients.find(p => p.id === editingStop.patientId) : undefined) ??
+        patients.find(p => normalize(p.name) === normName) ??
+        patients.find(p =>
+          normalize(p.name).includes(normName) || normName.includes(normalize(p.name))
+        );
 
-        setStops(prev => prev.map((s, idx) =>
+      if (!patient) {
+        console.error('handleSaveLocation: paciente no encontrado', editingStop);
+        return;
+      }
+
+      const newLocation = locationInput.trim();
+      await updatePatient({ ...patient, location: newLocation });
+
+      // Re-geocode the updated location
+      const newCoords = await geocodeLocation(newLocation);
+
+      // Update stop list and redraw map avoiding the stale-closure bug
+      let updatedStops: RouteStop[] = [];
+      setStops(prev => {
+        updatedStops = prev.map((s, idx) =>
           idx === editingStop.stopIndex
-            ? { ...s, location: locationInput.trim(), coords: newCoords }
-            : s
-        ));
-
-        // Re-draw map with updated stops
-        const updatedStops = stops.map((s, idx) =>
-          idx === editingStop.stopIndex
-            ? { ...s, location: locationInput.trim(), coords: newCoords }
+            ? { ...s, location: newLocation, coords: newCoords }
             : s
         );
-        drawMapRoute(updatedStops);
-      }
+        return updatedStops;
+      });
+
+      // drawMapRoute must run after setStops, so defer one tick
+      setTimeout(() => drawMapRoute(updatedStops), 0);
     } catch (e) {
       console.error('Error saving location:', e);
     } finally {
@@ -570,7 +583,7 @@ export const RoutesPage: React.FC = () => {
                     <button
                       id={`add-location-${i}`}
                       onClick={() => {
-                        setEditingStop({ stopIndex: i, patientId: stop.appointment.patientId, currentValue: stop.location });
+                        setEditingStop({ stopIndex: i, patientId: stop.appointment.patientId, patientName: stop.patientName, currentValue: stop.location });
                         setLocationInput(stop.location === 'Sin ubicación registrada' ? '' : stop.location);
                       }}
                       style={{

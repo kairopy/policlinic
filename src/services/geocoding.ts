@@ -14,7 +14,7 @@ const CACHE_KEY_PREFIX = 'geo_cache_';
 /** Returns cached [lat, lng] or null */
 const getFromCache = (key: string): [number, number] | null => {
   try {
-    const raw = sessionStorage.getItem(CACHE_KEY_PREFIX + btoa(key));
+    const raw = localStorage.getItem(CACHE_KEY_PREFIX + encodeURIComponent(key));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as [number, number];
     if (Array.isArray(parsed) && parsed.length === 2) return parsed;
@@ -24,10 +24,10 @@ const getFromCache = (key: string): [number, number] | null => {
   return null;
 };
 
-/** Persists [lat, lng] to sessionStorage */
+/** Persists [lat, lng] to localStorage */
 const setCache = (key: string, coords: [number, number]): void => {
   try {
-    sessionStorage.setItem(CACHE_KEY_PREFIX + btoa(key), JSON.stringify(coords));
+    localStorage.setItem(CACHE_KEY_PREFIX + encodeURIComponent(key), JSON.stringify(coords));
   } catch {
     // storage quota issues are non-fatal
   }
@@ -123,32 +123,60 @@ export const sanitizeGoogleMapsUrl = (url: string): string | null => {
 /**
  * Main geocoding function — resolves a patient's `location` string to [lat, lng].
  *
- * Tries coordinate extraction from a Google Maps URL first; falls back to
- * Nominatim text geocoding. Results are cached in sessionStorage.
+ * Strategy:
+ * 1. Check sessionStorage cache (instant, no network)
+ * 2. If the URL already contains coordinates (long Google Maps URL), extract them directly
+ * 3. Send to backend /api/resolve-location which:
+ *    - Follows short URL (maps.app.goo.gl) redirects server-side to bypass CORS
+ *    - Extracts coordinates from the resolved full URL
+ *    - Falls back to Nominatim geocoding for plain text addresses
  *
- * @param location - Google Maps URL or free-text address
+ * @param location - Google Maps URL (short or full) or free-text address
  * @returns {Promise<[number, number] | null>} [latitude, longitude] or null
  */
 export const geocodeLocation = async (location: string): Promise<[number, number] | null> => {
   if (!location?.trim()) return null;
 
   const trimmed = location.trim();
+
+  // 1. Check cache first
   const cached = getFromCache(trimmed);
   if (cached) return cached;
 
-  // 1. Try extracting from a Google Maps URL directly
+  // 2. Fast path: if this is a full Google Maps URL with coords already embedded, extract inline
   const fromUrl = extractCoordsFromGoogleMapsUrl(trimmed);
   if (fromUrl) {
     setCache(trimmed, fromUrl);
     return fromUrl;
   }
 
-  // 2. Fall back to Nominatim text geocoding
-  const fromNominatim = await geocodeWithNominatim(trimmed);
-  if (fromNominatim) {
-    setCache(trimmed, fromNominatim);
-    return fromNominatim;
+  // 3. Send to backend to resolve (handles short URLs + text addresses)
+  try {
+    const res = await fetch('http://localhost:3001/api/resolve-location', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ location: trimmed }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (res.ok) {
+      const data = await res.json() as { lat: number | null; lng: number | null };
+      if (data.lat !== null && data.lng !== null && !isNaN(data.lat) && !isNaN(data.lng)) {
+        const coords: [number, number] = [data.lat, data.lng];
+        setCache(trimmed, coords);
+        return coords;
+      }
+    }
+  } catch {
+    // Backend unavailable — try Nominatim directly as last resort
+    const fromNominatim = await geocodeWithNominatim(trimmed);
+    if (fromNominatim) {
+      setCache(trimmed, fromNominatim);
+      return fromNominatim;
+    }
   }
 
   return null;
 };
+
+
