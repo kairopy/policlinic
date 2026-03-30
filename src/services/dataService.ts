@@ -504,11 +504,12 @@ export const updatePatient = async (patient: Patient) => {
         }
 
         const targetId = String(patient.id).trim();
-        const rowIndex = rows.findIndex((row, idx) => 
-          idx > 0 && String(row[idColIdx] ?? '').trim() === targetId
-        );
+        const rowIndex = rows.findIndex((row, idx) => {
+          const isDataRow = mappedCount > 0 ? idx > 0 : true;
+          return isDataRow && String(row[idColIdx] ?? '').trim() === targetId;
+        });
 
-        if (rowIndex > 0) {
+        if (rowIndex >= 0) {
           const rowNum = rowIndex + 1;
           const newRow: string[] = [];
           
@@ -536,21 +537,18 @@ export const updatePatient = async (patient: Patient) => {
           clearDataCache();
           return;
         } else {
-          console.error(`updatePatient: no encontré el ID ${targetId} en la columna ${idColIdx}. Filas totales: ${rows.length}`);
+          console.error(`updatePatient: no encontré el ID "${targetId}" en la col ${idColIdx}. Filas: ${rows.length}`);
         }
       } else {
          console.error(`updatePatient: el sheet está vacío o data.values es nulo`);
       }
     }
-  } else {
-    console.log(`updatePatient: isGoogleLinked es FALSE. Actualizando en mock`);
   }
+  
   // Fallback: update mock data only
   const mockIdx = (mockPatients as Patient[]).findIndex(p => p.id === patient.id);
   if (mockIdx !== -1) {
     (mockPatients as Patient[])[mockIdx] = patient;
-  } else {
-    console.error(`updatePatient: no encontré el ID ${patient.id} ni siquiera en mockData!`);
   }
   
   clearDataCache();
