@@ -124,8 +124,20 @@ const ensureSpreadsheetExists = async (): Promise<string | null> => {
     try {
       const cached = localStorage.getItem(SHEETS_ID_KEY);
       const isEnsured = localStorage.getItem('policlinic_sheet_ensured');
-      
-      // Fast path: if we already verified tabs and headers in a previous session, skip heavy checks!
+      const cachedName = localStorage.getItem('policlinic_sheet_name');
+
+      // 🚨 CACHE BUSTER: If no name is stored (old version) or name is different, clear everything!
+      if (!cachedName || cachedName !== SPREADSHEET_NAME) {
+        console.warn('--- [CACHE BUSTER] Stale sheet name. Resetting connection. ---');
+        localStorage.removeItem(SHEETS_ID_KEY);
+        localStorage.removeItem('policlinic_sheet_ensured');
+        localStorage.setItem('policlinic_sheet_name', SPREADSHEET_NAME);
+        
+        // Return null to force a fresh search/creation logic below
+        return null;
+      }
+
+      // Fast path: if already verified for this spreadsheet
       if (cached && cached !== 'undefined' && cached !== 'null' && isEnsured === 'true') {
         return cached;
       }
@@ -176,6 +188,7 @@ const ensureSpreadsheetExists = async (): Promise<string | null> => {
 
       // Mark as fully verified so future data fetches bypass this 2-3 second bottleneck
       localStorage.setItem('policlinic_sheet_ensured', 'true');
+      localStorage.setItem('policlinic_sheet_name', SPREADSHEET_NAME);
       
       return sheetsId;
     } finally {
@@ -240,8 +253,12 @@ export const getPatients = async (forceRefresh = false): Promise<Patient[]> => {
   if (isGoogleLinked()) {
     const sheetsId = await ensureSpreadsheetExists();
     if (sheetsId) {
+      // 1. Get sheet name dynamically (first sheet)
+      const meta = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}?fields=sheets(properties(title))`);
+      const mainSheet = meta?.sheets?.[0]?.properties?.title || 'Sheet1';
+
       const data = await callGoogleApi(
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1`
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/${mainSheet}`
       );
       if (data && data.values && data.values.length > 0) {
         const firstRow = data.values[0] as string[];
@@ -421,21 +438,23 @@ export const savePatient = async (patient: Partial<Patient>) => {
   if (isGoogleLinked()) {
     const sheetsId = await ensureSpreadsheetExists();
     if (sheetsId) {
+      const meta = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}?fields=sheets(properties(title))`);
+      const mainSheet = meta?.sheets?.[0]?.properties?.title || 'Sheet1';
+
       const values = [[
-        patient.id ?? '',
-        patient.name ?? '',
-        patient.age ?? '',
-        patient.email ?? '',
-        patient.phone ?? '',
-        patient.status ?? '',
-        patient.lastVisit ?? '',
-        patient.createdAt ?? '',
-        patient.notes ?? '',
-        patient.location ?? ''
+        String(patient.id ?? ''),
+        String(patient.name ?? ''),
+        String(patient.age ?? ''),
+        String(patient.email ?? ''),
+        String(patient.phone ?? ''),
+        String(patient.status ?? ''),
+        String(patient.lastVisit ?? ''),
+        String(patient.createdAt ?? ''),
+        String(patient.notes ?? ''),
+        String(patient.location ?? '')
       ]];
-      // Correct append URL: range before :append, options as query params
       await callGoogleApi(
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1!A1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/${mainSheet}!A1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
         'POST',
         { values }
       );
@@ -453,44 +472,87 @@ export const updatePatient = async (patient: Patient) => {
   if (isGoogleLinked()) {
     const sheetsId = await ensureSpreadsheetExists();
     if (sheetsId) {
-      // Read all rows to find the row number of this patient
+      const meta = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}?fields=sheets(properties(title))`);
+      const mainSheet = meta?.sheets?.[0]?.properties?.title || 'Sheet1';
+
       const data = await callGoogleApi(
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1!A:A`
+        `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/${mainSheet}`
       );
-      if (data && data.values) {
+      if (data && data.values && data.values.length > 0) {
         const rows = data.values as string[][];
-        // rows[0] is the header; find the data row where A == patient.id
-        const rowIndex = rows.findIndex((row, idx) => idx > 0 && row[0] === patient.id);
+        const firstRow = rows[0];
+        
+        const colMap: Record<number, keyof Patient> = {};
+        let idColIdx = 0;
+        let mappedCount = 0;
+        
+        firstRow.forEach((h, i) => {
+          const key = HEADER_MAP[h?.trim().toLowerCase() || ''];
+          if (key) {
+            colMap[i] = key;
+            if (key === 'id') idColIdx = i;
+            mappedCount++;
+          }
+        });
+
+        // Fallback to default indices if no headers matched
+        if (mappedCount === 0) {
+           PATIENTS_HEADERS.forEach((h, i) => {
+             const key = HEADER_MAP[h.toLowerCase()] || HEADER_MAP[h.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()];
+             if (key) { colMap[i] = key; if (key === 'id') idColIdx = i; }
+           });
+        }
+
+        const targetId = String(patient.id).trim();
+        const rowIndex = rows.findIndex((row, idx) => 
+          idx > 0 && String(row[idColIdx] ?? '').trim() === targetId
+        );
+
         if (rowIndex > 0) {
-          const rowNum = rowIndex + 1; // convert 0-index to 1-index in Sheets notation
-          const values = [[
-            patient.id,
-            patient.name,
-            patient.age,
-            patient.email,
-            patient.phone,
-            patient.status,
-            patient.lastVisit,
-            patient.createdAt,
-            patient.notes ?? '',
-            patient.location ?? ''
-          ]];
+          const rowNum = rowIndex + 1;
+          const newRow: string[] = [];
+          
+          let maxCol = Math.max(...Object.keys(colMap).map(Number));
+          if (maxCol < 9) maxCol = 9; // Support at least default columns
+
+          for (let i = 0; i <= maxCol; i++) {
+             const key = colMap[i];
+             if (key) {
+               newRow[i] = String(patient[key] ?? '');
+             } else {
+               // Preserve existing unknown column data
+               newRow[i] = rows[rowIndex][i] ?? '';
+             }
+          }
+
           await callGoogleApi(
-            `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1!A${rowNum}:J${rowNum}?valueInputOption=USER_ENTERED`,
+            `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/${mainSheet}!A${rowNum}?valueInputOption=USER_ENTERED`,
             'PUT',
-            { values }
+            { values: [newRow] }
           );
-          // Also update mock data
+          
           const mockIdx = (mockPatients as Patient[]).findIndex(p => p.id === patient.id);
           if (mockIdx !== -1) (mockPatients as Patient[])[mockIdx] = patient;
+          clearDataCache();
           return;
+        } else {
+          console.error(`updatePatient: no encontré el ID ${targetId} en la columna ${idColIdx}. Filas totales: ${rows.length}`);
         }
+      } else {
+         console.error(`updatePatient: el sheet está vacío o data.values es nulo`);
       }
     }
+  } else {
+    console.log(`updatePatient: isGoogleLinked es FALSE. Actualizando en mock`);
   }
   // Fallback: update mock data only
   const mockIdx = (mockPatients as Patient[]).findIndex(p => p.id === patient.id);
-  if (mockIdx !== -1) (mockPatients as Patient[])[mockIdx] = patient;
+  if (mockIdx !== -1) {
+    (mockPatients as Patient[])[mockIdx] = patient;
+  } else {
+    console.error(`updatePatient: no encontré el ID ${patient.id} ni siquiera en mockData!`);
+  }
+  
   clearDataCache();
 };
 
@@ -501,44 +563,56 @@ export const deletePatient = async (patientId: string) => {
   if (isGoogleLinked()) {
     const sheetsId = await ensureSpreadsheetExists();
     if (sheetsId) {
-      // Get sheet metadata to find the sheetId (numeric) of Sheet1
-      const meta = await callGoogleApi(
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}?fields=sheets(properties(sheetId,title))`
-      );
-      const sheetNumId: number = (meta?.sheets?.[0]?.properties?.sheetId as number) ?? 0;
+      try {
+        const meta = await callGoogleApi(
+          `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}?fields=sheets(properties(sheetId,title))`
+        );
+        const mainSheetProps = meta?.sheets?.[0]?.properties;
+        const sheetNumId = mainSheetProps?.sheetId ?? 0;
+        const mainSheetTitle = mainSheetProps?.title || 'Sheet1';
 
-      // Get column A to find the row index
-      const col = await callGoogleApi(
-        `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1!A:A`
-      );
-      if (col?.values) {
-        const rows = col.values as string[][];
-        const rowIndex = rows.findIndex((row, idx) => idx > 0 && row[0] === patientId);
-        if (rowIndex > 0) {
-          // batchUpdate: deleteDimension removes the row (0-indexed, endIndex exclusive)
-          await callGoogleApi(
-            `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}:batchUpdate`,
-            'POST',
-            {
-              requests: [{
-                deleteDimension: {
-                  range: {
-                    sheetId: sheetNumId,
-                    dimension: 'ROWS',
-                    startIndex: rowIndex,      // 0-indexed (header is 0, first data row is 1)
-                    endIndex: rowIndex + 1,
-                  }
-                }
-              }]
-            }
+        const data = await callGoogleApi(
+          `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/${mainSheetTitle}`
+        );
+
+        if (data && data.values) {
+          const rows = data.values as string[][];
+          const targetId = String(patientId).trim().toLowerCase();
+          
+          // Buscar la fila donde el ID coincida en la primera columna (o en cualquiera si fallara)
+          const rowIndex = rows.findIndex((row, idx) => 
+            idx > 0 && row[0] && String(row[0]).trim().toLowerCase() === targetId
           );
+
+          if (rowIndex > 0) {
+            await callGoogleApi(
+              `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}:batchUpdate`,
+              'POST',
+              {
+                requests: [{
+                  deleteDimension: {
+                    range: {
+                      sheetId: sheetNumId,
+                      dimension: 'ROWS',
+                      startIndex: rowIndex, 
+                      endIndex: rowIndex + 1,
+                    }
+                  }
+                }]
+              }
+            );
+          }
         }
+      } catch (err) {
+        console.error('Error deleting from Google Sheets:', err);
       }
     }
   }
-  // Remove from mock data
-  const mockIdx = (mockPatients as Patient[]).findIndex(p => p.id === patientId);
-  if (mockIdx !== -1) (mockPatients as Patient[]).splice(mockIdx, 1);
+  // Remove from local bypass/mock
+  const idx = (mockPatients as Patient[]).findIndex(p => String(p.id) === String(patientId));
+  if (idx !== -1) (mockPatients as Patient[]).splice(idx, 1);
+  
+  // CRITICAL: clear cache so next getPatients() MUST fetch from Sheets
   clearDataCache();
 };
 
