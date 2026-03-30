@@ -15,7 +15,7 @@ import { es } from 'date-fns/locale';
 import { Calendar, Navigation, Clock, User, MapPin, AlertCircle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { getAppointments, getPatients } from '../../services/dataService';
+import { getAppointments, getPatients, updatePatient } from '../../services/dataService';
 import type { Appointment, Patient } from '../../services/dataService';
 import { geocodeLocation } from '../../services/geocoding';
 
@@ -97,6 +97,14 @@ export const RoutesPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [geocodingProgress, setGeocodingProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
+  const [showDebug, setShowDebug] = useState(false);
+
+  // ── Inline location editor state ─────────────────────────────────────────────
+  type EditingStop = { stopIndex: number; patientId: string; currentValue: string };
+  const [editingStop, setEditingStop] = useState<EditingStop | null>(null);
+  const [locationInput, setLocationInput] = useState('');
+  const [savingLocation, setSavingLocation] = useState(false);
 
   // ── Initialize Leaflet map once ──────────────────────────────────────────────
   useEffect(() => {
@@ -137,9 +145,20 @@ export const RoutesPage: React.FC = () => {
 
       try {
         const [appointments, patients] = await Promise.all([getAppointments(), getPatients()]);
+        const debugLines: string[] = [
+          `✅ Pacientes cargados: ${patients.length}`,
+          ...patients.map(p => `  👤 "${p.name}" → ubicación: "${p.location || '(vacía)'}"`),
+          `✅ Citas totales: ${appointments.length}`,
+        ];
 
-        // Build a quick look-up map for patients
+        // Build look-up maps: by ID and by normalized name
         const patientMap = new Map<string, Patient>(patients.map(p => [p.id, p]));
+        // Normalize names for fuzzy matching (lowercase, no accents, no extra spaces)
+        const normalize = (s: string) =>
+          s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+        const patientByName = new Map<string, Patient>(
+          patients.map(p => [normalize(p.name), p])
+        );
 
         // Filter appointments for the selected date, sorted by time
         const dayAppts = appointments
@@ -148,6 +167,9 @@ export const RoutesPage: React.FC = () => {
             catch { return false; }
           })
           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        debugLines.push(`✅ Citas para hoy (${format(selectedDate, 'dd/MM/yyyy')}): ${dayAppts.length}`);
+        dayAppts.forEach(a => debugLines.push(`  📅 "${a.title}" patientId="${a.patientId}" fecha="${a.date}"`));
 
         if (dayAppts.length === 0) {
           setLoading(false);
@@ -158,12 +180,26 @@ export const RoutesPage: React.FC = () => {
         const resolvedStops: RouteStop[] = [];
         for (let i = 0; i < dayAppts.length; i++) {
           const appt = dayAppts[i];
-          const patient = patientMap.get(appt.patientId);
+
+          // 1st try: match by patientId (set when appointment was created in the app)
+          // 2nd try: match by patient name extracted from the appointment title
+          const titleName = appt.title.split(' - ')[0].trim();
+          const patient =
+            patientMap.get(appt.patientId) ||
+            patientByName.get(normalize(titleName)) ||
+            // 3rd try: partial name match (handles "Juan P." vs "Juan Pérez")
+            patients.find(p =>
+              normalize(p.name).includes(normalize(titleName)) ||
+              normalize(titleName).includes(normalize(p.name))
+            );
+
           const location = patient?.location || '';
+          debugLines.push(`  🔍 "${titleName}" → paciente: ${patient ? '"'+patient.name+'"' : 'NO ENCONTRADO'} → ubicación: "${location || '(vacía)'}"`);
 
           let coords: [number, number] | null = null;
           if (location) {
             coords = await geocodeLocation(location);
+            debugLines.push(`  📍 Geocodificación: ${coords ? `[${coords[0].toFixed(4)}, ${coords[1].toFixed(4)}]` : 'FALLÓ'}`);
           }
 
           resolvedStops.push({
@@ -179,6 +215,7 @@ export const RoutesPage: React.FC = () => {
         }
 
         setStops(resolvedStops);
+        setDebugInfo(debugLines);
         drawMapRoute(resolvedStops);
       } catch (err) {
         setError('Error al cargar las rutas. Por favor intenta de nuevo.');
@@ -269,6 +306,46 @@ export const RoutesPage: React.FC = () => {
   const nextDay = () => setSelectedDate(d => { const n = new Date(d); n.setDate(n.getDate() + 1); return n; });
   const isToday = isSameDay(selectedDate, new Date());
 
+  /**
+   * Persists a new location string to the patient record and immediately
+   * re-geocodes the stop on the map without reloading the whole route.
+   */
+  const handleSaveLocation = async () => {
+    if (!editingStop || !locationInput.trim()) return;
+    setSavingLocation(true);
+    try {
+      const [, patients] = await Promise.all([Promise.resolve(), getPatients()]);
+      const patient = patients.find(p => p.id === editingStop.patientId);
+      if (patient) {
+        const updated = { ...patient, location: locationInput.trim() };
+        await updatePatient(updated);
+
+        // Re-geocode the updated location
+        const newCoords = await geocodeLocation(locationInput.trim());
+
+        setStops(prev => prev.map((s, idx) =>
+          idx === editingStop.stopIndex
+            ? { ...s, location: locationInput.trim(), coords: newCoords }
+            : s
+        ));
+
+        // Re-draw map with updated stops
+        const updatedStops = stops.map((s, idx) =>
+          idx === editingStop.stopIndex
+            ? { ...s, location: locationInput.trim(), coords: newCoords }
+            : s
+        );
+        drawMapRoute(updatedStops);
+      }
+    } catch (e) {
+      console.error('Error saving location:', e);
+    } finally {
+      setSavingLocation(false);
+      setEditingStop(null);
+      setLocationInput('');
+    }
+  };
+
   return (
     <div className="animate-fade-in" style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
@@ -357,6 +434,38 @@ export const RoutesPage: React.FC = () => {
             </div>
           )}
 
+          {/* 🛠 DEBUG PANEL — remove after diagnosis */}
+          {debugInfo.length > 0 && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <span style={{ fontSize: '0.65rem', color: 'var(--color-primary)', fontWeight: 700 }}>🔌 ESTADO DE CONEXIÓN</span>
+                <button
+                  onClick={() => setShowDebug(v => !v)}
+                  style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  {showDebug ? 'Cerrar log' : 'Ver log'}
+                </button>
+              </div>
+              
+              <div style={{ padding: '0.6rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, fontSize: '0.7rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                  <span>Archivo:</span>
+                  <span style={{ fontWeight: 600 }}>{localStorage.getItem('policlinic_sheet_name') || 'No definido'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-muted)' }}>
+                  <span>ID Google:</span>
+                  <span style={{ fontSize: '0.6rem' }}>{localStorage.getItem('policlinic_sheet_id')?.substring(0, 15)}...</span>
+                </div>
+              </div>
+
+              {showDebug && (
+                <pre style={{ margin: '8px 0 0', padding: '0.75rem', background: 'rgba(0,0,0,0.06)', borderRadius: 8, fontSize: '0.7rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all', maxHeight: 200, overflowY: 'auto', color: 'var(--color-text-main)', border: '1px solid var(--color-border)' }}>
+                  {debugInfo.join('\n')}
+                </pre>
+              )}
+            </div>
+          )}
+
           {/* Empty state */}
           {!loading && !error && stops.length === 0 && (
             <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--color-text-muted)', background: 'var(--color-background)', borderRadius: '14px', border: '1px dashed var(--color-border)' }}>
@@ -402,14 +511,85 @@ export const RoutesPage: React.FC = () => {
                       {stop.appointment.type}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.3rem', fontSize: '0.75rem', color: stop.coords ? 'var(--color-text-muted)' : '#f59e0b' }}>
-                    <MapPin size={11} style={{ flexShrink: 0, marginTop: 1 }} />
-                    <span style={{ wordBreak: 'break-word' }}>
-                      {stop.coords
-                        ? (stop.location.startsWith('http') ? '📍 Coords extraídas del link' : stop.location)
-                        : '⚠ Sin coordenadas — agregar ubicación al paciente'}
-                    </span>
-                  </div>
+
+                  {/* Location row */}
+                  {stop.coords ? (
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.3rem', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                      <MapPin size={11} style={{ flexShrink: 0, marginTop: 1 }} />
+                      <span style={{ wordBreak: 'break-word' }}>
+                        {stop.location.startsWith('http') ? '📍 Coords extraídas del link' : stop.location}
+                      </span>
+                    </div>
+                  ) : editingStop?.stopIndex === i ? (
+                    /* ── Inline editor ── */
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <input
+                        id={`location-input-${i}`}
+                        autoFocus
+                        value={locationInput}
+                        onChange={e => setLocationInput(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleSaveLocation(); if (e.key === 'Escape') { setEditingStop(null); setLocationInput(''); } }}
+                        placeholder="Dirección o link de Google Maps…"
+                        style={{
+                          width: '100%', boxSizing: 'border-box',
+                          background: 'var(--color-background)',
+                          border: '1.5px solid var(--color-primary)',
+                          borderRadius: '8px', padding: '5px 10px',
+                          fontSize: '0.78rem', color: 'var(--color-text-main)',
+                          outline: 'none',
+                        }}
+                      />
+                      <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem' }}>
+                        <button
+                          id={`save-location-${i}`}
+                          onClick={handleSaveLocation}
+                          disabled={savingLocation || !locationInput.trim()}
+                          style={{
+                            flex: 1, padding: '4px 0', borderRadius: '7px',
+                            background: 'var(--color-primary)', color: 'white',
+                            border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700,
+                            opacity: savingLocation || !locationInput.trim() ? 0.6 : 1,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                          }}
+                        >
+                          {savingLocation ? <Loader2 size={12} className="animate-spin" /> : <MapPin size={12} />}
+                          {savingLocation ? 'Guardando…' : 'Guardar'}
+                        </button>
+                        <button
+                          onClick={() => { setEditingStop(null); setLocationInput(''); }}
+                          style={{
+                            padding: '4px 10px', borderRadius: '7px',
+                            background: 'var(--color-surface)', color: 'var(--color-text-muted)',
+                            border: '1px solid var(--color-border)', cursor: 'pointer', fontSize: '0.75rem',
+                          }}
+                        >✕</button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* ── Warning + trigger button ── */
+                    <button
+                      id={`add-location-${i}`}
+                      onClick={() => {
+                        setEditingStop({ stopIndex: i, patientId: stop.appointment.patientId, currentValue: stop.location });
+                        setLocationInput(stop.location === 'Sin ubicación registrada' ? '' : stop.location);
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.3rem',
+                        marginTop: '0.25rem',
+                        background: 'rgba(245,158,11,0.12)',
+                        border: '1px dashed rgba(245,158,11,0.6)',
+                        borderRadius: '7px', padding: '4px 8px',
+                        cursor: 'pointer', color: '#f59e0b',
+                        fontSize: '0.73rem', fontWeight: 600,
+                        width: '100%', textAlign: 'left',
+                        transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(245,158,11,0.22)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'rgba(245,158,11,0.12)')}
+                    >
+                      <MapPin size={11} /> ⚠ Sin coordenadas — clic para agregar ubicación
+                    </button>
+                  )}
                 </div>
               </div>
             </React.Fragment>
