@@ -43,6 +43,8 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     location: '',
     status: 'pending_control',
   });
+  // Preserve original read-only fields so they are not overwritten on save
+  const originalRef = React.useRef<{ createdAt: string; lastVisit: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +54,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         const patients = await getPatients();
         const patient = patients.find((p: Patient) => p.id === id);
         if (patient) {
+          originalRef.current = { createdAt: patient.createdAt, lastVisit: patient.lastVisit };
           setFormData({
             name: patient.name,
             age: patient.age,
@@ -89,9 +92,10 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         email: formData.email || '',
         notes: formData.notes || '',
         location: formData.location || '',
-        lastVisit: new Date().toISOString().split('T')[0],
+        // Preserve original dates when editing; set today only for new patients
+        lastVisit: isEdit && originalRef.current ? originalRef.current.lastVisit : new Date().toISOString().split('T')[0],
         status: (formData.status as Patient['status']) || 'in_treatment',
-        createdAt: new Date().toISOString().split('T')[0],
+        createdAt: isEdit && originalRef.current ? originalRef.current.createdAt : new Date().toISOString().split('T')[0],
       };
 
       if (isEdit) {

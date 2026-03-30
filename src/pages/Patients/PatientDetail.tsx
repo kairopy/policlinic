@@ -38,7 +38,8 @@ export const PatientDetail: React.FC = () => {
   const [showNewConsultation, setShowNewConsultation] = React.useState(false);
 
   const refreshPatient = React.useCallback(async () => {
-    const allPatients = await getPatients();
+    // forceRefresh=true bypasses the 5-min cache so the UI shows the just-saved data
+    const allPatients = await getPatients(true);
     const found = allPatients.find((p: Patient) => p.id === id);
     if (found) setPatient(found);
   }, [id]);
@@ -48,11 +49,9 @@ export const PatientDetail: React.FC = () => {
     setDeleting(true);
     setShowDeleteConfirm(false);
     try {
-     if (window.confirm(t('patients.deleteConfirm'))) {
       await deletePatient(String(patient.id));
       addNotification(t('common.success'), t('patients.deleteSuccess'), 'success');
       navigate('/patients');
-    }
     } catch (err) {
       console.error('Error al eliminar paciente:', err);
       setDeleting(false);
