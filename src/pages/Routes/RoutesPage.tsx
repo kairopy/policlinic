@@ -97,9 +97,6 @@ export const RoutesPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [geocodingProgress, setGeocodingProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<string[]>([]);
-  const [showDebug, setShowDebug] = useState(false);
-
   // ── Inline location editor state ─────────────────────────────────────────────
   type EditingStop = { stopIndex: number; patientId: string; patientName: string; currentValue: string };
   const [editingStop, setEditingStop] = useState<EditingStop | null>(null);
@@ -146,11 +143,6 @@ export const RoutesPage: React.FC = () => {
 
       try {
         const [appointments, patients] = await Promise.all([getAppointments(), getPatients()]);
-        const debugLines: string[] = [
-          `✅ Pacientes cargados: ${patients.length}`,
-          ...patients.map(p => `  👤 "${p.name}" → ubicación: "${p.location || '(vacía)'}"`),
-          `✅ Citas totales: ${appointments.length}`,
-        ];
 
         // Build look-up maps: by ID and by normalized name
         const patientMap = new Map<string, Patient>(patients.map(p => [p.id, p]));
@@ -168,9 +160,6 @@ export const RoutesPage: React.FC = () => {
             catch { return false; }
           })
           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-        debugLines.push(`✅ Citas para hoy (${format(selectedDate, 'dd/MM/yyyy')}): ${dayAppts.length}`);
-        dayAppts.forEach(a => debugLines.push(`  📅 "${a.title}" patientId="${a.patientId}" fecha="${a.date}"`));
 
         if (dayAppts.length === 0) {
           setLoading(false);
@@ -212,7 +201,6 @@ export const RoutesPage: React.FC = () => {
         // Sort just in case parallel resolution finishes out of order (though Promise.all preserves mapped index order)
         // Since mapped array gives elements in the exact original array order, we're good.
         setStops(resolvedStops);
-        setDebugInfo(debugLines);
         drawMapRoute(resolvedStops);
       } catch (err) {
         setError('Error al cargar las rutas. Por favor intenta de nuevo.');
@@ -448,38 +436,6 @@ export const RoutesPage: React.FC = () => {
             <div style={{ display: 'flex', gap: '0.75rem', padding: '1rem', borderRadius: '12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', fontSize: '0.85rem' }}>
               <AlertCircle size={18} style={{ flexShrink: 0 }} />
               {error}
-            </div>
-          )}
-
-          {/* 🛠 DEBUG PANEL — remove after diagnosis */}
-          {debugInfo.length > 0 && (
-            <div style={{ marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                <span style={{ fontSize: '0.65rem', color: 'var(--color-primary)', fontWeight: 700 }}>🔌 ESTADO DE CONEXIÓN</span>
-                <button
-                  onClick={() => setShowDebug(v => !v)}
-                  style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
-                >
-                  {showDebug ? 'Cerrar log' : 'Ver log'}
-                </button>
-              </div>
-              
-              <div style={{ padding: '0.6rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, fontSize: '0.7rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                  <span>Archivo:</span>
-                  <span style={{ fontWeight: 600 }}>{localStorage.getItem('policlinic_sheet_name') || 'No definido'}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-muted)' }}>
-                  <span>ID Google:</span>
-                  <span style={{ fontSize: '0.6rem' }}>{localStorage.getItem('policlinic_sheet_id')?.substring(0, 15)}...</span>
-                </div>
-              </div>
-
-              {showDebug && (
-                <pre style={{ margin: '8px 0 0', padding: '0.75rem', background: 'rgba(0,0,0,0.06)', borderRadius: 8, fontSize: '0.7rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all', maxHeight: 200, overflowY: 'auto', color: 'var(--color-text-main)', border: '1px solid var(--color-border)' }}>
-                  {debugInfo.join('\n')}
-                </pre>
-              )}
             </div>
           )}
 
