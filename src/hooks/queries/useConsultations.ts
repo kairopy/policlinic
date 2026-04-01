@@ -7,7 +7,7 @@ export const CONSULTATIONS_KEY = ['consultations'];
 export const useConsultations = () => {
   return useQuery({
     queryKey: CONSULTATIONS_KEY,
-    queryFn: () => getConsultations(true),
+    queryFn: getConsultations,
   });
 };
 

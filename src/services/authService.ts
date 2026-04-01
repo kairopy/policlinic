@@ -1,3 +1,7 @@
+import { logger } from './loggerService';
+
+const API_BASE_URL = 'http://127.0.0.1:3001';
+
 export const GOOGLE_CONNECTED_KEY = 'google_connected';
 export const GOOGLE_ACCESS_TOKEN_KEY = 'google_access_token';
 export const SHEETS_ID_KEY = 'google_sheets_id';
@@ -7,7 +11,8 @@ export const isGoogleLinked = () =>
 
 export const syncLoginStatusWithBackend = async () => {
   try {
-    const response = await fetch('http://localhost:3001/api/token');
+    logger.info('Intentando sincronizar estado de login con backend');
+    const response = await fetch(`${API_BASE_URL}/api/token`);
     if (response.ok) {
       const data = await response.json();
       localStorage.setItem(GOOGLE_ACCESS_TOKEN_KEY, data.access_token);

@@ -31,72 +31,30 @@ import {
 export type { Patient, Appointment, Consultation };
 export { isGoogleLinked, syncLoginStatusWithBackend, callGoogleApi };
 
-let patientsCache: Patient[] | null = null;
-let patientsCacheTime = 0;
-let consultationsCache: Consultation[] | null = null;
-let consultationsCacheTime = 0;
-let appointmentsCache: Appointment[] | null = null;
-let appointmentsCacheTime = 0;
-const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
+export type { Patient, Appointment, Consultation };
+export { isGoogleLinked, syncLoginStatusWithBackend, callGoogleApi };
 
-export const clearDataCache = () => {
-  patientsCache = null;
-  consultationsCache = null;
-  appointmentsCache = null;
-};
-
-export const getPatients = async (forceRefresh = false): Promise<Patient[]> => {
-  const now = Date.now();
-  if (!forceRefresh && patientsCache && (now - patientsCacheTime < CACHE_TTL)) {
-    return [...patientsCache];
-  }
-
+export const getPatients = async (): Promise<Patient[]> => {
   if (isGoogleLinked()) {
     const parsed = await getPatientsFromSheets();
-    if (parsed.length > 0) {
-      patientsCache = [...parsed];
-      patientsCacheTime = Date.now();
-      return parsed;
-    }
+    if (parsed.length > 0) return parsed;
   }
   return [...(mockPatients as Patient[])];
 };
 
-export const getAppointments = async (forceRefresh = false): Promise<Appointment[]> => {
-  const now = Date.now();
-  if (!forceRefresh && appointmentsCache && (now - appointmentsCacheTime < CACHE_TTL)) {
-    return [...appointmentsCache];
-  }
-
+export const getAppointments = async (): Promise<Appointment[]> => {
   if (isGoogleLinked()) {
     const parsed = await getAppointmentsFromCalendar();
-    if (parsed.length > 0) {
-      appointmentsCache = [...parsed];
-      appointmentsCacheTime = Date.now();
-      return parsed;
-    }
-    appointmentsCache = [];
-    appointmentsCacheTime = Date.now();
+    if (parsed.length > 0) return parsed;
     return [];
   }
   return [...(mockAppointments as Appointment[])];
 };
 
-export const getConsultations = async (forceRefresh = false): Promise<Consultation[]> => {
-  const now = Date.now();
-  if (!forceRefresh && consultationsCache && (now - consultationsCacheTime < CACHE_TTL)) {
-    return [...consultationsCache];
-  }
-
+export const getConsultations = async (): Promise<Consultation[]> => {
   if (isGoogleLinked()) {
     const parsed = await getConsultationsFromSheets();
-    if (parsed.length > 0) {
-      consultationsCache = [...parsed];
-      consultationsCacheTime = Date.now();
-      return parsed;
-    }
-    consultationsCache = [];
-    consultationsCacheTime = Date.now();
+    if (parsed.length > 0) return parsed;
     return [];
   }
   return [...(mockConsultations as Consultation[])];
@@ -107,7 +65,6 @@ export const savePatient = async (patient: Partial<Patient>) => {
     await savePatientToSheets(patient);
   }
   (mockPatients as Patient[]).push(patient as Patient);
-  clearDataCache();
 };
 
 export const updatePatient = async (patient: Patient) => {
@@ -116,7 +73,6 @@ export const updatePatient = async (patient: Patient) => {
   }
   const mockIdx = (mockPatients as Patient[]).findIndex(p => p.id === patient.id);
   if (mockIdx !== -1) (mockPatients as Patient[])[mockIdx] = patient;
-  clearDataCache();
 };
 
 export const deletePatient = async (patientId: string) => {
@@ -125,7 +81,6 @@ export const deletePatient = async (patientId: string) => {
   }
   const idx = (mockPatients as Patient[]).findIndex(p => String(p.id) === String(patientId));
   if (idx !== -1) (mockPatients as Patient[]).splice(idx, 1);
-  clearDataCache();
 };
 
 export const saveAppointment = async (appointment: Appointment) => {
@@ -133,7 +88,6 @@ export const saveAppointment = async (appointment: Appointment) => {
     await saveAppointmentToCalendar(appointment);
   }
   (mockAppointments as Appointment[]).push(appointment);
-  clearDataCache();
 };
 
 export const updateAppointment = async (appointment: Appointment) => {
@@ -142,7 +96,6 @@ export const updateAppointment = async (appointment: Appointment) => {
   }
   const mockIdx = (mockAppointments as Appointment[]).findIndex(a => String(a.id) === String(appointment.id));
   if (mockIdx !== -1) (mockAppointments as Appointment[])[mockIdx] = appointment;
-  clearDataCache();
 };
 
 export const deleteAppointment = async (appointmentId: string | number) => {
@@ -151,7 +104,6 @@ export const deleteAppointment = async (appointmentId: string | number) => {
   }
   const mockIdx = (mockAppointments as Appointment[]).findIndex(a => String(a.id) === String(appointmentId));
   if (mockIdx !== -1) (mockAppointments as Appointment[]).splice(mockIdx, 1);
-  clearDataCache();
 };
 
 export const saveConsultation = async (consultation: Consultation) => {
@@ -159,7 +111,6 @@ export const saveConsultation = async (consultation: Consultation) => {
     await saveConsultationToSheets(consultation);
   }
   mockConsultations.push(consultation);
-  clearDataCache();
 };
 
 export const getTemplates = async () => {

@@ -1,4 +1,5 @@
 import { callGoogleApi, SHEETS_ID_KEY } from './authService';
+import { logger } from './loggerService';
 import type { Patient, Consultation } from '../data/mockData';
 import { mockPatients, mockConsultations } from '../data/mockData';
 
@@ -73,12 +74,17 @@ export const ensureSpreadsheetExists = async (): Promise<string | null> => {
         
         if (searchResult && searchResult.files && searchResult.files.length > 0) {
           sheetsId = searchResult.files[0].id as string;
+          logger.info(`Hoja encontrada en Drive: ${sheetsId}`);
         } else {
+          logger.info('Hoja no encontrada, creando una nueva...');
           const newSheet = await callGoogleApi('https://sheets.googleapis.com/v4/spreadsheets', 'POST', {
             properties: { title: SPREADSHEET_NAME },
             sheets: [{ properties: { title: 'Sheet1' } }]
           });
-          if (newSheet) sheetsId = newSheet.spreadsheetId;
+          if (newSheet) {
+            sheetsId = newSheet.spreadsheetId;
+            logger.info(`Nueva hoja creada con ID: ${sheetsId}`);
+          }
         }
       }
 
@@ -198,6 +204,7 @@ export const savePatientToSheets = async (patient: Partial<Patient>) => {
     'POST',
     { values }
   );
+  logger.info(`Paciente guardado en Google Sheets: ${patient.name}`);
 };
 
 export const updatePatientInSheets = async (patient: Patient) => {
@@ -243,6 +250,7 @@ export const updatePatientInSheets = async (patient: Patient) => {
       'PUT',
       { values: [newRow] }
     );
+    logger.info(`Paciente actualizado en Google Sheets: ${patient.name}`);
   }
 };
 
@@ -279,6 +287,7 @@ export const deletePatientFromSheets = async (patientId: string) => {
         }]
       }
     );
+    logger.info(`Paciente eliminado de Google Sheets: ${patientId}`);
   }
 };
 
@@ -366,4 +375,5 @@ export const saveConsultationToSheets = async (consultation: Consultation) => {
     'POST',
     { values }
   );
+  logger.info(`Consulta guardada en Google Sheets: ${consultation.patientName || consultation.id}`);
 };

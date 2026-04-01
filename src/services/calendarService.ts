@@ -1,4 +1,5 @@
 import { callGoogleApi } from './authService';
+import { logger } from './loggerService';
 import type { Appointment } from '../data/mockData';
 import { mockAppointments } from '../data/mockData';
 
@@ -59,6 +60,7 @@ export const saveAppointmentToCalendar = async (appointment: Appointment) => {
     'POST',
     event
   );
+  logger.info(`Cita agendada en Google Calendar: ${appointment.title}`);
 };
 
 export const updateAppointmentInCalendar = async (appointment: Appointment) => {
@@ -94,6 +96,7 @@ export const updateAppointmentInCalendar = async (appointment: Appointment) => {
     'PUT',
     event
   );
+  logger.info(`Cita actualizada en Google Calendar: ${appointment.title}`);
 };
 
 export const deleteAppointmentFromCalendar = async (appointmentId: string | number) => {
@@ -102,4 +105,5 @@ export const deleteAppointmentFromCalendar = async (appointmentId: string | numb
     `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${appointmentId}`,
     'DELETE'
   );
+  logger.info(`Cita eliminada de Google Calendar: ${appointmentId}`);
 };

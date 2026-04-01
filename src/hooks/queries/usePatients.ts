@@ -7,8 +7,7 @@ export const PATIENTS_KEY = ['patients'];
 export const usePatients = () => {
   return useQuery({
     queryKey: PATIENTS_KEY,
-    // Llamamos siempre pasandole forceRefresh=true temporalmente para bypassear la cache interna del legacy service
-    queryFn: () => getPatients(true),
+    queryFn: getPatients,
   });
 };
 

@@ -25,5 +25,12 @@ dist-ssr
 dist-electron/
 .builder-cache/
 electron_dom_dump.html
-server/tokens.json
-server/tokens.json.backup
+# Production secrets and tokens
+server/.env
+server/*.json
+!server/package.json
+!server/package-lock.json
+tokens.json
+credentials.json
+.env
+.env.*

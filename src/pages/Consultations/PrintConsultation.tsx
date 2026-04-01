@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getConsultations, getPatients } from '../../services/dataService';
+import { useConsultations } from '../../hooks/queries/useConsultations';
+import { usePatients } from '../../hooks/queries/usePatients';
 import type { Consultation, Patient } from '../../services/dataService';
 import { FileText, ArrowLeft, Loader2 } from 'lucide-react';
 
@@ -8,34 +9,25 @@ export const PrintConsultation = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  const [consult, setConsult] = useState<(Consultation & { patientName: string }) | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: consultations = [], isLoading: loadingConsultations } = useConsultations();
+  const { data: patients = [], isLoading: loadingPatients } = usePatients();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const [consultationsList, patientsList] = await Promise.all([getConsultations(), getPatients()]);
-      
-      const consultRaw = consultationsList.find((c: Consultation) => String(c.id) === id);
-      const patient = consultRaw ? patientsList.find((p: Patient) => String(p.id) === String(consultRaw.patientId)) : null;
-      
-      if (consultRaw) {
-        setConsult({
-          ...consultRaw,
-          patientName: consultRaw.patientName || (patient ? patient.name : 'Desconocido')
-        });
-      }
-      setLoading(false);
-    };
-    fetchData();
-  }, [id]);
+  const consultRaw = consultations.find((c: Consultation) => String(c.id) === id);
+  const patient = consultRaw ? patients.find((p: Patient) => String(p.id) === String(consultRaw.patientId)) : null;
+  
+  const consult = consultRaw ? {
+    ...consultRaw,
+    patientName: consultRaw.patientName || (patient ? patient.name : 'Desconocido')
+  } : null;
+
+  const loading = loadingConsultations || loadingPatients;
 
   useEffect(() => {
     if (consult && !loading) {
       // Trigger print automatically after a short delay for rendering
       const timer = setTimeout(() => {
         const originalTitle = document.title;
-        document.title = ''; // Clear title to prevent printing on headers
+        document.title = ''; 
         window.print();
         document.title = originalTitle;
       }, 500);

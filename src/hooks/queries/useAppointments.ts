@@ -7,7 +7,7 @@ export const APPOINTMENTS_KEY = ['appointments'];
 export const useAppointments = () => {
   return useQuery({
     queryKey: APPOINTMENTS_KEY,
-    queryFn: () => getAppointments(true),
+    queryFn: getAppointments,
   });
 };
 
