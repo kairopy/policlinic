@@ -15,7 +15,20 @@ export const useSavePatient = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (patient: Partial<Patient>) => savePatient(patient),
-    onSuccess: () => {
+    onMutate: async (newP) => {
+      await queryClient.cancelQueries({ queryKey: PATIENTS_KEY });
+      const previous = queryClient.getQueryData<Patient[]>(PATIENTS_KEY);
+      if (previous) {
+        queryClient.setQueryData<Patient[]>(PATIENTS_KEY, [{ ...newP, id: newP.id || Date.now() } as Patient, ...previous]);
+      }
+      return { previous };
+    },
+    onError: (err, newP, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(PATIENTS_KEY, context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: PATIENTS_KEY });
     },
   });
@@ -25,7 +38,23 @@ export const useUpdatePatient = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (patient: Patient) => updatePatient(patient),
-    onSuccess: () => {
+    onMutate: async (updatedP) => {
+      await queryClient.cancelQueries({ queryKey: PATIENTS_KEY });
+      const previous = queryClient.getQueryData<Patient[]>(PATIENTS_KEY);
+      if (previous) {
+        queryClient.setQueryData<Patient[]>(
+          PATIENTS_KEY,
+          previous.map(p => p.id === updatedP.id ? updatedP : p)
+        );
+      }
+      return { previous };
+    },
+    onError: (err, updatedP, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(PATIENTS_KEY, context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: PATIENTS_KEY });
     },
   });
@@ -45,7 +74,23 @@ export const useDeletePatient = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string | number) => deletePatient(id),
-    onSuccess: () => {
+    onMutate: async (idToDelete) => {
+      await queryClient.cancelQueries({ queryKey: PATIENTS_KEY });
+      const previous = queryClient.getQueryData<Patient[]>(PATIENTS_KEY);
+      if (previous) {
+        queryClient.setQueryData<Patient[]>(
+          PATIENTS_KEY,
+          previous.filter(p => p.id !== idToDelete)
+        );
+      }
+      return { previous };
+    },
+    onError: (err, idToDelete, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(PATIENTS_KEY, context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: PATIENTS_KEY });
     },
   });

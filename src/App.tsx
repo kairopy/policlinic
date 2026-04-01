@@ -17,19 +17,20 @@ import { AnalyticsPage } from './pages/Analytics/AnalyticsPage';
 import TitleBar from './components/layout/TitleBar';
 import './App.css';
 
+// Configuración persistente de React Query - FUERA del ciclo de renderizado
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 0, // Siempre validar contra el service
+      retry: 1, // Reducir reintentos para fallos rápidos
+      refetchOnWindowFocus: true, 
+    },
+  },
+});
+
 function App() {
   const win = window as unknown as { process?: { type?: string } };
   const isElectron = win.process && win.process.type === 'renderer';
-
-  // Configuración base para React Query
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 5 * 60 * 1000, // Los datos se consideran frescos por 5 minutos
-        retry: 2, // Reintenta 2 veces si falla la red
-      },
-    },
-  });
 
   return (
     <QueryClientProvider client={queryClient}>

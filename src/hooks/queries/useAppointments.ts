@@ -15,7 +15,20 @@ export const useSaveAppointment = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (appointment: Appointment) => saveAppointment(appointment),
-    onSuccess: () => {
+    onMutate: async (newApp) => {
+      await queryClient.cancelQueries({ queryKey: APPOINTMENTS_KEY });
+      const previous = queryClient.getQueryData<Appointment[]>(APPOINTMENTS_KEY);
+      if (previous) {
+        queryClient.setQueryData<Appointment[]>(APPOINTMENTS_KEY, [newApp, ...previous]);
+      }
+      return { previous };
+    },
+    onError: (err, newApp, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(APPOINTMENTS_KEY, context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: APPOINTMENTS_KEY });
     },
   });
