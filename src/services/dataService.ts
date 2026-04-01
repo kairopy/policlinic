@@ -1,0 +1,242 @@
+import { 
+  mockPatients, 
+  mockAppointments, 
+  mockConsultations, 
+  mockTemplates,
+} from '../data/mockData';
+import type { Patient, Appointment, Consultation } from '../data/mockData';
+
+import { 
+  isGoogleLinked,
+  syncLoginStatusWithBackend,
+  callGoogleApi 
+} from './authService';
+
+import {
+  getPatientsFromSheets,
+  savePatientToSheets,
+  updatePatientInSheets,
+  deletePatientFromSheets,
+  getConsultationsFromSheets,
+  saveConsultationToSheets
+} from './sheetsService';
+
+import {
+  getAppointmentsFromCalendar,
+  saveAppointmentToCalendar,
+  updateAppointmentInCalendar,
+  deleteAppointmentFromCalendar
+} from './calendarService';
+
+export type { Patient, Appointment, Consultation };
+export { isGoogleLinked, syncLoginStatusWithBackend, callGoogleApi };
+
+let patientsCache: Patient[] | null = null;
+let patientsCacheTime = 0;
+let consultationsCache: Consultation[] | null = null;
+let consultationsCacheTime = 0;
+let appointmentsCache: Appointment[] | null = null;
+let appointmentsCacheTime = 0;
+const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
+
+export const clearDataCache = () => {
+  patientsCache = null;
+  consultationsCache = null;
+  appointmentsCache = null;
+};
+
+export const getPatients = async (forceRefresh = false): Promise<Patient[]> => {
+  const now = Date.now();
+  if (!forceRefresh && patientsCache && (now - patientsCacheTime < CACHE_TTL)) {
+    return [...patientsCache];
+  }
+
+  if (isGoogleLinked()) {
+    const parsed = await getPatientsFromSheets();
+    if (parsed.length > 0) {
+      patientsCache = [...parsed];
+      patientsCacheTime = Date.now();
+      return parsed;
+    }
+  }
+  return [...(mockPatients as Patient[])];
+};
+
+export const getAppointments = async (forceRefresh = false): Promise<Appointment[]> => {
+  const now = Date.now();
+  if (!forceRefresh && appointmentsCache && (now - appointmentsCacheTime < CACHE_TTL)) {
+    return [...appointmentsCache];
+  }
+
+  if (isGoogleLinked()) {
+    const parsed = await getAppointmentsFromCalendar();
+    if (parsed.length > 0) {
+      appointmentsCache = [...parsed];
+      appointmentsCacheTime = Date.now();
+      return parsed;
+    }
+    appointmentsCache = [];
+    appointmentsCacheTime = Date.now();
+    return [];
+  }
+  return [...(mockAppointments as Appointment[])];
+};
+
+export const getConsultations = async (forceRefresh = false): Promise<Consultation[]> => {
+  const now = Date.now();
+  if (!forceRefresh && consultationsCache && (now - consultationsCacheTime < CACHE_TTL)) {
+    return [...consultationsCache];
+  }
+
+  if (isGoogleLinked()) {
+    const parsed = await getConsultationsFromSheets();
+    if (parsed.length > 0) {
+      consultationsCache = [...parsed];
+      consultationsCacheTime = Date.now();
+      return parsed;
+    }
+    consultationsCache = [];
+    consultationsCacheTime = Date.now();
+    return [];
+  }
+  return [...(mockConsultations as Consultation[])];
+};
+
+export const savePatient = async (patient: Partial<Patient>) => {
+  if (isGoogleLinked()) {
+    await savePatientToSheets(patient);
+  }
+  (mockPatients as Patient[]).push(patient as Patient);
+  clearDataCache();
+};
+
+export const updatePatient = async (patient: Patient) => {
+  if (isGoogleLinked()) {
+    await updatePatientInSheets(patient);
+  }
+  const mockIdx = (mockPatients as Patient[]).findIndex(p => p.id === patient.id);
+  if (mockIdx !== -1) (mockPatients as Patient[])[mockIdx] = patient;
+  clearDataCache();
+};
+
+export const deletePatient = async (patientId: string) => {
+  if (isGoogleLinked()) {
+    await deletePatientFromSheets(patientId);
+  }
+  const idx = (mockPatients as Patient[]).findIndex(p => String(p.id) === String(patientId));
+  if (idx !== -1) (mockPatients as Patient[]).splice(idx, 1);
+  clearDataCache();
+};
+
+export const saveAppointment = async (appointment: Appointment) => {
+  if (isGoogleLinked()) {
+    await saveAppointmentToCalendar(appointment);
+  }
+  (mockAppointments as Appointment[]).push(appointment);
+  clearDataCache();
+};
+
+export const updateAppointment = async (appointment: Appointment) => {
+  if (isGoogleLinked()) {
+    await updateAppointmentInCalendar(appointment);
+  }
+  const mockIdx = (mockAppointments as Appointment[]).findIndex(a => String(a.id) === String(appointment.id));
+  if (mockIdx !== -1) (mockAppointments as Appointment[])[mockIdx] = appointment;
+  clearDataCache();
+};
+
+export const deleteAppointment = async (appointmentId: string | number) => {
+  if (isGoogleLinked()) {
+    await deleteAppointmentFromCalendar(appointmentId);
+  }
+  const mockIdx = (mockAppointments as Appointment[]).findIndex(a => String(a.id) === String(appointmentId));
+  if (mockIdx !== -1) (mockAppointments as Appointment[]).splice(mockIdx, 1);
+  clearDataCache();
+};
+
+export const saveConsultation = async (consultation: Consultation) => {
+  if (isGoogleLinked()) {
+    await saveConsultationToSheets(consultation);
+  }
+  mockConsultations.push(consultation);
+  clearDataCache();
+};
+
+export const getTemplates = async () => {
+  return mockTemplates;
+};
+
+export const updatePatientStatus = async (patientId: string | number, status: string) => {
+  const patient = mockPatients.find((p: Patient) => String(p.id) === String(patientId));
+  if (patient) {
+    patient.status = status;
+    if (isGoogleLinked()) {
+       // Since the full patient update logic is in updatePatient, we can just fetch and update or leave as is if only mock is needed.
+       // For better consistency, we should update the sheet too.
+       await updatePatient(patient);
+    }
+  }
+};
+
+export interface SearchResult {
+  id: string;
+  title: string;
+  subtitle: string;
+  type: 'patient' | 'appointment' | 'consultation';
+  link: string;
+}
+
+export const globalSearch = async (query: string): Promise<SearchResult[]> => {
+  if (!query || query.length < 2) return [];
+
+  const lowerQuery = query.toLowerCase();
+  const results: SearchResult[] = [];
+
+  try {
+    const [patients, appointments, consultations] = await Promise.all([
+      getPatients(),
+      getAppointments(),
+      getConsultations()
+    ]);
+
+    // Patients
+    patients.filter(p => 
+      p.name.toLowerCase().includes(lowerQuery) || 
+      String(p.id).toLowerCase().includes(lowerQuery) ||
+      (p.email && p.email.toLowerCase().includes(lowerQuery))
+    ).forEach(p => results.push({
+      id: String(p.id),
+      title: p.name,
+      subtitle: `Paciente • ID: ${p.id}`,
+      type: 'patient',
+      link: `/patients/${p.id}`
+    }));
+
+    // Appointments
+    appointments.filter(a => 
+      a.title.toLowerCase().includes(lowerQuery)
+    ).forEach(a => results.push({
+      id: String(a.id),
+      title: a.title,
+      subtitle: `Cita • ${new Date(a.date).toLocaleDateString()}`,
+      type: 'appointment',
+      link: `/appointments`
+    }));
+
+    // Consultations
+    consultations.filter(c => 
+      (c.patientName && c.patientName.toLowerCase().includes(lowerQuery)) ||
+      (c.summary && c.summary.toLowerCase().includes(lowerQuery))
+    ).forEach(c => results.push({
+      id: String(c.id),
+      title: c.patientName || 'Consulta de Paciente',
+      subtitle: `Evaluación • ${c.summary}`,
+      type: 'consultation',
+      link: `/consultations/${c.id}`
+    }));
+  } catch (error) {
+    console.error('Error in globalSearch:', error);
+  }
+
+  return results.slice(0, 10);
+};

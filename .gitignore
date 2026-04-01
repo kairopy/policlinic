@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+dist-electron/
+.builder-cache/
+electron_dom_dump.html
+server/tokens.json
+server/tokens.json.backup
