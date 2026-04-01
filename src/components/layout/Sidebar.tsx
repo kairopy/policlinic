@@ -7,7 +7,8 @@ import {
   Settings,
   Activity,
   LayoutDashboard,
-  Navigation
+  Navigation,
+  PieChart
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import './layout.css';
@@ -20,6 +21,7 @@ export const Sidebar: React.FC = () => {
     { to: '/patients', icon: Users, label: t('sidebar.patients') },
     { to: '/appointments', icon: CalendarIcon, label: t('sidebar.appointments') },
     { to: '/routes', icon: Navigation, label: 'Rutas' },
+    { to: '/analytics', icon: PieChart, label: 'Analíticas' },
     { to: '/consultations', icon: Activity, label: t('sidebar.history') },
     { to: '/templates', icon: FileText, label: t('sidebar.templates') },
   ];

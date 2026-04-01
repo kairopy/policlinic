@@ -12,6 +12,7 @@ import { PrintConsultation } from './pages/Consultations/PrintConsultation';
 import { Templates } from './pages/Templates/Templates';
 import { Settings } from './pages/Settings';
 import { RoutesPage } from './pages/Routes/RoutesPage';
+import { AnalyticsPage } from './pages/Analytics/AnalyticsPage';
 import TitleBar from './components/layout/TitleBar';
 import './App.css';
 
@@ -37,6 +38,7 @@ function App() {
               <Route path="new" element={<CreateAppointment />} />
             </Route>
             <Route path="routes" element={<RoutesPage />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="consultations">
               <Route index element={<ConsultationHistory />} />
               <Route path="new" element={<CreateConsultation />} />
