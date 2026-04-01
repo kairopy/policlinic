@@ -48,8 +48,7 @@ const callGoogleApi = async (url: string, method: string = 'GET', body?: unknown
         return null;
       }
     } catch (e) {
-      console.error('Backend token provider unreachable', e);
-      return null;
+      throw new Error('Backend token provider unreachable: ' + e);
     }
   }
 
@@ -64,8 +63,7 @@ const callGoogleApi = async (url: string, method: string = 'GET', body?: unknown
     });
   };
 
-  try {
-    let response = await makeRequest(token as string);
+  let response = await makeRequest(token as string);
 
     if (response.status === 401) {
       // Token expired, attempt refresh
@@ -90,21 +88,15 @@ const callGoogleApi = async (url: string, method: string = 'GET', body?: unknown
           return null;
         }
       } catch (e) {
-        console.error('Failed to retry with fresh token', e);
-        return null;
+        throw new Error('Failed to retry with fresh token: ' + e);
       }
     }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: response.statusText }));
-      console.error(`Google API Error (${response.status}):`, errorData);
-      throw new Error(`Google API error: ${response.statusText}`);
+      throw new Error(`Google API error: ${response.statusText}`, errorData);
     }
     return await response.json();
-  } catch (error) {
-    console.error('Google API Request Error:', error);
-    return null;
-  }
 };
 
 const SPREADSHEET_NAME = 'Ariel Cespedes Pacientes';
@@ -537,10 +529,10 @@ export const updatePatient = async (patient: Patient) => {
           clearDataCache();
           return;
         } else {
-          console.error(`updatePatient: no encontré el ID "${targetId}" en la col ${idColIdx}. Filas: ${rows.length}`);
+          throw new Error(`updatePatient: no encontré el ID "${targetId}" en la col ${idColIdx}. Filas: ${rows.length}`);
         }
       } else {
-         console.error(`updatePatient: el sheet está vacío o data.values es nulo`);
+         throw new Error(`updatePatient: el sheet está vacío o data.values es nulo`);
       }
     }
   }
@@ -602,7 +594,7 @@ export const deletePatient = async (patientId: string) => {
           }
         }
       } catch (err) {
-        console.error('Error deleting from Google Sheets:', err);
+        throw new Error('Error deleting from Google Sheets: ' + err);
       }
     }
   }
@@ -689,7 +681,7 @@ export const updateAppointment = async (appointment: Appointment) => {
         event
       );
     } catch (e) {
-      console.error("Error updating event in Google Calendar: ", e);
+      throw new Error("Error updating event in Google Calendar: " + e);
     }
   }
 
@@ -709,7 +701,7 @@ export const deleteAppointment = async (appointmentId: string | number) => {
         'DELETE'
       );
     } catch (e) {
-      console.error("Error deleting event from Google Calendar: ", e);
+      throw new Error("Error deleting event from Google Calendar: " + e);
     }
   }
 
@@ -814,7 +806,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
       link: `/consultations/${c.id}`
     }));
   } catch (error) {
-    console.error('Error in globalSearch:', error);
+    throw new Error('Error in globalSearch: ' + error);
   }
 
   return results.slice(0, 10); // Return top 10 matches

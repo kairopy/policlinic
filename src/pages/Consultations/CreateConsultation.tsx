@@ -177,8 +177,7 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
       } else {
         navigate('/dashboard');
       }
-    } catch (error) {
-      console.error('Submit error:', error);
+    } catch {
       addNotification('Error al Guardar', 'No se pudo sincronizar la consulta. Intente nuevamente.', 'error');
     } finally {
       setSubmitting(false);

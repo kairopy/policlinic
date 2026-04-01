@@ -113,8 +113,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
       } else {
         navigate(isEdit ? `/patients/${id}` : '/patients');
       }
-    } catch (err) {
-      console.error('Error al guardar paciente:', err);
+    } catch {
       setError('Ocurrió un error al guardar. Por favor intente de nuevo.');
       setSaving(false);
     }

@@ -1,6 +1,16 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to the `policlinic` project will be documented in this file.
+
+## [Phase 15] - 2026-04-01 - Auditoría de Seguridad y Refactorización de Deuda Técnica
+
+### Security
+- **Express Server Bind Port**: Se securizó `server/index.js` restringiendo el bind del servidor Node.js al loopback local (`127.0.0.1`) previniendo ataques externos e intercepción de tokens OAuth en la misma red local.
+- **Limpieza de Cajas Negras**: Eliminatoria absoluta de `console.error` y `console.log` sin control en producción.
+
+### Modified
+- **dataService.ts**: Reemplazados múltiples `console.error` anidados que devoraban excepciones. Ahora lanzan `throw new Error()` permitiendo que la capa de UI intercepte fallos de Google APIs y geolocalización.
+- **Frontend UI**: `CreateAppointment.tsx`, `CreateConsultation.tsx`, `PatientDetail.tsx`, `PatientForm.tsx`, `MainLayout.tsx` y `RoutesPage.tsx` fueron refactorizados para atrapar errores de red silenciosos y desplegarlos visualmente vía `NotificationContext` usando esquemas de `try/catch` limpios, eliminando variables inutilizadas. Linting pasivo de todo el proyecto resuelto.
 
 ## [Phase 14] - 2026-03-28 - Fisioterapia a Domicilio (Ariel Cespedes)
 

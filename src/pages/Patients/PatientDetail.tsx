@@ -52,8 +52,8 @@ export const PatientDetail: React.FC = () => {
       await deletePatient(String(patient.id));
       addNotification(t('common.success'), t('patients.deleteSuccess'), 'success');
       navigate('/patients');
-    } catch (err) {
-      console.error('Error al eliminar paciente:', err);
+    } catch {
+      addNotification('Error', 'No se pudo eliminar el paciente.', 'error');
       setDeleting(false);
     }
   };

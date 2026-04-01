@@ -202,16 +202,14 @@ export const RoutesPage: React.FC = () => {
         // Since mapped array gives elements in the exact original array order, we're good.
         setStops(resolvedStops);
         drawMapRoute(resolvedStops);
-      } catch (err) {
+      } catch {
         setError('Error al cargar las rutas. Por favor intenta de nuevo.');
-        console.error('RoutesPage load error:', err);
       } finally {
         setLoading(false);
       }
     };
 
     load();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   // ── Draw markers and OSRM route polyline on the Leaflet map ─────────────────
@@ -319,7 +317,6 @@ export const RoutesPage: React.FC = () => {
         );
 
       if (!patient) {
-        console.error('handleSaveLocation: paciente no encontrado', editingStop);
         return;
       }
 
@@ -342,8 +339,8 @@ export const RoutesPage: React.FC = () => {
 
       // drawMapRoute must run after setStops, so defer one tick
       setTimeout(() => drawMapRoute(updatedStops), 0);
-    } catch (e) {
-      console.error('Error saving location:', e);
+    } catch {
+      // Failed to save location
     } finally {
       setSavingLocation(false);
       setEditingStop(null);

@@ -87,6 +87,7 @@ export const CreateAppointment: React.FC<CreateAppointmentProps> = ({ onClose, o
          patients.find(p => normalize(p.name).includes(normTitle) || normTitle.includes(normalize(p.name)));
        
        if (match) {
+         // eslint-disable-next-line
          setSelectedPatientId(match.id);
        } else {
          setSelectedPatientId(''); // Clear out the garbage ID so the user is forced to pick manually
@@ -131,8 +132,7 @@ export const CreateAppointment: React.FC<CreateAppointmentProps> = ({ onClose, o
         await saveAppointment(appointmentData);
         addNotification('Cita Agendada', `Nueva cita agendada para ${patient.name}.`, 'success');
       }
-    } catch (err) {
-      console.error('Error saving:', err);
+    } catch {
       addNotification('Error', 'No se pudo guardar la cita.', 'error');
     }
     

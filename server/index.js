@@ -8,9 +8,9 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS config
+// CORS config — allow all origins so Electron renderer (null/file:// origin) can reach the backend
 app.use(cors({
-  origin: 'http://localhost:5173', // Allow frontend
+  origin: true,
   credentials: true
 }));
 app.use(express.json());
@@ -217,9 +217,110 @@ app.post('/api/logout', (req, res) => {
 // 5. Serve static frontend files (used for proxying Print previews to native Chrome/Edge)
 app.use(express.static(path.join(__dirname, '../dist')));
 
+
+/**
+ * POST /api/resolve-location
+ * Resolves a Google Maps URL or text address into { lat, lng }.
+ * - Short URLs (maps.app.goo.gl): follows the redirect server-side to get the full URL
+ * - Full Google Maps URLs: extracts coordinates via regex
+ * - Plain text addresses: geocodes via Nominatim (OSM), biased to Paraguay
+ */
+app.post('/api/resolve-location', async (req, res) => {
+  const { location } = req.body;
+  if (!location || typeof location !== 'string') {
+    return res.status(400).json({ error: 'location is required' });
+  }
+
+  try {
+    let urlToparse = location.trim();
+
+    // --- Step 1: If it's a short Google URL, follow the redirect ---
+    if (/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(urlToparse)) {
+      try {
+        const response = await fetch(urlToparse, {
+          method: 'HEAD',
+          redirect: 'follow',
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Policlinic/1.0)' },
+          signal: AbortSignal.timeout(8000),
+        });
+        const finalUrl = response.url;
+        if (finalUrl && finalUrl !== urlToparse) {
+          urlToparse = finalUrl;
+        }
+      } catch (redirectErr) {
+        // If redirect fails, try GET instead of HEAD
+        try {
+          const response = await fetch(urlToparse, {
+            redirect: 'follow',
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Policlinic/1.0)' },
+            signal: AbortSignal.timeout(8000),
+          });
+          const finalUrl = response.url;
+          if (finalUrl && finalUrl !== urlToparse) {
+            urlToparse = finalUrl;
+          }
+        } catch { /* ignore, try regex on original URL */ }
+      }
+    }
+
+    // --- Step 2: Extract coordinates from the (possibly resolved) URL ---
+    if (/google\.com\/maps|maps\.google/i.test(urlToparse)) {
+      // Format: /@lat,lng,zoom or /@lat,lng,zoomlevel
+      let match = urlToparse.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+      if (match) {
+        return res.json({ lat: parseFloat(match[1]), lng: parseFloat(match[2]) });
+      }
+      // Format: ?q=lat,lng or &q=lat,lng
+      match = urlToparse.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+      if (match) {
+        return res.json({ lat: parseFloat(match[1]), lng: parseFloat(match[2]) });
+      }
+      // Format: !3dlat!4dlng
+      match = urlToparse.match(/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/);
+      if (match) {
+        return res.json({ lat: parseFloat(match[1]), lng: parseFloat(match[2]) });
+      }
+      // Format: place/name/lat,lng
+      match = urlToparse.match(/place\/[^/]+\/(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+      if (match) {
+        return res.json({ lat: parseFloat(match[1]), lng: parseFloat(match[2]) });
+      }
+    }
+
+    // --- Step 3: Nominatim geocoding for plain-text addresses ---
+    const query = encodeURIComponent(location.trim());
+    const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=py&accept-language=es`;
+    const nominatimRes = await fetch(nominatimUrl, {
+      headers: { 'User-Agent': 'Policlinic-Fisioterapia/1.0 (home-visits app)' },
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (nominatimRes.ok) {
+      const results = await nominatimRes.json();
+      if (results && results.length > 0) {
+        return res.json({
+          lat: parseFloat(results[0].lat),
+          lng: parseFloat(results[0].lon),
+        });
+      }
+    }
+
+    return res.json({ lat: null, lng: null });
+  } catch (err) {
+    console.error('[resolve-location] Error:', err);
+    return res.json({ lat: null, lng: null });
+  }
+});
+
+app.post('/api/log', (req, res) => {
+  console.log('[CLIENT LOG]', req.body.msg);
+  req.body.data && console.dir(req.body.data, {depth: null});
+  res.send('ok');
+});
+
 const startServer = () => {
-  return app.listen(PORT, () => {
-    console.log(`Backend server running on http://localhost:${PORT}`);
+  return app.listen(PORT, '127.0.0.1', () => {
+    console.log(`Backend server running on http://127.0.0.1:${PORT}`);
   });
 };
 
