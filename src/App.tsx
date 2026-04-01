@@ -1,4 +1,5 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MainLayout } from './components/layout/MainLayout';
 import { Dashboard } from './pages/Dashboard';
 import { PatientsList } from './pages/Patients/PatientsList';
@@ -20,8 +21,19 @@ function App() {
   const win = window as unknown as { process?: { type?: string } };
   const isElectron = win.process && win.process.type === 'renderer';
 
+  // Configuración base para React Query
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000, // Los datos se consideran frescos por 5 minutos
+        retry: 2, // Reintenta 2 veces si falla la red
+      },
+    },
+  });
+
   return (
-    <HashRouter>
+    <QueryClientProvider client={queryClient}>
+      <HashRouter>
       <div className="min-h-screen flex flex-col relative w-full h-[100vh] overflow-hidden bg-[var(--color-background)]">
         {isElectron && <TitleBar />}
         <Routes>
@@ -51,6 +63,7 @@ function App() {
         </Routes>
       </div>
     </HashRouter>
+    </QueryClientProvider>
   );
 }
 

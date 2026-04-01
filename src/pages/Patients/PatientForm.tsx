@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { User, Phone, Mail, FileText, ArrowLeft, Save, MapPin, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useNotifications } from '../../context/NotificationContext';
-import { getPatients, savePatient, updatePatient } from '../../services/dataService';
+import { usePatients, useSavePatient, useUpdatePatient } from '../../hooks/queries/usePatients';
 import { sanitizeGoogleMapsUrl } from '../../services/geocoding';
 import type { Patient } from '../../services/dataService';
 
@@ -34,6 +34,10 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   const id = editPatientId ?? params.id;
   const isEdit = mode === 'edit' || (mode === undefined && Boolean(id));
 
+  const { data: patients = [] } = usePatients();
+  const saveMutation = useSavePatient();
+  const updateMutation = useUpdatePatient();
+
   const [formData, setFormData] = useState<Partial<Patient>>({
     name: '',
     age: 0,
@@ -45,30 +49,27 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   });
   // Preserve original read-only fields so they are not overwritten on save
   const originalRef = React.useRef<{ createdAt: string; lastVisit: string } | null>(null);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const saving = saveMutation.isPending || updateMutation.isPending;
+
   useEffect(() => {
-    if (isEdit && id) {
-      const fetchPatient = async () => {
-        const patients = await getPatients();
-        const patient = patients.find((p: Patient) => p.id === id);
-        if (patient) {
-          originalRef.current = { createdAt: patient.createdAt, lastVisit: patient.lastVisit };
-          setFormData({
-            name: patient.name,
-            age: patient.age,
-            phone: patient.phone,
-            email: patient.email,
-            notes: patient.notes || '',
-            location: patient.location || '',
-            status: patient.status as Patient['status'],
-          });
-        }
-      };
-      fetchPatient();
+    if (isEdit && id && patients.length > 0) {
+      const patient = patients.find((p: Patient) => String(p.id) === String(id));
+      if (patient) {
+        originalRef.current = { createdAt: patient.createdAt, lastVisit: patient.lastVisit };
+        setFormData({
+          name: patient.name,
+          age: patient.age,
+          phone: patient.phone,
+          email: patient.email,
+          notes: patient.notes || '',
+          location: patient.location || '',
+          status: patient.status as Patient['status'],
+        });
+      }
     }
-  }, [isEdit, id]);
+  }, [isEdit, id, patients]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -80,9 +81,6 @@ export const PatientForm: React.FC<PatientFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    setError(null);
-
     try {
       const patientData: Patient = {
         id: isEdit ? id || '' : `PT-${Date.now()}`,
@@ -98,24 +96,25 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         createdAt: isEdit && originalRef.current ? originalRef.current.createdAt : new Date().toISOString().split('T')[0],
       };
 
-      if (isEdit) {
-        await updatePatient(patientData);
-        addNotification('Paciente Actualizado', `Los datos de ${patientData.name} han sido actualizados.`, 'success');
-      } else {
-        await savePatient(patientData);
-        addNotification('Paciente Creado', `El paciente ${patientData.name} ha sido registrado exitosamente.`, 'success');
-      }
+      const mutation = isEdit ? updateMutation : saveMutation;
 
-      onSaved?.();
-
-      if (isModalMode) {
-        onClose!();
-      } else {
-        navigate(isEdit ? `/patients/${id}` : '/patients');
-      }
+      mutation.mutate(patientData, {
+        onSuccess: () => {
+          addNotification(
+            isEdit ? 'Paciente Actualizado' : 'Paciente Creado',
+            isEdit ? `Los datos de ${patientData.name} han sido actualizados.` : `El paciente ${patientData.name} ha sido registrado exitosamente.`,
+            'success'
+          );
+          onSaved?.();
+          if (isModalMode) onClose!();
+          else navigate(isEdit ? `/patients/${id}` : '/patients');
+        },
+        onError: () => {
+          setError('Ocurrió un error al guardar. Por favor intente de nuevo.');
+        }
+      });
     } catch {
-      setError('Ocurrió un error al guardar. Por favor intente de nuevo.');
-      setSaving(false);
+      setError('Ocurrió un error inesperado al procesar los datos.');
     }
   };
 

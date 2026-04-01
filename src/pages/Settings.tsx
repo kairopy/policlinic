@@ -77,7 +77,7 @@ export const Settings: React.FC = () => {
 
           <div style={{ marginLeft: '3rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <p style={{ fontSize: '0.95rem', color: 'var(--color-text-muted)' }}>
-              La aplicación se sincroniza automáticamente con tu Google Sheets ("Lic Karina Pacientes") y Google Calendar.
+              La aplicación se sincroniza automáticamente con tu Google Sheets ("Ariel Cespedes Pacientes") y Google Calendar.
             </p>
 
             <button 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 
-import { Search, Download, Plus, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
-import { getConsultations, getPatients } from '../../services/dataService';
+import { Search, Download, Plus, ChevronUp, ChevronDown, Loader2, RefreshCw } from 'lucide-react';
+import { useConsultations } from '../../hooks/queries/useConsultations';
+import { usePatients } from '../../hooks/queries/usePatients';
 import type { Consultation, Patient } from '../../services/dataService';
 import { useLanguage } from '../../context/LanguageContext';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
@@ -18,9 +19,12 @@ const SortIcon = ({ field, currentField, direction }: { field: SortField, curren
 
 export const ConsultationHistory: React.FC = () => {
   const { t } = useLanguage();
-  const [consultations, setConsultations] = useState<Consultation[]>([]);
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: consultations = [], isLoading: loadingC, refetch: refetchC, isFetching: fetchC } = useConsultations();
+  const { data: patients = [], isLoading: loadingP, refetch: refetchP, isFetching: fetchP } = usePatients();
+
+  const loading = loadingC || loadingP;
+  const isSyncing = fetchC || fetchP;
+
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -30,20 +34,9 @@ export const ConsultationHistory: React.FC = () => {
   const [showNewConsultation, setShowNewConsultation] = useState(false);
 
   const loadData = async () => {
-    setLoading(true);
-    const [consultData, patientData] = await Promise.all([
-      getConsultations(),
-      getPatients()
-    ]);
-    setConsultations(consultData);
-    setPatients(patientData);
-    setLoading(false);
+    refetchC();
+    refetchP();
   };
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadData();
-  }, []);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -81,7 +74,7 @@ export const ConsultationHistory: React.FC = () => {
   }, [consultations, patients, searchTerm, startDate, endDate, sortField, sortDirection]);
 
   const handleExport = () => {
-    const headers = ['ID', 'Paciente', 'Fecha', 'Doctor', 'Tipo', 'Costo (Gs)', 'Síntomas', 'Tratamiento'];
+    const headers = ['ID', 'Paciente', 'Fecha', 'Doctor', 'Plantilla', 'Costo (Gs)', 'Síntomas', 'Tratamiento'];
     const rows = enrichedConsultations.map(c => [
       c.id,
       `"${c.patientName}"`,
@@ -113,6 +106,14 @@ export const ConsultationHistory: React.FC = () => {
           <p className="page-description">{t('history.description')}</p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button 
+            className="btn btn-outline" 
+            onClick={() => loadData()} 
+            disabled={isSyncing}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <RefreshCw size={18} className={isSyncing ? "animate-spin" : ""} /> Sincronizar
+          </button>
           <button className="btn btn-outline" onClick={handleExport} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Download size={18} /> {t('history.export')}
           </button>
@@ -171,7 +172,7 @@ export const ConsultationHistory: React.FC = () => {
                   </th>
                   <th onClick={() => handleSort('type')} style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)', cursor: 'pointer' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      {t('history.type')} <SortIcon field="type" currentField={sortField} direction={sortDirection} />
+                      Plantilla <SortIcon field="type" currentField={sortField} direction={sortDirection} />
                     </div>
                   </th>
                   <th style={{ padding: '1rem 1.5rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>{t('history.summary')}</th>
@@ -183,7 +184,13 @@ export const ConsultationHistory: React.FC = () => {
                     <td style={{ padding: '1rem 1.5rem', fontWeight: 500 }}>{consult.date}</td>
                     <td style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>{consult.patientName}</td>
                     <td style={{ padding: '1rem 1.5rem', color: 'var(--color-text-muted)' }}>{consult.doctor}</td>
-                    <td style={{ padding: '1rem 1.5rem' }}><span className="badge badge-success">{consult.type}</span></td>
+                    <td style={{ padding: '1rem 1.5rem' }}>
+                      <span className="badge badge-success">
+                        {(!consult.type || consult.type.trim() === '' || consult.type.toLowerCase() === 'regular' || consult.type.toLowerCase() === 'general') 
+                          ? 'Personalizada' 
+                          : consult.type}
+                      </span>
+                    </td>
                     <td style={{ padding: '1rem 1.5rem', color: 'var(--color-text-muted)', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{consult.summary}</td>
                   </tr>
                 ))}
@@ -211,7 +218,7 @@ export const ConsultationHistory: React.FC = () => {
         <CreateConsultation 
           onClose={() => {
             setShowNewConsultation(false);
-            loadData();
+            // Ya no es necesario llamar a loadData() porque useSaveConsultation invalida la query
           }} 
         />
       </SlidePanel>

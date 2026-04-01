@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Plus, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
-import { getPatients } from '../../services/dataService';
+import { usePatients } from '../../hooks/queries/usePatients';
 import type { Patient } from '../../services/dataService';
 import { useLanguage } from '../../context/LanguageContext';
 import { SlidePanel } from '../../components/ui/SlidePanel';
@@ -18,24 +18,16 @@ const SortIcon = ({ field, currentField, direction }: { field: SortField, curren
 export const PatientsList: React.FC = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: patients = [], isLoading: loading, refetch: refetchPatients } = usePatients();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [showNewPatient, setShowNewPatient] = useState(false);
 
   const loadData = async () => {
-    setLoading(true);
-    const data = await getPatients();
-    setPatients(data);
-    setLoading(false);
+    refetchPatients();
   };
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadData();
-  }, []);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -230,7 +222,10 @@ export const PatientsList: React.FC = () => {
         <PatientForm
           mode="create"
           onClose={() => setShowNewPatient(false)}
-          onSaved={loadData}
+          onSaved={() => {
+            setShowNewPatient(false);
+            // No es estrictamente necesario llamar a loadData() porque useSavePatient (si se usa) invalidará la query
+          }}
         />
       </SlidePanel>
     </div>

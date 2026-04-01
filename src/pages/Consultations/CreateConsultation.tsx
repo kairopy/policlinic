@@ -5,7 +5,8 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { SingleDatePicker } from '../../components/ui/SingleDatePicker';
 import { Podograma } from '../../components/consultation/Podograma';
-import { getPatients, saveConsultation, getTemplates, updatePatientStatus } from '../../services/dataService';
+import { usePatients, useUpdatePatientStatus } from '../../hooks/queries/usePatients';
+import { useSaveConsultation, useTemplates } from '../../hooks/queries/useConsultations';
 import type { Patient, Consultation } from '../../services/dataService';
 
 interface Template {
@@ -28,9 +29,12 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
   const { t } = useLanguage();
   const { addNotification } = useNotifications();
   
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: patients = [], isLoading: loadingP } = usePatients();
+  const { data: templates = [], isLoading: loadingT } = useTemplates();
+  const saveMutation = useSaveConsultation();
+  const updateStatusMutation = useUpdatePatientStatus();
+
+  const loading = loadingP || loadingT;
 
   const [selectedPatientId, setSelectedPatientId] = useState('');
   const [patientSearch, setPatientSearch] = useState('');
@@ -69,19 +73,7 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
   const [consultTime, setConsultTime] = useState(now.toTimeString().substring(0, 5));
 
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const [p, tpl] = await Promise.all([
-        getPatients(),
-        getTemplates()
-      ]);
-      setPatients(p);
-      setTemplates(tpl);
-      setLoading(false);
-    };
-    fetchData();
-  }, []);
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -146,43 +138,45 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
       return;
     }
 
-    setSubmitting(true);
     try {
       const newConsultation: Consultation = {
         id: `C-${Math.floor(Math.random() * 10000)}`,
         patientId: selectedPatientId,
-        patientName: patients.find(p => p.id === selectedPatientId)?.name,
+        patientName: patients.find(p => String(p.id) === String(selectedPatientId))?.name,
         date: consultDate,
         time: consultTime,
-        doctor: 'Lic. Karina',
+        doctor: 'Ariel Cespedes Fisioterapeuta',
         summary: formData.symptoms.substring(0, 50) + (formData.symptoms.length > 50 ? '...' : ''),
-        type: t('consultation.type'),
-        status: 'Completed',
+        type: selectedTemplateId 
+          ? templates.find(t => t.id.toString() === selectedTemplateId)?.title || 'Personalizada'
+          : 'Personalizada',
+        status: 'completed',
         cost: Number(formData.cost) || 0,
         symptoms: formData.symptoms,
         treatment: formData.treatment,
         recommendations: formData.recommendations,
         recoveryTime: formData.recoveryTime,
         notes: formData.notes,
-        podograma_data: podogramaData
+        podograma_data: podogramaData || ''
       };
       
-      await updatePatientStatus(selectedPatientId, patientStatus);
-      await saveConsultation(newConsultation);
-
-      addNotification('Consulta Registrada', 'La evaluación clínica ha sido guardada en el historial del paciente.', 'success');
-      
-      if (onClose) {
-        onClose();
-      } else {
-        navigate('/dashboard');
-      }
+      updateStatusMutation.mutate({ id: selectedPatientId, status: patientStatus });
+      saveMutation.mutate(newConsultation, {
+        onSuccess: () => {
+          addNotification('Consulta Registrada', 'La evaluación clínica ha sido guardada en el historial del paciente.', 'success');
+          if (onClose) onClose();
+          else navigate('/dashboard');
+        },
+        onError: () => {
+          addNotification('Error al Guardar', 'No se pudo sincronizar la consulta. Intente nuevamente.', 'error');
+        }
+      });
     } catch {
-      addNotification('Error al Guardar', 'No se pudo sincronizar la consulta. Intente nuevamente.', 'error');
-    } finally {
-      setSubmitting(false);
+      addNotification('Error', 'Ocurrió un error inesperado.', 'error');
     }
   };
+
+  const submitting = saveMutation.isPending || updateStatusMutation.isPending;
 
   if (loading) {
     return (

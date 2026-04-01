@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Calendar, Clock, FileText, ChevronDown, CheckCircle } from 'lucide-react';
-import { getPatients, saveAppointment, updateAppointment } from '../../services/dataService';
-import type { Patient, Appointment } from '../../services/dataService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { SingleDatePicker } from '../../components/ui/SingleDatePicker';
+import { usePatients } from '../../hooks/queries/usePatients';
+import { useSaveAppointment, useUpdateAppointment } from '../../hooks/queries/useAppointments';
+import type { Patient, Appointment } from '../../services/dataService';
 
 interface CreateAppointmentProps {
   onClose?: () => void;
@@ -17,8 +18,10 @@ export const CreateAppointment: React.FC<CreateAppointmentProps> = ({ onClose, o
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { addNotification } = useNotifications();
-
-  const [patients, setPatients] = useState<Patient[]>([]);
+  
+  const { data: patients = [] } = usePatients();
+  const saveMutation = useSaveAppointment();
+  const updateMutation = useUpdateAppointment();
   const [selectedPatientId, setSelectedPatientId] = useState(initialAppointment?.patientId || '');
   const [patientSearch, setPatientSearch] = useState('');
   const [showPatientDropdown, setShowPatientDropdown] = useState(false);
@@ -48,13 +51,7 @@ export const CreateAppointment: React.FC<CreateAppointmentProps> = ({ onClose, o
   const typeDropdownRef = useRef<HTMLDivElement>(null);
   const timeDropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const fetchPatients = async () => {
-      const data = await getPatients();
-      setPatients(data);
-    };
-    fetchPatients();
-  }, []);
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -124,25 +121,23 @@ export const CreateAppointment: React.FC<CreateAppointmentProps> = ({ onClose, o
     };
     appointmentData.notes = notes;
 
-    try {
-      if (initialAppointment) {
-        await updateAppointment(appointmentData);
-        addNotification('Cita Actualizada', `La cita para ${patient.name} ha sido actualizada.`, 'success');
-      } else {
-        await saveAppointment(appointmentData);
-        addNotification('Cita Agendada', `Nueva cita agendada para ${patient.name}.`, 'success');
+    const mutation = initialAppointment ? updateMutation : saveMutation;
+
+    mutation.mutate(appointmentData, {
+      onSuccess: () => {
+        addNotification(
+          initialAppointment ? 'Cita Actualizada' : 'Cita Agendada',
+          initialAppointment ? `La cita para ${patient.name} ha sido actualizada.` : `Nueva cita agendada para ${patient.name}.`,
+          'success'
+        );
+        if (onSaved) onSaved();
+        if (onClose) onClose();
+        else navigate('/appointments');
+      },
+      onError: () => {
+        addNotification('Error', 'No se pudo guardar la cita.', 'error');
       }
-    } catch {
-      addNotification('Error', 'No se pudo guardar la cita.', 'error');
-    }
-    
-    if (onSaved) onSaved();
-    
-    if (onClose) {
-      onClose();
-    } else {
-      navigate('/appointments');
-    }
+    });
   };
 
   const isValidPatient = patients.some(p => p.id === selectedPatientId);

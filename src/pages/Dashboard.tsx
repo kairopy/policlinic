@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Calendar as CalendarIcon, Activity, TrendingUp, ArrowUpRight, ArrowDownRight, Loader2, Clock } from 'lucide-react';
 import { isSameDay, startOfMonth, endOfMonth, isWithinInterval, subMonths, format, parseISO } from 'date-fns';
-import { getPatients, getAppointments, getConsultations } from '../services/dataService';
+import { usePatients } from '../hooks/queries/usePatients';
+import { useAppointments } from '../hooks/queries/useAppointments';
+import { useConsultations } from '../hooks/queries/useConsultations';
 import type { Patient, Appointment, Consultation } from '../services/dataService';
 import { useLanguage } from '../context/LanguageContext';
 import { SlidePanel } from '../components/ui/SlidePanel';
@@ -52,32 +54,20 @@ const StatCard = ({ title, value, icon: Icon, trend, trendUp }: StatCardProps) =
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [consultations, setConsultations] = useState<Consultation[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  const { data: patients = [], isLoading: loadingP } = usePatients();
+  const { data: appointments = [], isLoading: loadingA } = useAppointments();
+  const { data: consultations = [], isLoading: loadingC } = useConsultations();
+
+  const loading = loadingP || loadingA || loadingC;
 
   const [showNewPatient, setShowNewPatient] = useState(false);
   const [showNewAppointment, setShowNewAppointment] = useState(false);
   const [showNewConsultation, setShowNewConsultation] = useState(false);
 
   const fetchData = React.useCallback(async () => {
-    setLoading(true);
-    const [p, a, c] = await Promise.all([
-      getPatients(),
-      getAppointments(),
-      getConsultations()
-    ]);
-    setPatients(p);
-    setAppointments(a);
-    setConsultations(c);
-    setLoading(false);
+    // No longer needed as separate function, but keep for passing to components if they still expect it
   }, []);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchData();
-  }, [fetchData]);
 
   // Logic Calculations
   const today = new Date();
@@ -243,7 +233,6 @@ export const Dashboard: React.FC = () => {
         <PatientForm
           mode="create"
           onClose={() => setShowNewPatient(false)}
-          onSaved={fetchData}
         />
       </SlidePanel>
 
@@ -254,7 +243,6 @@ export const Dashboard: React.FC = () => {
       >
         <CreateAppointment 
           onClose={() => setShowNewAppointment(false)} 
-          onSaved={fetchData} 
         />
       </SlidePanel>
 
@@ -267,7 +255,6 @@ export const Dashboard: React.FC = () => {
         <CreateConsultation 
           onClose={() => {
             setShowNewConsultation(false);
-            fetchData();
           }} 
         />
       </SlidePanel>

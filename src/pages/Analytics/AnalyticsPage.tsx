@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { getPatients, getAppointments, getConsultations } from '../../services/dataService';
+import React, { useState, useMemo } from 'react';
 import type { Patient, Appointment, Consultation } from '../../services/dataService';
+import { usePatients } from '../../hooks/queries/usePatients';
+import { useConsultations } from '../../hooks/queries/useConsultations';
+import { useAppointments } from '../../hooks/queries/useAppointments';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from 'recharts';
-import { Calendar as CalendarIcon, DollarSign, Activity, Users, Loader2 } from 'lucide-react';
+import { Calendar as CalendarIcon, DollarSign, Activity, Users, Loader2, RefreshCw } from 'lucide-react';
 import { format, subDays, startOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -11,28 +13,21 @@ const COLORS = ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 type Timeframe = 'thisMonth' | 'last30Days' | 'lastYear' | 'allTime';
 
 export const AnalyticsPage: React.FC = () => {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [consultations, setConsultations] = useState<Consultation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: patients = [], isLoading: loadingP, refetch: refetchP, isFetching: fetchP } = usePatients();
+  const { data: consultations = [], isLoading: loadingC, refetch: refetchC, isFetching: fetchC } = useConsultations();
+  const { data: appointments = [], isLoading: loadingA, refetch: refetchA, isFetching: fetchA } = useAppointments();
+  
+  const loading = loadingP || loadingC || loadingA;
+  const isSyncing = fetchP || fetchC || fetchA;
+  
   const [timeframe, setTimeframe] = useState<Timeframe>('last30Days');
   const [activeTab, setActiveTab] = useState<'general' | 'financial' | 'clinical' | 'operational'>('general');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const [p, a, c] = await Promise.all([
-        getPatients(),
-        getAppointments(),
-        getConsultations()
-      ]);
-      setPatients(p);
-      setAppointments(a);
-      setConsultations(c);
-      setLoading(false);
-    };
-    fetchData();
-  }, []);
+  const fetchData = async () => {
+    refetchP();
+    refetchC();
+    refetchA();
+  };
 
   const dateInterval = useMemo(() => {
     const today = new Date();
@@ -82,6 +77,22 @@ export const AnalyticsPage: React.FC = () => {
   const totalRevenue = useMemo(() => filteredConsultations.reduce((acc, c) => acc + (Number(c.cost) || 0), 0), [filteredConsultations]);
   const avgTicket = filteredConsultations.length > 0 ? totalRevenue / filteredConsultations.length : 0;
   
+  const maxTicket = useMemo(() => {
+    return filteredConsultations.reduce((max, c) => Math.max(max, Number(c.cost) || 0), 0);
+  }, [filteredConsultations]);
+
+  const altaMedicaCount = useMemo(() => {
+    return filteredPatients.filter(p => p.status === 'Alta Médica').length;
+  }, [filteredPatients]);
+
+  const confirmedAppointments = useMemo(() => {
+    return filteredAppointments.filter(a => a.status === 'Confirmada' || a.status === 'Atendida').length;
+  }, [filteredAppointments]);
+
+  const canceledAppointments = useMemo(() => {
+    return filteredAppointments.filter(a => a.status === 'Cancelada' || a.status === 'No Asistió').length;
+  }, [filteredAppointments]);
+  
   // Charts Data
   const revenueByDay = useMemo(() => {
     const map = new Map<string, number>();
@@ -114,6 +125,18 @@ export const AnalyticsPage: React.FC = () => {
     return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
   }, [filteredAppointments]);
 
+  const templateUsageData = useMemo(() => {
+    const map = new Map<string, number>();
+    filteredConsultations.forEach(c => {
+      let type = c.type && c.type.trim() !== '' ? c.type : 'Personalizada';
+      if (type.toLowerCase() === 'regular' || type.toLowerCase() === 'general') {
+        type = 'Personalizada';
+      }
+      map.set(type, (map.get(type) || 0) + 1);
+    });
+    return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
+  }, [filteredConsultations]);
+
   if (loading) {
     return (
       <div className="flex-center" style={{ height: '80vh', flexDirection: 'column', gap: '1rem' }}>
@@ -130,19 +153,41 @@ export const AnalyticsPage: React.FC = () => {
           <h1 className="page-title">Analíticas Avanzadas</h1>
           <p className="page-description">Centro de inteligencia y métricas en tiempo real</p>
         </div>
-        
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <select 
-            className="input" 
-            value={timeframe} 
-            onChange={(e) => setTimeframe(e.target.value as Timeframe)}
-            style={{ width: '200px', backgroundColor: 'var(--color-surface)' }}
-          >
-            <option value="thisMonth">Este Mes</option>
-            <option value="last30Days">Últimos 30 Días</option>
-            <option value="lastYear">Último Año</option>
-            <option value="allTime">Histórico Total</option>
-          </select>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button 
+            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+            Sincronizar
+          </button>
+          
+          <div style={{ display: 'flex', background: 'var(--color-surface)', padding: '4px', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+            {(
+              [
+                { id: 'thisMonth', label: 'Mes' },
+                { id: 'last30Days', label: '30 Días' },
+                { id: 'lastYear', label: '1 Año' },
+                { id: 'allTime', label: 'Total' }
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => setTimeframe(opt.id)}
+                style={{
+                  padding: '0.4rem 1rem',
+                  fontSize: '0.85rem',
+                  fontWeight: timeframe === opt.id ? 600 : 500,
+                  color: timeframe === opt.id ? 'white' : 'var(--color-text-muted)',
+                  background: timeframe === opt.id ? 'var(--color-primary)' : 'transparent',
+                  border: 'none',
+                  borderRadius: 'var(--radius-sm)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease-in-out',
+                  boxShadow: timeframe === opt.id ? '0 2px 8px rgba(2, 132, 199, 0.25)' : 'none'
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
@@ -170,40 +215,132 @@ export const AnalyticsPage: React.FC = () => {
 
       {/* KPI CARDS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-        <div className="glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="flex-between">
-            <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Ingresos Brutos</span>
-            <DollarSign size={20} color="var(--color-primary)" />
-          </div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{totalRevenue.toLocaleString('es-PY')} Gs</div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
-            Ticket Med. {Math.round(avgTicket).toLocaleString('es-PY')} Gs
-          </div>
-        </div>
         
-        <div className="glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="flex-between">
-            <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Consultas Realizadas</span>
-            <Activity size={20} color="var(--color-success)" />
-          </div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{filteredConsultations.length}</div>
-        </div>
+        {/* TAB: GENERAL */}
+        {activeTab === 'general' && (
+          <>
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <div className="flex-between">
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Ingresos Brutos</span>
+                <DollarSign size={20} color="var(--color-primary)" />
+              </div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{totalRevenue.toLocaleString('es-PY')} Gs</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
+                Ticket Med. {Math.round(avgTicket).toLocaleString('es-PY')} Gs
+              </div>
+            </div>
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <div className="flex-between">
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Consultas Realizadas</span>
+                <Activity size={20} color="var(--color-success)" />
+              </div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{filteredConsultations.length}</div>
+            </div>
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <div className="flex-between">
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Nuevos Pacientes</span>
+                <Users size={20} color="#8b5cf6" />
+              </div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{filteredPatients.length}</div>
+            </div>
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <div className="flex-between">
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Citas Programadas</span>
+                <CalendarIcon size={20} color="#f59e0b" />
+              </div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{filteredAppointments.length}</div>
+            </div>
+          </>
+        )}
 
-        <div className="glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="flex-between">
-            <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Nuevos Pacientes</span>
-            <Users size={20} color="#8b5cf6" />
-          </div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{filteredPatients.length}</div>
-        </div>
+        {/* TAB: FINANCIAL */}
+        {activeTab === 'financial' && (
+          <>
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <div className="flex-between">
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Facturación Total</span>
+                <DollarSign size={20} color="var(--color-primary)" />
+              </div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{totalRevenue.toLocaleString('es-PY')} Gs</div>
+            </div>
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <div className="flex-between">
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Ticket Promedio</span>
+                <Activity size={20} color="#8b5cf6" />
+              </div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{Math.round(avgTicket).toLocaleString('es-PY')} Gs</div>
+            </div>
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <div className="flex-between">
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Consulta Más Alta</span>
+                <DollarSign size={20} color="var(--color-success)" />
+              </div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{maxTicket.toLocaleString('es-PY')} Gs</div>
+            </div>
+          </>
+        )}
 
-        <div className="glass-panel" style={{ padding: '1.5rem' }}>
-          <div className="flex-between">
-            <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Citas Programadas</span>
-            <CalendarIcon size={20} color="#f59e0b" />
-          </div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{filteredAppointments.length}</div>
-        </div>
+        {/* TAB: CLINICAL */}
+        {activeTab === 'clinical' && (
+          <>
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <div className="flex-between">
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Consultas Clínicas</span>
+                <Activity size={20} color="var(--color-primary)" />
+              </div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{filteredConsultations.length}</div>
+            </div>
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <div className="flex-between">
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Diagnóstico Principal</span>
+                <Activity size={20} color="#f59e0b" />
+              </div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 700, marginTop: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {treatmentsData.length > 0 ? treatmentsData[0].name : 'N/A'}
+              </div>
+            </div>
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <div className="flex-between">
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Altas Médicas</span>
+                <Users size={20} color="var(--color-success)" />
+              </div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{altaMedicaCount}</div>
+            </div>
+          </>
+        )}
+
+        {/* TAB: OPERATIONAL */}
+        {activeTab === 'operational' && (
+          <>
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <div className="flex-between">
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Total Programado</span>
+                <CalendarIcon size={20} color="var(--color-primary)" />
+              </div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{filteredAppointments.length}</div>
+            </div>
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <div className="flex-between">
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Asistencias Confirmadas</span>
+                <Users size={20} color="var(--color-success)" />
+              </div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{confirmedAppointments}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--color-success)', marginTop: '0.5rem' }}>
+                {filteredAppointments.length > 0 ? Math.round((confirmedAppointments / filteredAppointments.length) * 100) : 0}% de retención
+              </div>
+            </div>
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+              <div className="flex-between">
+                <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Inasistencias / Canceladas</span>
+                <Activity size={20} color="var(--color-danger)" />
+              </div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 700, marginTop: '1rem' }}>{canceledAppointments}</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--color-danger)', marginTop: '0.5rem' }}>
+                {filteredAppointments.length > 0 ? Math.round((canceledAppointments / filteredAppointments.length) * 100) : 0}% de fuga
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* CHARTS GRID */}
@@ -271,6 +408,34 @@ export const AnalyticsPage: React.FC = () => {
                   >
                     {appointmentStatusData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderRadius: '8px' }} />
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {/* TEMPLATE USAGE PIECHART */}
+        {(activeTab === 'general' || activeTab === 'clinical') && (
+          <div className="glass-panel" style={{ padding: '1.5rem' }}>
+            <h3 style={{ marginBottom: '1.5rem' }}>Uso de Plantillas</h3>
+            <div style={{ height: '300px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={templateUsageData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={110}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {templateUsageData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[(index + 3) % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderRadius: '8px' }} />

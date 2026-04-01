@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { X, Printer } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { Podograma } from './Podograma';
+import { useNavigate } from 'react-router-dom';
 import type { Consultation } from '../../services/dataService';
 
 interface ConsultationDetailModalProps {
@@ -12,6 +13,7 @@ interface ConsultationDetailModalProps {
 
 export const ConsultationDetailModal: React.FC<ConsultationDetailModalProps> = ({ consultation, onClose }) => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     if (consultation) {
@@ -62,7 +64,11 @@ export const ConsultationDetailModal: React.FC<ConsultationDetailModalProps> = (
       >
         <div style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', display: 'flex', gap: '0.75rem', zIndex: 10 }}>
           <button 
-            onClick={() => window.open(`#/print/consultation/${consultation.id}`, '_blank')} 
+            className="btn btn-outline" 
+            onClick={() => {
+              document.body.style.overflow = 'unset';
+              navigate(`/print/consultation/${consultation.id}`);
+            }} 
             style={{ 
               background: 'var(--color-background)', 
               border: '1px solid var(--color-border)', 
@@ -136,9 +142,13 @@ export const ConsultationDetailModal: React.FC<ConsultationDetailModalProps> = (
           </div>
           <div>
             <strong style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '0.4rem' }}>
-              {t('history.type') || 'TIPO'}:
+              {t('history.type') || 'PLANTILLA'}:
             </strong> 
-            <div style={{ fontWeight: 700, fontSize: '1.15rem', color: 'var(--color-text-main)' }}>{consultation.type}</div>
+            <div style={{ fontWeight: 700, fontSize: '1.15rem', color: 'var(--color-text-main)' }}>
+              {(!consultation.type || consultation.type.trim() === '' || consultation.type.toLowerCase() === 'regular' || consultation.type.toLowerCase() === 'general') 
+                ? 'Personalizada' 
+                : consultation.type}
+            </div>
           </div>
           <div>
             <strong style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: '0.4rem' }}>

@@ -13,7 +13,8 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
-import { getPatients, getConsultations, deletePatient } from '../../services/dataService';
+import { usePatients, useDeletePatient } from '../../hooks/queries/usePatients';
+import { useConsultations } from '../../hooks/queries/useConsultations';
 import type { Patient, Consultation } from '../../services/dataService';
 import { sanitizeGoogleMapsUrl } from '../../services/geocoding';
 import { useLanguage } from '../../context/LanguageContext';
@@ -28,52 +29,35 @@ export const PatientDetail: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { addNotification } = useNotifications();
-  const [patient, setPatient] = React.useState<Patient | null>(null);
-  const [consultations, setConsultations] = React.useState<Consultation[]>([]);
-  const [loading, setLoading] = React.useState(true);
+  
+  const { data: allPatients = [], isLoading: loadingP } = usePatients();
+  const { data: allConsultations = [], isLoading: loadingC } = useConsultations();
+  const deleteMutation = useDeletePatient();
+
+  const patient = allPatients.find((p: Patient) => String(p.id) === String(id));
+  const consultations = allConsultations.filter((c: Consultation) => String(c.patientId) === String(id));
+  const loading = loadingP || loadingC;
+
   const [viewingConsultation, setViewingConsultation] = React.useState<Consultation | null>(null);
-  const [deleting, setDeleting] = React.useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const [showEditPatient, setShowEditPatient] = React.useState(false);
   const [showNewConsultation, setShowNewConsultation] = React.useState(false);
 
-  const refreshPatient = React.useCallback(async () => {
-    // forceRefresh=true bypasses the 5-min cache so the UI shows the just-saved data
-    const allPatients = await getPatients(true);
-    const found = allPatients.find((p: Patient) => p.id === id);
-    if (found) setPatient(found);
-  }, [id]);
-
   const handleDelete = async () => {
     if (!patient) return;
-    setDeleting(true);
-    setShowDeleteConfirm(false);
-    try {
-      await deletePatient(String(patient.id));
-      addNotification(t('common.success'), t('patients.deleteSuccess'), 'success');
-      navigate('/patients');
-    } catch {
-      addNotification('Error', 'No se pudo eliminar el paciente.', 'error');
-      setDeleting(false);
-    }
+    deleteMutation.mutate(patient.id, {
+      onSuccess: () => {
+        addNotification(t('common.success'), t('patients.deleteSuccess'), 'success');
+        navigate('/patients');
+      },
+      onError: () => {
+        addNotification('Error', 'No se pudo eliminar el paciente.', 'error');
+      }
+    });
   };
 
 
-  React.useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const allPatients: Patient[] = await getPatients();
-      const allConsultations: Consultation[] = await getConsultations();
-      
-      const foundPatient: Patient | undefined = allPatients.find((p: Patient) => p.id === id);
-      const patientConsultations: Consultation[] = allConsultations.filter((c: Consultation) => c.patientId === id);
-      
-      setPatient(foundPatient || null);
-      setConsultations(patientConsultations);
-      setLoading(false);
-    };
-    fetchData();
-  }, [id]);
+
 
   if (loading) {
     return (
@@ -136,9 +120,9 @@ export const PatientDetail: React.FC = () => {
               className="btn btn-outline"
               style={{ borderRadius: '12px', color: 'var(--color-danger, #ef4444)', borderColor: 'var(--color-danger, #ef4444)' }}
               onClick={() => setShowDeleteConfirm(true)}
-              disabled={deleting}
+              disabled={deleteMutation.isPending}
             >
-              <Trash2 size={18} />{deleting ? ' Eliminando...' : ' Eliminar'}
+              <Trash2 size={18} />{deleteMutation.isPending ? ' Eliminando...' : ' Eliminar'}
             </button>
             <button className="btn btn-outline" style={{ borderRadius: '12px' }} onClick={() => setShowEditPatient(true)}>
               <Edit size={18} /> {t('patients.editProfile')}
@@ -227,7 +211,7 @@ export const PatientDetail: React.FC = () => {
                   <button
                     className="btn btn-ghost btn-sm"
                     style={{ fontWeight: 600 }}
-                    onClick={() => window.open(`#/print/consultation/${c.id}`, '_blank')}
+                    onClick={() => navigate(`/print/consultation/${c.id}`)}
                   >
                     {t('patients.printReport')}
                   </button>
@@ -259,7 +243,6 @@ export const PatientDetail: React.FC = () => {
           mode="edit"
           editPatientId={id}
           onClose={() => setShowEditPatient(false)}
-          onSaved={refreshPatient}
         />
       </SlidePanel>
 
@@ -280,7 +263,7 @@ export const PatientDetail: React.FC = () => {
         confirmText={deleting ? 'Eliminando...' : 'Eliminar'}
         cancelText="Cancelar"
         isDanger={true}
-        onClose={() => !deleting && setShowDeleteConfirm(false)}
+        onClose={() => !deleteMutation.isPending && setShowDeleteConfirm(false)}
         onConfirm={handleDelete}
       />
     </div>

@@ -89,7 +89,7 @@ export const mockConsultations: Consultation[] = [
     patientId: 'PAC-001',
     patientName: 'Juan Pérez',
     date: '2024-03-10',
-    doctor: 'Lic. Karina',
+    doctor: 'Ariel Cespedes',
     summary: 'Profilaxis general y corte de uñas.',
     type: 'Regular',
     status: 'completed',

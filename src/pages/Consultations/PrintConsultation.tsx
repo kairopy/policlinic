@@ -66,8 +66,8 @@ export const PrintConsultation = () => {
       
       {/* Top Banner with Print Controls (Hidden on print) */}
       <div className="no-print" style={{ width: '100%', maxWidth: '210mm', background: 'white', padding: '1rem 2rem', marginBottom: '2rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <button onClick={() => window.close()} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', borderRadius: '10px', background: 'white', color: '#333', border: '1px solid #ccc' }}>
-          <ArrowLeft size={18} /> Cerrar Pestaña
+        <button onClick={() => navigate(-1)} className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', borderRadius: '10px', background: 'white', color: '#333', border: '1px solid #ccc' }}>
+          <ArrowLeft size={18} /> Volver
         </button>
         <button onClick={() => window.print()} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '10px' }}>
           <FileText size={18} /> Imprimir Documento
@@ -80,7 +80,7 @@ export const PrintConsultation = () => {
         {/* Document Header */}
         <div style={{ borderBottom: '3px solid #0066cc', paddingBottom: '1.5rem', marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 800, color: '#0066cc' }}>LIC KARINA PODOLOGÍA</h1>
+            <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 800, color: '#0066cc' }}>ARIEL CESPEDES FISIOTERAPEUTA</h1>
             <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.9rem', color: '#4b5563' }}>Prescripción médica y resumen de visita</p>
           </div>
           <div style={{ textAlign: 'right', fontSize: '0.95rem', color: '#1f2937' }}>
@@ -144,7 +144,7 @@ export const PrintConsultation = () => {
         {/* Footer / Signature */}
         <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '2rem', marginTop: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-              Documento generado por software médico Lic Karina Podología.
+              Documento generado por software médico Ariel Cespedes Fisioterapeuta.
            </div>
            <div style={{ textAlign: 'center', width: '200px' }}>
               <div style={{ borderBottom: '1px solid #333', marginBottom: '0.5rem', height: '40px' }}></div>

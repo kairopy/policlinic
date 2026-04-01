@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Loader2 } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, startOfWeek, endOfMonth, endOfWeek, isSameMonth, isSameDay, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { getAppointments, deleteAppointment } from '../../services/dataService';
+import { useAppointments, useDeleteAppointment } from '../../hooks/queries/useAppointments';
 import type { Appointment } from '../../services/dataService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useNotifications } from '../../context/NotificationContext';
@@ -13,26 +13,19 @@ import { CreateAppointment } from './CreateAppointment';
 export const CalendarView: React.FC = () => {
   const { t } = useLanguage();
   const { addNotification } = useNotifications();
+  const { data: appointments = [], isLoading: loading, refetch: refetchAppointments, isFetching: isSyncing } = useAppointments();
+  const deleteMutation = useDeleteAppointment();
+
   const [currentDate, setCurrentDate] = useState(new Date()); 
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showNewAppointment, setShowNewAppointment] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const loadAppointments = React.useCallback(async () => {
-    setLoading(true);
-    const data = await getAppointments();
-    setAppointments(data);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadAppointments();
-  }, [loadAppointments]);
+    refetchAppointments();
+  }, [refetchAppointments]);
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -327,11 +320,16 @@ export const CalendarView: React.FC = () => {
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={async () => {
           if (selectedAppointment) {
-            await deleteAppointment(selectedAppointment.id);
-            addNotification('Cita Eliminada', 'La cita fue eliminada del sistema y de Google Calendar.', 'success');
-            setSelectedAppointment(null);
-            setShowDeleteConfirm(false);
-            loadAppointments();
+            deleteMutation.mutate(selectedAppointment.id, {
+              onSuccess: () => {
+                addNotification('Cita Eliminada', 'La cita fue eliminada del sistema y de Google Calendar.', 'success');
+                setSelectedAppointment(null);
+                setShowDeleteConfirm(false);
+              },
+              onError: (error) => {
+                addNotification('Error', 'No se pudo eliminar la cita: ' + error.message, 'error');
+              }
+            });
           }
         }}
       />

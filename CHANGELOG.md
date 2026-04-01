@@ -2,6 +2,24 @@
 
 All notable changes to the `policlinic` project will be documented in this file.
 
+## [Phase 16] - 2026-04-01 - Proyecto Titán: Modernización de Arquitectura con React Query
+
+### Added
+- **TanStack Query Integración**: Implementación de `@tanstack/react-query` como motor de sincronización de estado y caché.
+- **Custom Hooks (`src/hooks/queries/`)**: 
+  - `usePatients`: CRUD reactivo para pacientes.
+  - `useConsultations`: Historización y plantillas.
+  - `useAppointments`: Gestión de agenda con invalidación automática.
+- **Servicios Especializados**: Desacoplamiento de `dataService.ts` en `authService.ts`, `sheetsService.ts` y `calendarService.ts`.
+
+### Modified
+- **Refactorización de Vistas Core**: Migración total de `Dashboard`, `History`, `Calendar`, `PatientsList`, `PatientDetail`, `PatientForm`, `CreateAppointment` y `CreateConsultation` para eliminar `useEffect` imperativos y estados locales duplicados.
+- **Sincronización Automática**: El sistema ahora invalida la caché automáticamente tras mutaciones, eliminando la necesidad de recargas manuales (F5).
+- **Consolidación de Brand**: Reemplazo global de "Lic. Karina" por "Ariel Cespedes Fisioterapeuta" en reportes e interfaces.
+
+### Security
+- **Data Integrity**: Se eliminaron los "Silent Failures" en la capa de datos; los hooks ahora manejan estados de error nativos de React Query.
+
 ## [Phase 15] - 2026-04-01 - Auditoría de Seguridad y Refactorización de Deuda Técnica
 
 ### Security
