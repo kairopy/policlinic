@@ -70,76 +70,61 @@ export const ensureSpreadsheetExists = async (): Promise<string | null> => {
       const cached = localStorage.getItem(SHEETS_ID_KEY);
       const isEnsured = localStorage.getItem('policlinic_sheet_ensured');
       const cachedName = localStorage.getItem('policlinic_sheet_name');
+      const citasEnsured = localStorage.getItem('policlinic_citas_tab_ensured');
 
-      if (!cachedName || cachedName !== SPREADSHEET_NAME) {
-        localStorage.removeItem(SHEETS_ID_KEY);
-        localStorage.removeItem('policlinic_sheet_ensured');
-        localStorage.setItem('policlinic_sheet_name', SPREADSHEET_NAME);
-        return null;
-      }
-
-      if (cached && cached !== 'undefined' && cached !== 'null' && isEnsured === 'true') {
-        // Verificamos si ya hemos asegurado la pestaña de Citas específicamente
-        const citasEnsured = localStorage.getItem('policlinic_citas_tab_ensured');
-        if (citasEnsured === 'true') return cached;
+      // Si ya tenemos todo asegurado, retornamos rápido
+      if (cached && isEnsured === 'true' && citasEnsured === 'true' && cachedName === SPREADSHEET_NAME) {
+        return cached;
       }
 
       let sheetsId = cached;
 
-      if (!sheetsId || sheetsId === 'undefined' || sheetsId === 'null') {
+      // 1. Buscar o crear la hoja principal
+      if (!sheetsId || sheetsId === 'undefined' || cachedName !== SPREADSHEET_NAME) {
         const q = encodeURIComponent(`name='${SPREADSHEET_NAME}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`);
         const searchResult = await callGoogleApi(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&pageSize=1`);
         
-        if (searchResult && searchResult.files && searchResult.files.length > 0) {
-          sheetsId = searchResult.files[0].id as string;
-          logger.info(`Hoja encontrada en Drive: ${sheetsId}`);
+        if (searchResult?.files?.length > 0) {
+          sheetsId = searchResult.files[0].id;
         } else {
-          logger.info('Hoja no encontrada, creando una nueva...');
           const newSheet = await callGoogleApi('https://sheets.googleapis.com/v4/spreadsheets', 'POST', {
-            properties: { title: SPREADSHEET_NAME },
-            sheets: [{ properties: { title: 'Sheet1' } }]
+            properties: { title: SPREADSHEET_NAME }
           });
-          if (newSheet) {
-            sheetsId = newSheet.spreadsheetId;
-            logger.info(`Nueva hoja creada con ID: ${sheetsId}`);
-          }
+          sheetsId = newSheet?.spreadsheetId;
         }
       }
 
       if (!sheetsId) return null;
       localStorage.setItem(SHEETS_ID_KEY, sheetsId);
+      localStorage.setItem('policlinic_sheet_name', SPREADSHEET_NAME);
 
+      // 2. Verificar pestañas (con calma para no bloquear)
       const meta = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}?fields=sheets(properties(title))`);
-      if (!meta) return sheetsId;
+      const sheetTitles = (meta?.sheets || []).map((s: any) => s.properties.title);
 
-      const sheetTitles = (meta.sheets as Array<{ properties: { title: string } }>).map(s => s.properties.title);
-      
-      if (sheetTitles.includes('Sheet1')) {
-        const data = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1!A1:1`);
-        if (!data || !data.values) {
-          await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Sheet1!A1`, 'PUT', { values: [PATIENTS_HEADERS] });
-        }
-      }
-
+      // Asegurar Consultas
       if (!sheetTitles.includes('Consultas')) {
         await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}:batchUpdate`, 'POST', {
           requests: [{ addSheet: { properties: { title: 'Consultas' } } }]
-        });
+        }).catch(() => {});
+        await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Consultas!A1`, 'PUT', { values: [CONSULTATIONS_HEADERS] }).catch(() => {});
       }
-      
+
+      // Asegurar Citas
       if (!sheetTitles.includes('Citas')) {
         await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}:batchUpdate`, 'POST', {
           requests: [{ addSheet: { properties: { title: 'Citas' } } }]
-        });
+        }).catch(() => {});
+        await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Citas!A1`, 'PUT', { values: [APPOINTMENTS_HEADERS] }).catch(() => {});
       }
-      
-      await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Citas!A1`, 'PUT', { values: [APPOINTMENTS_HEADERS] });
 
       localStorage.setItem('policlinic_sheet_ensured', 'true');
       localStorage.setItem('policlinic_citas_tab_ensured', 'true');
-      localStorage.setItem('policlinic_sheet_name', SPREADSHEET_NAME);
       
       return sheetsId;
+    } catch (error) {
+      console.error('Error crítico en ensureSpreadsheetExists:', error);
+      return localStorage.getItem(SHEETS_ID_KEY); // Intentar retornar el cache al menos
     } finally {
       ensurePromise = null;
     }
