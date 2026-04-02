@@ -411,12 +411,15 @@ export const getAppointmentsFromSheets = async (): Promise<any[]> => {
         });
         
         // Formatear fechas para que Recharts las entienda (YYYY-MM-DD)
-        if (a.date && a.date.includes('/')) {
-            const parts = a.date.split('/');
+        const rawDate = String(a.date || '').trim();
+        if (rawDate && rawDate.includes('/')) {
+            const parts = rawDate.split('/');
             if (parts.length === 3) {
                 const y = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
                 a.date = `${y}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
             }
+        } else if (rawDate) {
+            a.date = rawDate;
         }
         
         return a;

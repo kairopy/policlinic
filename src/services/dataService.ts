@@ -65,32 +65,32 @@ export const getPatients = async (): Promise<Patient[]> => {
 
 export const getAppointments = async (): Promise<Appointment[]> => {
   if (isGoogleLinked()) {
-    const fromSheets = await getAppointmentsFromSheets();
+    // Lanzamos ambas peticiones en paralelo para máxima velocidad
+    const [fromSheets, fromCalendar] = await Promise.all([
+      getAppointmentsFromSheets().catch(() => []),
+      getAppointmentsFromCalendar().catch(() => [])
+    ]);
+
     const syncDone = localStorage.getItem('policlinic_calendar_to_sheets_sync_done') === 'true';
 
-    // Si la sincronización no ha terminado, o si Sheets está vacío, traemos de Calendar también
-    if (!syncDone || fromSheets.length === 0) {
-      const fromCalendar = await getAppointmentsFromCalendar();
-      
-      // Si Sheets está totalmente vacío y hay datos en Calendar, disparamos migración
-      if (fromSheets.length === 0 && fromCalendar.length > 0 && !syncDone) {
+    // Si Sheets está vacío pero Calendar tiene datos y no hemos marcado el fin de la sincronización:
+    if (fromSheets.length === 0 && fromCalendar.length > 0 && !syncDone) {
         syncCalendarToSheets(fromCalendar);
-      }
-
-      // Fusionar y eliminar duplicados (priorizando Sheets si ya existe el ID)
-      const merged = [...fromSheets];
-      const sheetIds = new Set(fromSheets.map(a => String(a.id)));
-      
-      fromCalendar.forEach(calAppt => {
-        if (!sheetIds.has(String(calAppt.id))) {
-          merged.push(calAppt);
-        }
-      });
-
-      return merged.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }
+
+    // FUSIÓN Y DEDUPLICACIÓN OBLIGATORIA
+    // Esto garantiza que si algo falta en Sheets, se traiga de Calendar
+    const merged = [...fromSheets];
+    const sheetIds = new Set(fromSheets.map(a => String(a.id)));
     
-    return fromSheets;
+    fromCalendar.forEach(calAppt => {
+      if (!sheetIds.has(String(calAppt.id))) {
+        merged.push(calAppt);
+      }
+    });
+
+    // Siempre devolvemos la unión de ambos, ordenados por fecha
+    return merged.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }
   return [...(mockAppointments as Appointment[])];
 };
