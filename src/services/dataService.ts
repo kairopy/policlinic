@@ -65,18 +65,29 @@ export const getPatients = async (): Promise<Patient[]> => {
 
 export const getAppointments = async (): Promise<Appointment[]> => {
   if (isGoogleLinked()) {
-    // Priorizamos Sheets para velocidad y analíticas
     const fromSheets = await getAppointmentsFromSheets();
-    
-    // Si Sheets está vacío, intentamos con Calendar y disparamos la migración
-    if (fromSheets.length === 0) {
-        const fromCalendar = await getAppointmentsFromCalendar();
-        if (fromCalendar.length > 0) {
-            // Disparamos la migración en segundo plano
-            syncCalendarToSheets(fromCalendar);
-            return fromCalendar;
+    const syncDone = localStorage.getItem('policlinic_calendar_to_sheets_sync_done') === 'true';
+
+    // Si la sincronización no ha terminado, o si Sheets está vacío, traemos de Calendar también
+    if (!syncDone || fromSheets.length === 0) {
+      const fromCalendar = await getAppointmentsFromCalendar();
+      
+      // Si Sheets está totalmente vacío y hay datos en Calendar, disparamos migración
+      if (fromSheets.length === 0 && fromCalendar.length > 0 && !syncDone) {
+        syncCalendarToSheets(fromCalendar);
+      }
+
+      // Fusionar y eliminar duplicados (priorizando Sheets si ya existe el ID)
+      const merged = [...fromSheets];
+      const sheetIds = new Set(fromSheets.map(a => String(a.id)));
+      
+      fromCalendar.forEach(calAppt => {
+        if (!sheetIds.has(String(calAppt.id))) {
+          merged.push(calAppt);
         }
-        return [];
+      });
+
+      return merged.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }
     
     return fromSheets;
