@@ -5,7 +5,7 @@ import { useConsultations } from '../../hooks/queries/useConsultations';
 import { useAppointments } from '../../hooks/queries/useAppointments';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from 'recharts';
 import { Calendar as CalendarIcon, DollarSign, Activity, Users, Loader2, RefreshCw } from 'lucide-react';
-import { format, subDays, startOfMonth, isWithinInterval, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subDays, addDays, isWithinInterval, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const COLORS = [
