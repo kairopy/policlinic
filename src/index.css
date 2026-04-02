@@ -239,6 +239,14 @@ h3 { font-size: 1.5rem; }
   box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 
+.recharts-wrapper:focus {
+  outline: none !important;
+}
+
+::-moz-focus-inner {
+  border: 0;
+}
+
 .input-field::placeholder {
   color: var(--color-text-muted);
 }
