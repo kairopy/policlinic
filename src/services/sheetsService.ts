@@ -10,6 +10,9 @@ export const CONSULTATIONS_HEADERS = [
   'Treatment', 'Recommendations', 'Cost', 'Doctor', 'PodogramaData',
   'Time', 'Plantilla', 'Status', 'RecoveryTime', 'Notes'
 ];
+export const APPOINTMENTS_HEADERS = [
+  'ID', 'Título', 'Fecha', 'Hora', 'Duración', 'Paciente ID', 'Paciente Nombre', 'Servicio', 'Estado', 'Notas'
+];
 
 // Maps from possible header names (n8n Spanish / app English) to Patient interface keys
 const HEADER_MAP: Record<string, keyof Patient> = {
@@ -42,6 +45,19 @@ const CONSULT_HEADER_MAP: Record<string, keyof Consultation> = {
   'status': 'status', 'estado': 'status',
   'recoverytime': 'recoveryTime', 'tiempo de recuperación': 'recoveryTime', 'tiempo recuperacion': 'recoveryTime', 'recuperacion': 'recoveryTime',
   'notes': 'notes', 'notas': 'notes', 'notas privadas': 'notes'
+};
+
+const APPOINT_HEADER_MAP: Record<string, string> = {
+  'id': 'id',
+  'título': 'title', 'titulo': 'title', 'title': 'title', 'asunto': 'title',
+  'fecha': 'date', 'date': 'date',
+  'hora': 'time', 'time': 'time', 'inicio': 'time',
+  'duración': 'duration', 'duracion': 'duration', 'duration': 'duration',
+  'paciente id': 'patientId', 'patientid': 'patientId',
+  'paciente nombre': 'patientName', 'patientname': 'patientName', 'paciente': 'patientName',
+  'servicio': 'type', 'tipo': 'type', 'service': 'type',
+  'estado': 'status', 'status': 'status',
+  'notas': 'description', 'notes': 'description', 'descripción': 'description', 'descripcion': 'description'
 };
 
 let ensurePromise: Promise<string | null> | null = null;
@@ -109,7 +125,13 @@ export const ensureSpreadsheetExists = async (): Promise<string | null> => {
         });
       }
       
-      await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Consultas!A1`, 'PUT', { values: [CONSULTATIONS_HEADERS] });
+      if (!sheetTitles.includes('Citas')) {
+        await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}:batchUpdate`, 'POST', {
+          requests: [{ addSheet: { properties: { title: 'Citas' } } }]
+        });
+      }
+      
+      await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Citas!A1`, 'PUT', { values: [APPOINTMENTS_HEADERS] });
 
       localStorage.setItem('policlinic_sheet_ensured', 'true');
       localStorage.setItem('policlinic_sheet_name', SPREADSHEET_NAME);
@@ -376,4 +398,139 @@ export const saveConsultationToSheets = async (consultation: Consultation) => {
     { values }
   );
   logger.info(`Consulta guardada en Google Sheets: ${consultation.patientName || consultation.id}`);
+};
+
+export const getAppointmentsFromSheets = async (): Promise<any[]> => {
+  const sheetsId = await ensureSpreadsheetExists();
+  if (!sheetsId) return [];
+
+  const data = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Citas`);
+  if (data && data.values && data.values.length > 0) {
+    const firstRow = data.values[0] as string[];
+    const colMap: Record<number, string> = {};
+    
+    firstRow.forEach((h, i) => {
+      const key = APPOINT_HEADER_MAP[h?.trim().toLowerCase() || ''];
+      if (key) colMap[i] = key;
+    });
+
+    return data.values.slice(1)
+      .filter((row: string[]) => row.some(cell => cell?.trim()))
+      .map((row: string[]) => {
+        const a: any = {};
+        Object.entries(colMap).forEach(([idxStr, key]) => {
+          a[key] = row[Number(idxStr)] ?? '';
+        });
+        
+        // Formatear fechas para que Recharts las entienda (YYYY-MM-DD)
+        if (a.date && a.date.includes('/')) {
+            const parts = a.date.split('/');
+            if (parts.length === 3) {
+                const y = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+                a.date = `${y}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+        }
+        
+        return a;
+      });
+  }
+  return [];
+};
+
+export const saveAppointmentToSheets = async (appointment: any) => {
+  const sheetsId = await ensureSpreadsheetExists();
+  if (!sheetsId) return;
+
+  const values = [[
+    String(appointment.id || ''),
+    appointment.title,
+    appointment.date,
+    appointment.time,
+    appointment.duration || '30',
+    appointment.patientId || '',
+    appointment.patientName || '',
+    appointment.type || 'General',
+    appointment.status || 'Pendiente',
+    appointment.description || ''
+  ]];
+
+  await callGoogleApi(
+    `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Citas!A1:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+    'POST',
+    { values }
+  );
+  logger.info(`Cita guardada en Google Sheets: ${appointment.title}`);
+};
+
+export const updateAppointmentInSheets = async (appointment: any) => {
+  const sheetsId = await ensureSpreadsheetExists();
+  if (!sheetsId) return;
+
+  const data = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Citas`);
+  if (!data || !data.values) return;
+
+  const rows = data.values as string[][];
+  const targetId = String(appointment.id).trim();
+  const rowIndex = rows.findIndex((row, idx) => idx > 0 && String(row[0] ?? '').trim() === targetId);
+
+  if (rowIndex >= 0) {
+    const rowNum = rowIndex + 1;
+    const newRow = [
+      String(appointment.id || ''),
+      appointment.title,
+      appointment.date,
+      appointment.time,
+      appointment.duration || '30',
+      appointment.patientId || '',
+      appointment.patientName || '',
+      appointment.type || 'General',
+      appointment.status || 'Pendiente',
+      appointment.description || ''
+    ];
+
+    await callGoogleApi(
+      `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Citas!A${rowNum}?valueInputOption=USER_ENTERED`,
+      'PUT',
+      { values: [newRow] }
+    );
+    logger.info(`Cita actualizada en Google Sheets: ${appointment.title}`);
+  }
+};
+
+export const deleteAppointmentFromSheets = async (appointmentId: string | number) => {
+    const sheetsId = await ensureSpreadsheetExists();
+    if (!sheetsId) return;
+
+    const meta = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}?fields=sheets(properties(sheetId,title))`);
+    const citasSheetProps = (meta.sheets as any[]).find(s => s.properties.title === 'Citas')?.properties;
+    if (!citasSheetProps) return;
+
+    const sheetNumId = citasSheetProps.sheetId;
+
+    const data = await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Citas`);
+    if (!data || !data.values) return;
+
+    const rows = data.values as string[][];
+    const targetId = String(appointmentId).trim().toLowerCase();
+    const rowIndex = rows.findIndex((row, idx) => idx > 0 && row[0] && String(row[0]).trim().toLowerCase() === targetId);
+
+    if (rowIndex > 0) {
+        await callGoogleApi(
+            `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}:batchUpdate`,
+            'POST',
+            {
+                requests: [{
+                    deleteDimension: {
+                        range: {
+                            sheetId: sheetNumId,
+                            dimension: 'ROWS',
+                            startIndex: rowIndex,
+                            endIndex: rowIndex + 1,
+                        }
+                    }
+                }]
+            }
+        );
+        logger.info(`Cita eliminada de Google Sheets: ${appointmentId}`);
+    }
 };

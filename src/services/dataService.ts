@@ -18,7 +18,11 @@ import {
   updatePatientInSheets,
   deletePatientFromSheets,
   getConsultationsFromSheets,
-  saveConsultationToSheets
+  saveConsultationToSheets,
+  getAppointmentsFromSheets,
+  saveAppointmentToSheets,
+  updateAppointmentInSheets,
+  deleteAppointmentFromSheets
 } from './sheetsService';
 
 import {
@@ -41,8 +45,14 @@ export const getPatients = async (): Promise<Patient[]> => {
 
 export const getAppointments = async (): Promise<Appointment[]> => {
   if (isGoogleLinked()) {
-    const parsed = await getAppointmentsFromCalendar();
-    if (parsed.length > 0) return parsed;
+    // Priorizamos Sheets para velocidad y analíticas
+    const fromSheets = await getAppointmentsFromSheets();
+    if (fromSheets.length > 0) return fromSheets;
+
+    // Si Sheets está vacío, intentamos con Calendar
+    const fromCalendar = await getAppointmentsFromCalendar();
+    if (fromCalendar.length > 0) return fromCalendar;
+    
     return [];
   }
   return [...(mockAppointments as Appointment[])];
@@ -82,14 +92,22 @@ export const deletePatient = async (patientId: string) => {
 
 export const saveAppointment = async (appointment: Appointment) => {
   if (isGoogleLinked()) {
-    await saveAppointmentToCalendar(appointment);
+    // Escritura Dual: Calendar + Sheets
+    await Promise.allSettled([
+      saveAppointmentToCalendar(appointment),
+      saveAppointmentToSheets(appointment)
+    ]);
   }
   (mockAppointments as Appointment[]).push(appointment);
 };
 
 export const updateAppointment = async (appointment: Appointment) => {
   if (isGoogleLinked()) {
-    await updateAppointmentInCalendar(appointment);
+    // Actualización Dual
+    await Promise.allSettled([
+        updateAppointmentInCalendar(appointment),
+        updateAppointmentInSheets(appointment)
+    ]);
   }
   const mockIdx = (mockAppointments as Appointment[]).findIndex(a => String(a.id) === String(appointment.id));
   if (mockIdx !== -1) (mockAppointments as Appointment[])[mockIdx] = appointment;
@@ -97,7 +115,11 @@ export const updateAppointment = async (appointment: Appointment) => {
 
 export const deleteAppointment = async (appointmentId: string | number) => {
   if (isGoogleLinked()) {
-    await deleteAppointmentFromCalendar(appointmentId);
+    // Eliminación Dual
+    await Promise.allSettled([
+        deleteAppointmentFromCalendar(appointmentId),
+        deleteAppointmentFromSheets(appointmentId)
+    ]);
   }
   const mockIdx = (mockAppointments as Appointment[]).findIndex(a => String(a.id) === String(appointmentId));
   if (mockIdx !== -1) (mockAppointments as Appointment[]).splice(mockIdx, 1);
