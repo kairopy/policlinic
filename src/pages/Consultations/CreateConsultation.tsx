@@ -44,7 +44,6 @@ export const CreateConsultation: React.FC<CreateConsultationProps> = ({ onClose 
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [patientStatus, setPatientStatus] = useState('in_treatment');
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   
   const patientDropdownRef = useRef<HTMLDivElement>(null);
   const templateDropdownRef = useRef<HTMLDivElement>(null);

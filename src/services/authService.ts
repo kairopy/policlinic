@@ -89,7 +89,7 @@ export const callGoogleApi = async (url: string, method: string = 'GET', body?: 
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ message: response.statusText }));
-    throw new Error(`Google API error: ${response.statusText}`, errorData);
+    throw new Error(`Google API error: ${response.statusText}. Details: ${JSON.stringify(errorData)}`);
   }
 
   if (response.status === 204) {

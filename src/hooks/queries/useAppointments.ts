@@ -28,7 +28,24 @@ export const useSaveAppointment = () => {
         queryClient.setQueryData(APPOINTMENTS_KEY, context.previous);
       }
     },
+    onSuccess: () => {
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: APPOINTMENTS_KEY, type: 'active' });
+      }, 1000);
+    },
     onSettled: () => {
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: APPOINTMENTS_KEY });
+      }, 2000);
+    },
+  });
+};
+
+export const useUpdateAppointment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (appointment: Appointment) => updateAppointment(appointment),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: APPOINTMENTS_KEY });
     },
   });

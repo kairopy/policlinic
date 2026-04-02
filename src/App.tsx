@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MainLayout } from './components/layout/MainLayout';
@@ -17,20 +18,19 @@ import { AnalyticsPage } from './pages/Analytics/AnalyticsPage';
 import TitleBar from './components/layout/TitleBar';
 import './App.css';
 
-// Configuración persistente de React Query - FUERA del ciclo de renderizado
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 0, // Siempre validar contra el service
-      retry: 1, // Reducir reintentos para fallos rápidos
-      refetchOnWindowFocus: true, 
-    },
-  },
-});
-
 function App() {
   const win = window as unknown as { process?: { type?: string } };
   const isElectron = win.process && win.process.type === 'renderer';
+
+  const queryClient = useMemo(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 0,
+        retry: 1,
+        refetchOnWindowFocus: true, 
+      },
+    },
+  }), []);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -218,7 +218,8 @@ export const ConsultationHistory: React.FC = () => {
         <CreateConsultation 
           onClose={() => {
             setShowNewConsultation(false);
-            // Ya no es necesario llamar a loadData() porque useSaveConsultation invalida la query
+            // Capa de seguridad adicional: forzar recarga al cerrar el panel
+            loadData();
           }} 
         />
       </SlidePanel>

@@ -154,20 +154,18 @@ export const AnalyticsPage: React.FC = () => {
           <p className="page-description">Centro de inteligencia y métricas en tiempo real</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button 
+          <button className="btn btn-outline" onClick={() => window.location.reload()}>
             <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
             Sincronizar
           </button>
           
           <div style={{ display: 'flex', background: 'var(--color-surface)', padding: '4px', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-            {(
-              [
-                { id: 'thisMonth', label: 'Mes' },
-                { id: 'last30Days', label: '30 Días' },
-                { id: 'lastYear', label: '1 Año' },
-                { id: 'allTime', label: 'Total' }
-              ] as const
-            ).map((opt) => (
+            {[
+              { id: 'thisMonth', label: 'Mes' },
+              { id: 'last30Days', label: '30 Días' },
+              { id: 'lastYear', label: '1 Año' },
+              { id: 'allTime', label: 'Total' }
+            ].map((opt) => (
               <button
                 key={opt.id}
                 onClick={() => setTimeframe(opt.id)}

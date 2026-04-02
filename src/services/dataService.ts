@@ -31,9 +31,6 @@ import {
 export type { Patient, Appointment, Consultation };
 export { isGoogleLinked, syncLoginStatusWithBackend, callGoogleApi };
 
-export type { Patient, Appointment, Consultation };
-export { isGoogleLinked, syncLoginStatusWithBackend, callGoogleApi };
-
 export const getPatients = async (): Promise<Patient[]> => {
   if (isGoogleLinked()) {
     const parsed = await getPatientsFromSheets();

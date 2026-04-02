@@ -35,14 +35,19 @@ export const useSaveConsultation = () => {
         queryClient.setQueryData(CONSULTATIONS_KEY, context.previousConsultations);
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: CONSULTATIONS_KEY });
-      // Crear una consulta usualmente afecta lastVisit del paciente, invalidamos pacientes también
-      queryClient.invalidateQueries({ queryKey: ['patients'] });
+    onSuccess: async () => {
+      // Retraso de seguridad para propagación de Google Sheets (1 segundo)
+      // Esto evita que la lectura ocurra antes de que Google actualice su índice
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: CONSULTATIONS_KEY, type: 'active' });
+        queryClient.refetchQueries({ queryKey: ['patients'], type: 'active' });
+      }, 1000);
     },
     onSettled: () => {
-      // Asegurar sincronización final
-      queryClient.invalidateQueries({ queryKey: CONSULTATIONS_KEY });
+      // Invalidation garantizada después de cualquier estado
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: CONSULTATIONS_KEY });
+      }, 2000);
     },
   });
 };

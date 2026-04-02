@@ -154,7 +154,7 @@ export const Dashboard: React.FC = () => {
                 <div key={app.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <div className="avatar" style={{ backgroundColor: 'var(--color-primary-light)', color: 'var(--color-primary)', fontWeight: 700 }}>
-                      {app.title.split(' ')[0][0]}{app.title.split(' ')[1][0]}
+                      {app.title ? app.title.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : '??'}
                     </div>
                     <div>
                       <div style={{ fontWeight: 600 }}>{app.title.split(' - ')[0]}</div>
