@@ -35,15 +35,16 @@ export const AnalyticsPage: React.FC = () => {
     const today = new Date();
     switch (timeframe) {
       case 'thisMonth':
-        return { start: startOfMonth(today), end: today };
+        return { start: startOfMonth(today), end: endOfMonth(today) };
       case 'last30Days':
-        return { start: subDays(today, 30), end: today };
+        // Ver panorama completo: 30 días atrás y 30 días adelante
+        return { start: subDays(today, 30), end: addDays(today, 30) };
       case 'lastYear':
-        return { start: subDays(today, 365), end: today };
+        return { start: subDays(today, 365), end: addDays(today, 30) };
       case 'allTime':
-        return { start: new Date(2000, 0, 1), end: today };
+        return { start: new Date(2000, 0, 1), end: addDays(today, 365) };
       default:
-        return { start: subDays(today, 30), end: today };
+        return { start: subDays(today, 30), end: addDays(today, 30) };
     }
   }, [timeframe]);
 
