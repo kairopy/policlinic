@@ -35,6 +35,26 @@ import {
 export type { Patient, Appointment, Consultation };
 export { isGoogleLinked, syncLoginStatusWithBackend, callGoogleApi };
 
+// Función interna para migrar citas existentes de Calendar a Sheets
+const syncCalendarToSheets = async (appointments: Appointment[]) => {
+  const syncDone = localStorage.getItem('policlinic_calendar_to_sheets_sync_done');
+  if (syncDone === 'true' || appointments.length === 0) return;
+
+  console.log(`Iniciando migración de ${appointments.length} citas hacia Sheets...`);
+  try {
+    // Usamos un bucle secuencial para no saturar la API de Sheets
+    for (const appt of appointments) {
+      await saveAppointmentToSheets(appt);
+      // Pequeña pausa para evitar límites de cuota
+      await new Promise(r => setTimeout(r, 200));
+    }
+    localStorage.setItem('policlinic_calendar_to_sheets_sync_done', 'true');
+    console.log('Migración de citas completada con éxito.');
+  } catch (error) {
+    console.error('Error durante la migración de citas:', error);
+  }
+};
+
 export const getPatients = async (): Promise<Patient[]> => {
   if (isGoogleLinked()) {
     const parsed = await getPatientsFromSheets();
@@ -47,13 +67,19 @@ export const getAppointments = async (): Promise<Appointment[]> => {
   if (isGoogleLinked()) {
     // Priorizamos Sheets para velocidad y analíticas
     const fromSheets = await getAppointmentsFromSheets();
-    if (fromSheets.length > 0) return fromSheets;
-
-    // Si Sheets está vacío, intentamos con Calendar
-    const fromCalendar = await getAppointmentsFromCalendar();
-    if (fromCalendar.length > 0) return fromCalendar;
     
-    return [];
+    // Si Sheets está vacío, intentamos con Calendar y disparamos la migración
+    if (fromSheets.length === 0) {
+        const fromCalendar = await getAppointmentsFromCalendar();
+        if (fromCalendar.length > 0) {
+            // Disparamos la migración en segundo plano
+            syncCalendarToSheets(fromCalendar);
+            return fromCalendar;
+        }
+        return [];
+    }
+    
+    return fromSheets;
   }
   return [...(mockAppointments as Appointment[])];
 };
