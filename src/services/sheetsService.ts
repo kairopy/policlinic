@@ -79,7 +79,9 @@ export const ensureSpreadsheetExists = async (): Promise<string | null> => {
       }
 
       if (cached && cached !== 'undefined' && cached !== 'null' && isEnsured === 'true') {
-        return cached;
+        // Verificamos si ya hemos asegurado la pestaña de Citas específicamente
+        const citasEnsured = localStorage.getItem('policlinic_citas_tab_ensured');
+        if (citasEnsured === 'true') return cached;
       }
 
       let sheetsId = cached;
@@ -134,6 +136,7 @@ export const ensureSpreadsheetExists = async (): Promise<string | null> => {
       await callGoogleApi(`https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/Citas!A1`, 'PUT', { values: [APPOINTMENTS_HEADERS] });
 
       localStorage.setItem('policlinic_sheet_ensured', 'true');
+      localStorage.setItem('policlinic_citas_tab_ensured', 'true');
       localStorage.setItem('policlinic_sheet_name', SPREADSHEET_NAME);
       
       return sheetsId;
