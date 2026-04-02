@@ -147,6 +147,22 @@ export const AnalyticsPage: React.FC = () => {
       .sort((a, b) => b.value - a.value);
   }, [filteredConsultations]);
 
+  const appointmentsByDayOfWeek = useMemo(() => {
+    const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Juv', 'Vie', 'Sáb'];
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    
+    filteredAppointments.forEach(a => {
+      try {
+        const d = new Date(a.date);
+        if (!isNaN(d.getTime())) {
+          counts[d.getDay()]++;
+        }
+      } catch {}
+    });
+    
+    return dayNames.map((name, i) => ({ name, value: counts[i] }));
+  }, [filteredAppointments]);
+
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
       <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -310,6 +326,17 @@ export const AnalyticsPage: React.FC = () => {
             )}
             {activeTab === 'operational' && (
               <>
+                <div className="glass-panel" style={{ padding: '1.5rem', borderLeft: '4px solid var(--color-primary)' }}>
+                  <div className="flex-between">
+                    <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Base de Datos</span>
+                    <RefreshCw size={20} color="var(--color-primary)" className={fetchA ? "animate-spin" : ""} />
+                  </div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 700, marginTop: '1rem' }}>Sincronizada</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--color-success)', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'currentColor' }} />
+                    Sheets Tab: Citas
+                  </div>
+                </div>
                 <div className="glass-panel" style={{ padding: '1.5rem' }}>
                   <div className="flex-between">
                     <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>Total Programado</span>
@@ -410,51 +437,129 @@ export const AnalyticsPage: React.FC = () => {
               </div>
             )}
 
-            {/* APPOINTMENT STATUS */}
-            {(activeTab === 'general' || activeTab === 'operational') && (
-              <div className="glass-panel" style={{ padding: '1.5rem' }}>
-                <h3 style={{ marginBottom: '1.5rem' }}>Estado de Citas</h3>
-                {appointmentStatusData.length > 0 ? (
-                  <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ height: '240px', width: '240px', flexShrink: 0 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={appointmentStatusData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={65}
-                            outerRadius={90}
-                            paddingAngle={5}
-                            dataKey="value"
-                          >
-                            {appointmentStatusData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)' }} />
-                        </PieChart>
-                      </ResponsiveContainer>
+            {/* APPOINTMENT STATUS & WORKLOAD (OPERATIONAL TAB) */}
+            {activeTab === 'operational' && (
+              <>
+                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                  <h3 style={{ marginBottom: '1.5rem' }}>Estado de Citas</h3>
+                  {appointmentStatusData.length > 0 ? (
+                    <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ height: '240px', width: '240px', flexShrink: 0 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={appointmentStatusData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={65}
+                              outerRadius={90}
+                              paddingAngle={5}
+                              dataKey="value"
+                            >
+                              {appointmentStatusData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)' }} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: '180px' }}>
+                        {(() => {
+                          const total = appointmentStatusData.reduce((sum, item) => sum + item.value, 0);
+                          return [...appointmentStatusData].sort((a, b) => b.value - a.value).map((item, index) => (
+                            <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(0,0,0,0.02)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}>
+                              <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: COLORS[(appointmentStatusData.indexOf(item) + 2) % COLORS.length] }} />
+                              <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 500 }}>{item.name}</span>
+                              <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{Math.round((item.value / total) * 100)}%</span>
+                            </div>
+                          ));
+                        })()}
+                      </div>
                     </div>
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: '180px' }}>
-                      {(() => {
-                        const total = appointmentStatusData.reduce((sum, item) => sum + item.value, 0);
-                        return [...appointmentStatusData].sort((a, b) => b.value - a.value).map((item, index) => (
-                          <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(0,0,0,0.02)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}>
-                            <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: COLORS[(appointmentStatusData.indexOf(item) + 2) % COLORS.length] }} />
-                            <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 500 }}>{item.name}</span>
-                            <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{Math.round((item.value / total) * 100)}%</span>
-                          </div>
-                        ));
-                      })()}
+                  ) : (
+                    <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)', border: '2px dashed var(--color-border)', borderRadius: '12px' }}>
+                      No hay datos de citas disponibles.
                     </div>
+                  )}
+                </div>
+
+                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                  <h3 style={{ marginBottom: '1.5rem' }}>Popularidad por Día de la Semana</h3>
+                  <div style={{ height: '240px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={appointmentsByDayOfWeek}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                        <XAxis dataKey="name" stroke="var(--color-text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis stroke="var(--color-text-muted)" fontSize={12} tickLine={false} axisLine={false} />
+                        <Tooltip 
+                            cursor={{fill: 'rgba(0,0,0,0.05)'}}
+                            contentStyle={{ backgroundColor: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)' }} 
+                        />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                          {appointmentsByDayOfWeek.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.value === Math.max(...appointmentsByDayOfWeek.map(d => d.value)) ? 'var(--color-primary)' : 'var(--color-primary-light)'} fillOpacity={0.8} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
-                ) : (
-                  <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)', border: '2px dashed var(--color-border)', borderRadius: '12px' }}>
-                    No hay datos de citas disponibles.
+                  <p style={{ marginTop: '1rem', fontSize: '0.8rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
+                    Identifica los días con mayor carga de pacientes para optimizar tu personal.
+                  </p>
+                </div>
+              </>
+            )}
+
+            {activeTab !== 'operational' && (
+              <>
+                {/* APPOINTMENT STATUS */}
+                {(activeTab === 'general') && (
+                  <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                    <h3 style={{ marginBottom: '1.5rem' }}>Estado de Citas</h3>
+                    {appointmentStatusData.length > 0 ? (
+                      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ height: '240px', width: '240px', flexShrink: 0 }}>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={appointmentStatusData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={65}
+                                outerRadius={90}
+                                paddingAngle={5}
+                                dataKey="value"
+                              >
+                                {appointmentStatusData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)' }} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: '180px' }}>
+                          {(() => {
+                            const total = appointmentStatusData.reduce((sum, item) => sum + item.value, 0);
+                            return [...appointmentStatusData].sort((a, b) => b.value - a.value).map((item, index) => (
+                              <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(0,0,0,0.02)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}>
+                                <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: COLORS[(appointmentStatusData.indexOf(item) + 2) % COLORS.length] }} />
+                                <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 500 }}>{item.name}</span>
+                                <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{Math.round((item.value / total) * 100)}%</span>
+                              </div>
+                            ));
+                          })()}
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)', border: '2px dashed var(--color-border)', borderRadius: '12px' }}>
+                        No hay datos de citas disponibles.
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
+              </>
             )}
 
             {/* TEMPLATE USAGE */}
