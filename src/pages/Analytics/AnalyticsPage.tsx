@@ -60,13 +60,19 @@ export const AnalyticsPage: React.FC = () => {
     return appointments.filter(a => {
       try {
         if (!a.date) return false;
-        // Intentar parsear de forma robusta
-        const d = parseISO(a.date);
-        if (isNaN(d.getTime())) {
-          const altD = new Date(a.date);
-          if (isNaN(altD.getTime())) return false;
-          return isWithinInterval(altD, dateInterval);
+        
+        let d: Date;
+        if (a.date instanceof Date) {
+          d = a.date;
+        } else {
+          // Intentar parsear de forma robusta
+          d = parseISO(a.date);
+          if (isNaN(d.getTime())) {
+            d = new Date(a.date);
+          }
         }
+        
+        if (isNaN(d.getTime())) return false;
         return isWithinInterval(d, dateInterval);
       } catch { return false; }
     });

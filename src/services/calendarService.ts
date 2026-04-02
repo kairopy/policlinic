@@ -17,10 +17,10 @@ export const getAppointmentsFromCalendar = async (): Promise<Appointment[]> => {
         id: item.id,
         patientId: '', 
         title: item.summary,
-        date: new Date(item.start.dateTime || item.start.date || ''),
+        date: new Date(item.start.dateTime || item.start.date || '').toISOString(),
         duration: 30, 
         type: parsedType,
-        status: 'confirmed'
+        status: 'Confirmada'
       };
     });
   }
